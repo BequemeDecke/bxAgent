@@ -5,6 +5,8 @@ from pathlib import Path
 from dotenv import load_dotenv
 from pydantic import BaseModel, SecretStr, Field
 from langchain.chat_models import init_chat_model
+from langchain.messages import HumanMessage
+from deepagents import create_deep_agent
 
 # Load environment variables from the .env file
 dotenv_path = (
@@ -46,14 +48,22 @@ def build_chat_model():
     )
 
 
+def build_bx_agent():
+    """Builds the BxAgent using the chat model."""
+    model = build_chat_model()
+    return create_deep_agent(model=model)
+
+
 def main():
     logging.info("Starting BxAgent with configuration: %s", agent_config)
 
-    chat_model = build_chat_model()
-    logging.debug(f"Chat model initialized successfully.")
+    bx_agent = build_bx_agent()
+    logging.debug(f"BxAgent initialized successfully.")
 
     # TODO: Remove this example after testing
-    response = chat_model.invoke("Hello, how are you?")
+    response = bx_agent.invoke(
+        {"messages": [HumanMessage(content="Hello, how are you?")]}
+    )
     logging.info(f"Received response from chat model: {response}")
 
 
