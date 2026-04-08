@@ -88,6 +88,7 @@ dependencies = [
     { name = "ipykernel" },
     { name = "langchain-openai" },
     { name = "langfuse" },
+    { name = "pydantic" },
 ]
 
 [package.metadata]
@@ -97,6 +98,7 @@ requires-dist = [
     { name = "ipykernel", specifier = "==7.2.0" },
     { name = "langchain-openai", specifier = "==1.1.12" },
     { name = "langfuse", specifier = "==4.0.6" },
+    { name = "pydantic", specifier = ">=2.12.5" },
 ]
 
 [[package]]
