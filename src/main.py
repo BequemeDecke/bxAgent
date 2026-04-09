@@ -1,13 +1,18 @@
 import os
 import logging
+import sys
+import uuid
 
 from pathlib import Path
 from dotenv import load_dotenv
 from pydantic import BaseModel, SecretStr, Field
 from langchain.chat_models import init_chat_model
 from langchain.messages import HumanMessage, SystemMessage
+from langgraph.checkpoint.memory import InMemorySaver
 from deepagents import create_deep_agent
-from deepagents.backends import LocalShellBackend
+from deepagents.backends import LocalShellBackend, CompositeBackend, FilesystemBackend
+
+from prompt import SYSTEM_PROMPT
 
 # Load environment variables from the .env file
 dotenv_path = (
@@ -18,7 +23,7 @@ assert has_env_loaded, f"Failed to load environment variables from {dotenv_path}
 
 # Setup Logging
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.DEBUG,  # TODO: Change it to INFO or WARNING later on; Counter: 1
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 
@@ -50,44 +55,64 @@ def build_chat_model():
     )
 
 
-def build_backend():
+def build_backend(workspace_dir: Path):
     """
     Builds the backend for the BxAgent.
-
-    When using the LocalShellBackend, we set virtual_mode to True to enable in-memory operations.
     """
-    return LocalShellBackend(
-        root_dir=Path("./agent_data"), virtual_mode=True
-    )  # TODO: Make this configurable later on; Counter: 1
+
+    bxagent_skills_dir = Path.cwd() / "bxagent-skills" / "skills"
+
+    return lambda rt: CompositeBackend(
+        default=LocalShellBackend(root_dir=workspace_dir, virtual_mode=True),
+        routes={
+            "/skills/": FilesystemBackend(
+                root_dir=bxagent_skills_dir, virtual_mode=True
+            )
+        },
+    )
 
 
-def build_bx_agent(system_prompt: str):
+def build_bx_agent(
+    workspace_dir: Path = Path("agent_data"), system_prompt: str = SYSTEM_PROMPT
+):
     """Builds the BxAgent using the chat model."""
     model = build_chat_model()
-    backend = build_backend()
+    backend = build_backend(workspace_dir)
 
     return create_deep_agent(
-        model=model, backend=backend, system_prompt=SystemMessage(system_prompt)
+        model=model,
+        backend=backend,
+        system_prompt=SystemMessage(system_prompt),
+        checkpointer=InMemorySaver(),
+        skills=["/skills/"]
     )
 
 
 # --- Main Execution ---
 def main():
+    if len(sys.argv) < 3:
+        logging.error(
+            "No custom workspace directory or prompt provided. Using default values. To specify custom values, run the script with: python main.py <workspace_dir> <prompt>"
+        )
+        exit(1)
+
+    workspace_dir = Path(sys.argv[1])
+    input_prompt = sys.argv[2]
+
+    logging.debug(f"Using workspace directory: {workspace_dir}")
     logging.info("Starting BxAgent with configuration: %s", agent_config)
 
-    bx_agent = build_bx_agent(
-        system_prompt="You are a helpful assistant with coding capabilities in Python."
-    )
+    bx_agent = build_bx_agent(workspace_dir=workspace_dir)
     logging.debug(f"BxAgent initialized successfully.")
 
-    # TODO: Remove this example after testing
     response = bx_agent.invoke(
+        {"messages": [HumanMessage(content=input_prompt)]},
         {
-            "messages": [
-                HumanMessage(
-                    content="Write a Python function that adds two numbers and returns the result. The file should be named add.py and the function should be named add_numbers."
-                )
-            ]
+            "configurable": {
+                "thread_id": str(
+                    uuid.uuid4()
+                ),  # Maybe there are better ways to do that
+            }
         },
     )
     logging.info(f"Received response from bxAgent: {response}")

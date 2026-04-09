@@ -1,0 +1,3 @@
+#!/bin/bash
+
+uv run src/main.py "/Users/lukas/Masterarbeit/transformations/Families2PersonsJava/src/de/tbuchmann/m2m/f2p/java" "Write a EMF model transformation in Java that transforms the Family metamodel to the Person metamodel. The Family metamodel has EClasses: Family, Parent, Child. The Person metamodel has EClasses: Person, Adult, Kid. The transformation should be bidirectional and support incremental updates."

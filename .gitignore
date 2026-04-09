@@ -1,5 +1,6 @@
 # --- BxAgent ---
 agent_data/
+exclude/
 
 # ---- LangChain ----
 # gitignore template for LangChain products, e.g., LangGraph, LangSmith
