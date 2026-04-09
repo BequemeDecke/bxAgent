@@ -9,6 +9,8 @@ from pydantic import BaseModel, SecretStr, Field
 from langchain.chat_models import init_chat_model
 from langchain.messages import HumanMessage, SystemMessage
 from langgraph.checkpoint.memory import InMemorySaver
+from langfuse import Langfuse, get_client as get_langfuse_client
+from langfuse.langchain import CallbackHandler as LangfuseCallbackHandler
 from deepagents import create_deep_agent
 from deepagents.backends import LocalShellBackend, CompositeBackend, FilesystemBackend
 
@@ -23,7 +25,7 @@ assert has_env_loaded, f"Failed to load environment variables from {dotenv_path}
 
 # Setup Logging
 logging.basicConfig(
-    level=logging.DEBUG,  # TODO: Change it to INFO or WARNING later on; Counter: 1
+    level=logging.INFO,  # TODO: Let this be configurable; Counter: 2
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 
@@ -56,6 +58,18 @@ langfuse_config = LangFuseConfig(
 
 
 # --- Builder Functions ---
+def build_langfuse_client():
+    # Initialize Langfuse client with constructor arguments
+    client = Langfuse(
+        secret_key=langfuse_config.SECRET_KEY.get_secret_value(),
+        public_key=langfuse_config.PUBLIC_KEY.get_secret_value(),
+        host=langfuse_config.BASE_URL
+    )
+
+    # Initialize the Langfuse handler
+    langfuse_handler = LangfuseCallbackHandler()
+    return client, langfuse_handler
+
 def build_chat_model():
     """Builds the chat model using the loaded configuration."""
     return init_chat_model(
@@ -115,6 +129,9 @@ def main():
 
     bx_agent = build_bx_agent(workspace_dir=workspace_dir)
     logging.debug(f"BxAgent initialized successfully.")
+    
+    langfuse_client, langfuse_handler = build_langfuse_client()
+    logging.debug("Langfuse client and handler initialized successfully.")
 
     response = bx_agent.invoke(
         {"messages": [HumanMessage(content=input_prompt)]},
@@ -123,10 +140,12 @@ def main():
                 "thread_id": str(
                     uuid.uuid4()
                 ),  # Maybe there are better ways to do that
-            }
+            },
+            "callbacks": [langfuse_handler],
         },
     )
     logging.info(f"Received response from bxAgent: {response}")
+    langfuse_client.flush()  # Ensure all events are sent to Langfuse
 
 
 if __name__ == "__main__":
