@@ -1,0 +1,3 @@
+[submodule "skills"]
+	path = bxagent-skills
+	url = git@github.com:BequemeDecke/bxAgent-skills.git
