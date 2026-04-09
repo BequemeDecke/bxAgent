@@ -43,6 +43,17 @@ agent_config = BxAgentConfig(
     MODEL_ID=os.getenv("MODEL_ID"),
 )
 
+class LangFuseConfig(BaseModel):
+    SECRET_KEY: SecretStr = Field()
+    PUBLIC_KEY: SecretStr = Field()
+    BASE_URL: str = Field()
+    
+langfuse_config = LangFuseConfig(
+    SECRET_KEY=os.getenv("LANGFUSE_SECRET_KEY"),
+    PUBLIC_KEY=os.getenv("LANGFUSE_PUBLIC_KEY"),
+    BASE_URL=os.getenv("LANGFUSE_BASE_URL"),
+)
+
 
 # --- Builder Functions ---
 def build_chat_model():
