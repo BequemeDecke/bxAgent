@@ -7,6 +7,7 @@ from pathlib import Path
 from src.models import build_base_model
 from .test import build_test_agent
 from .synthesis import build_synthesis_agent
+from .repair import build_repair_agent
 
 ORCHESTRATOR_SYSTEM_PROMPT = """
 You are a specialist in incremental and bidirectional model transformations in the Eclipse Modeling Framework (EMF). Your task is to create a Java implementation of a model transformation based on a natural language description.
@@ -94,11 +95,17 @@ def build_bx_agent(
         runnable=build_test_agent(),
     )
 
+    repair_agent = CompiledSubAgent(
+        name="repair_agent",
+        description="Agent responsible for repairing any issues found during testing of the synthesized transformation logic.",
+        runnable=build_repair_agent(),
+    )
+
     return create_deep_agent(
         model=model,
         backend=backend,
         system_prompt=SystemMessage(system_prompt),
         checkpointer=InMemorySaver(),
-        subagents=[synthesis_agent, test_agent],
+        subagents=[synthesis_agent, test_agent, repair_agent],
         skills=["/skills/"],
     )
