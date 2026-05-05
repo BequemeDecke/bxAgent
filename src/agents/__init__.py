@@ -1,5 +1,4 @@
-from langchain.chat_models import init_chat_model
-from langchain.messages import HumanMessage, SystemMessage
+from langchain.messages import SystemMessage
 from langgraph.checkpoint.memory import InMemorySaver
 from langfuse import Langfuse
 from langfuse.langchain import CallbackHandler as LangfuseCallbackHandler
@@ -8,7 +7,8 @@ from deepagents.backends import LocalShellBackend, CompositeBackend, FilesystemB
 from pathlib import Path
 
 from src.prompt import SYSTEM_PROMPT
-from src.config import agent_config, langfuse_config
+from src.config import langfuse_config
+from .models import build_chat_model
 
 
 # --- Builder Functions ---
@@ -23,16 +23,6 @@ def build_langfuse_client():
     # Initialize the Langfuse handler
     langfuse_handler = LangfuseCallbackHandler()
     return client, langfuse_handler
-
-
-def build_chat_model():
-    """Builds the chat model using the loaded configuration."""
-    return init_chat_model(
-        model_provider="openai",  # TODO: Make this configurable later on; Counter: 1
-        base_url=agent_config.BASE_URL,
-        api_key=agent_config.API_KEY.get_secret_value(),
-        model=agent_config.MODEL_ID,
-    )
 
 
 def build_backend(workspace_dir: Path):
