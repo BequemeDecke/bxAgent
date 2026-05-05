@@ -4,7 +4,7 @@ from deepagents import create_deep_agent
 from deepagents.backends import LocalShellBackend, CompositeBackend, FilesystemBackend
 from pathlib import Path
 
-from .models import build_chat_model
+from src.models import build_base_model
 
 ORCHESTRATOR_SYSTEM_PROMPT = """
 You are a specialist in incremental and bidirectional model transformations in the Eclipse Modeling Framework (EMF). Your task is to create a Java implementation of a model transformation based on a natural language description.
@@ -77,7 +77,7 @@ def build_bx_agent(
     system_prompt: str = ORCHESTRATOR_SYSTEM_PROMPT,
 ):
     """Builds the BxAgent using the chat model."""
-    model = build_chat_model()
+    model = build_base_model()
     backend = build_orchestrator_backend(workspace_dir)
 
     return create_deep_agent(

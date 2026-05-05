@@ -19,13 +19,15 @@ class BxAgentConfig(BaseModel):
 
     API_KEY: SecretStr = Field()
     BASE_URL: str = Field()
-    MODEL_ID: str = Field()
+    BASE_MODEL: str = Field()
+    CODING_MODEL: str = Field()
 
 
 agent_config = BxAgentConfig(
     API_KEY=os.getenv("API_KEY"),
     BASE_URL=os.getenv("BASE_URL"),
-    MODEL_ID=os.getenv("MODEL_ID"),
+    BASE_MODEL=os.getenv("BASE_MODEL"),
+    CODING_MODEL=os.getenv("CODING_MODEL"),
 )
 
 
