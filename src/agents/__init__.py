@@ -1,7 +1,5 @@
 from langchain.messages import SystemMessage
 from langgraph.checkpoint.memory import InMemorySaver
-from langfuse import Langfuse
-from langfuse.langchain import CallbackHandler as LangfuseCallbackHandler
 from deepagents import create_deep_agent
 from deepagents.backends import LocalShellBackend, CompositeBackend, FilesystemBackend
 from pathlib import Path
@@ -9,20 +7,6 @@ from pathlib import Path
 from src.prompt import SYSTEM_PROMPT
 from src.config import langfuse_config
 from .models import build_chat_model
-
-
-# --- Builder Functions ---
-def build_langfuse_client():
-    # Initialize Langfuse client with constructor arguments
-    client = Langfuse(
-        secret_key=langfuse_config.SECRET_KEY.get_secret_value(),
-        public_key=langfuse_config.PUBLIC_KEY.get_secret_value(),
-        host=langfuse_config.BASE_URL,
-    )
-
-    # Initialize the Langfuse handler
-    langfuse_handler = LangfuseCallbackHandler()
-    return client, langfuse_handler
 
 
 def build_backend(workspace_dir: Path):
