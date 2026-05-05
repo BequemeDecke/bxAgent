@@ -12,12 +12,6 @@ dotenv_path = (
 has_env_loaded = load_dotenv(dotenv_path=dotenv_path)
 assert has_env_loaded, f"Failed to load environment variables from {dotenv_path}"
 
-# Setup Logging
-logging.basicConfig(
-    level=logging.INFO,  # TODO: Let this be configurable; Counter: 2
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-)
-
 
 # Save the loaded environment variables to a config class for easy access
 class BxAgentConfig(BaseModel):
