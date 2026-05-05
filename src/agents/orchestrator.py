@@ -1,10 +1,11 @@
 from langchain.messages import SystemMessage
 from langgraph.checkpoint.memory import InMemorySaver
-from deepagents import create_deep_agent
+from deepagents import create_deep_agent, CompiledSubAgent
 from deepagents.backends import LocalShellBackend, CompositeBackend, FilesystemBackend
 from pathlib import Path
 
 from src.models import build_base_model
+from .synthesis import build_synthesis_agent
 
 ORCHESTRATOR_SYSTEM_PROMPT = """
 You are a specialist in incremental and bidirectional model transformations in the Eclipse Modeling Framework (EMF). Your task is to create a Java implementation of a model transformation based on a natural language description.
@@ -79,11 +80,18 @@ def build_bx_agent(
     """Builds the BxAgent using the chat model."""
     model = build_base_model()
     backend = build_orchestrator_backend(workspace_dir)
+    
+    synthesis_agent = CompiledSubAgent(
+        name="synthesis_agent",
+        description="Agent responsible for synthesizing the transformation logic based on the provided system prompt.",
+        runnable=build_synthesis_agent()
+    )
 
     return create_deep_agent(
         model=model,
         backend=backend,
         system_prompt=SystemMessage(system_prompt),
         checkpointer=InMemorySaver(),
+        subagents=[synthesis_agent],
         skills=["/skills/"],
     )
