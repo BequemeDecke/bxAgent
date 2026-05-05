@@ -1,10 +1,12 @@
 from langchain.messages import SystemMessage
 from langgraph.checkpoint.memory import InMemorySaver
 from deepagents import create_deep_agent
+from langchain.agents import create_agent
 from deepagents.backends import LocalShellBackend, CompositeBackend, FilesystemBackend
 from pathlib import Path
 
-from src.models import build_coding_model
+from src.models import build_base_model
+from src.tools import transformation_plan_tools, TransformationPlanState
 
 SYNTHESIS_SYSTEM_PROMPT = """
 You are the synthesis agent of the transformation process. 
@@ -32,10 +34,12 @@ def build_synthesis_agent(
     system_prompt: str = SYNTHESIS_SYSTEM_PROMPT,
 ):
     """Builds the SynthesisAgent using the chat model."""
-    model = build_coding_model()
+    model = build_base_model()
 
-    return create_deep_agent(
+    return create_agent(
         model=model,
         system_prompt=SystemMessage(system_prompt),
         checkpointer=InMemorySaver(),
+        state_schema=TransformationPlanState,
+        tools=[*transformation_plan_tools]
     )
