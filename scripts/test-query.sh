@@ -1,0 +1,3 @@
+#!/bin/bash
+
+uv run main.py -w "./agent_data/workspace" -p "Write a EMF model transformation in Java that transforms the Family metamodel to the Person metamodel. The Family metamodel has EClasses: Family, Parent, Child. The Person metamodel has EClasses: Person, Male, Female. The transformation should be bidirectional and support incremental updates. You don't have to write the models, just assume they are already defined. Focus on the transformation logic and how to handle incremental updates."
