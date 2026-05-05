@@ -5,6 +5,7 @@ from deepagents.backends import LocalShellBackend, CompositeBackend, FilesystemB
 from pathlib import Path
 
 from src.models import build_base_model
+from .test import build_test_agent
 from .synthesis import build_synthesis_agent
 
 ORCHESTRATOR_SYSTEM_PROMPT = """
@@ -80,11 +81,17 @@ def build_bx_agent(
     """Builds the BxAgent using the chat model."""
     model = build_base_model()
     backend = build_orchestrator_backend(workspace_dir)
-    
+
     synthesis_agent = CompiledSubAgent(
         name="synthesis_agent",
         description="Agent responsible for synthesizing the transformation logic based on the provided system prompt.",
-        runnable=build_synthesis_agent()
+        runnable=build_synthesis_agent(),
+    )
+
+    test_agent = CompiledSubAgent(
+        name="test_agent",
+        description="Agent responsible for testing the synthesized transformation logic.",
+        runnable=build_test_agent(),
     )
 
     return create_deep_agent(
@@ -92,6 +99,6 @@ def build_bx_agent(
         backend=backend,
         system_prompt=SystemMessage(system_prompt),
         checkpointer=InMemorySaver(),
-        subagents=[synthesis_agent],
+        subagents=[synthesis_agent, test_agent],
         skills=["/skills/"],
     )
