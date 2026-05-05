@@ -5,7 +5,7 @@ from argparse import ArgumentParser
 from pathlib import Path
 from langchain.messages import HumanMessage
 
-from src.agent import build_bx_agent, build_langfuse_client
+from src.agents import build_bx_agent
 
 
 def parse_arguments():
@@ -61,6 +61,8 @@ def main():
         }
     
     if args.use_langfuse:
+        from src.monitoring import build_langfuse_client # Dynamic import to avoid unnecessary dependency if not using Langfuse
+        
         langfuse_client, langfuse_handler = build_langfuse_client()
         config["callbacks"] = [langfuse_handler]
         logging.debug("Langfuse client and handler initialized successfully.")
