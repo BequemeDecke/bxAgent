@@ -21,21 +21,26 @@ class LangFuseConfig(BaseModel):
     BASE_URL: str = Field()
 
 
+class WorkspaceConfig(BaseModel):
+    PATH: Path = Field(default=Path.cwd() / ".bx-agent-workspace")
+
+
 class Config(BaseModel):
     """Main configuration class that holds all configurations for the application."""
 
     BX_AGENT: BxAgentConfig
     LANGFUSE: LangFuseConfig
-    
+    WORKSPACE: WorkspaceConfig
+
     @classmethod
-    def get_instance(cls) -> 'Config':
+    def get_instance(cls, env_path: Path = Path.cwd() / ".env") -> "Config":
         """Singleton pattern to get a single instance of the configuration."""
         if not hasattr(cls, "_instance"):
-            cls._instance = load_config()
-        return cls._instance    
+            cls._instance = load_config(env_path=env_path)
+        return cls._instance
 
 
-def load_config(env_path: Path = Path.cwd() / ".env") -> BaseModel:
+def load_config(env_path: Path) -> BaseModel:
     # Load environment variables from the .env file
     has_env_loaded = load_dotenv(dotenv_path=env_path)
     assert has_env_loaded, f"Failed to load environment variables from {env_path}"
@@ -54,9 +59,16 @@ def load_config(env_path: Path = Path.cwd() / ".env") -> BaseModel:
         BASE_URL=os.getenv("LANGFUSE_BASE_URL"),
     )
 
+    workspace_config = WorkspaceConfig(
+        PATH=Path(os.getenv("WORKSPACE_PATH", env_path.parent / ".bx-agent-workspace"))
+    )
+
     # Log the loaded configurations
     logging.debug("--- Loaded Configurations ---")
     logging.debug(f"Loaded BxAgentConfig: {agent_config}")
     logging.debug(f"Loaded LangFuseConfig: {langfuse_config}")
+    logging.debug(f"Loaded WorkspaceConfig: {workspace_config}")
     logging.debug("-----------------------------")
-    return Config(BX_AGENT=agent_config, LANGFUSE=langfuse_config)
+    return Config(
+        BX_AGENT=agent_config, LANGFUSE=langfuse_config, WORKSPACE=workspace_config
+    )

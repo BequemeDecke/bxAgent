@@ -1,12 +1,10 @@
 from langchain.messages import SystemMessage
+from langchain.chat_models import BaseChatModel
 from langgraph.checkpoint.memory import InMemorySaver
 from deepagents import create_deep_agent
-from langchain.agents import create_agent
-from deepagents.backends import LocalShellBackend, CompositeBackend, FilesystemBackend
-from pathlib import Path
 
 from src.models import build_base_model
-from src.tools import transformation_plan_tools, TransformationPlanState
+from src.tools import transformation_plan_tools
 
 SYNTHESIS_SYSTEM_PROMPT = """
 You are the synthesis agent of the transformation process. 
@@ -18,10 +16,7 @@ Sometimes it is not straightforward to transform the source model into the targe
 In this case, you should think step by step and protocol your thoughts in a clear and structured way.
 
 Always protocol your thoughts with the tools: 
-- add_decision_to_transformation_plan: This tool allows you to add a decision to the transformation plan. You should use this tool whenever you have to make a decision between multiple options in the transformation process. You should also provide the reasoning behind your decision when using this tool.
-- add_step_to_transformation_plan: This tool allows you to add a step on how to implement the transformation. You should use this tool whenever you have a clear step on how to implement the transformation. You should also provide the reasoning behind your step when using this tool.
-- update_decision_in_transformation_plan: This tool allows you to update an existing decision in the transformation plan. You should use this tool whenever you want to change an existing decision in the transformation plan.
-- update_step_in_transformation_plan: This tool allows you to update an existing step in the transformation plan. You should use this tool whenever you want to change an existing step in the transformation plan.
+- update_transformation_plan: This tool allows you to update the transformation plan with new thoughts or changes. You should use this tool whenever you want to update the transformation plan with new thoughts or changes.
 - read_transformation_plan: This tool reads the markdown file and returns the existing transformation plan.
 
 Input: 
@@ -36,14 +31,15 @@ Output:
 
 def build_synthesis_agent(
     system_prompt: str = SYNTHESIS_SYSTEM_PROMPT,
+    model: BaseChatModel | None = None,
 ):
     """Builds the SynthesisAgent using the chat model."""
-    model = build_base_model()
+    if model is None:
+        model = build_base_model()
 
-    return create_agent(
+    return create_deep_agent(
         model=model,
         system_prompt=SystemMessage(system_prompt),
         checkpointer=InMemorySaver(),
-        state_schema=TransformationPlanState,
-        tools=[*transformation_plan_tools]
+        tools=[*transformation_plan_tools],
     )
