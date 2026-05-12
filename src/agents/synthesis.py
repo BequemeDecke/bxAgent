@@ -36,6 +36,7 @@ Task:
 Output:
     - The transformation class which is a class that transforms the source model into the target model.
     - The synthesis thoughts written with the tool: write_transformation_plan
+    - A list with the created files of your transformation class which you write to the `transformation.md` file.
 """
 
 
