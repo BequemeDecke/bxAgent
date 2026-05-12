@@ -37,4 +37,4 @@ def update_transformation_plan(new_plan: str) -> None:
     """Updates the transformation plan in the `transformation.md` file with the new plan."""
     _update_transformation_plan(new_plan)
 
-transformation_plan_tools = [read_transformation_plan, update_transformation_plan]
+transformation_plan_tools = (read_transformation_plan, update_transformation_plan)

@@ -1,6 +1,7 @@
 from langchain.messages import SystemMessage
 from langchain.chat_models import BaseChatModel
 from langgraph.checkpoint.memory import InMemorySaver
+from deepagents.backends import BackendProtocol
 from deepagents import create_deep_agent
 
 from src.models import build_base_model
@@ -32,6 +33,7 @@ Output:
 def build_synthesis_agent(
     system_prompt: str = SYNTHESIS_SYSTEM_PROMPT,
     model: BaseChatModel | None = None,
+    backend: BackendProtocol | None = None,
 ):
     """Builds the SynthesisAgent using the chat model."""
     if model is None:
@@ -41,5 +43,6 @@ def build_synthesis_agent(
         model=model,
         system_prompt=SystemMessage(system_prompt),
         checkpointer=InMemorySaver(),
+        backend=backend,
         tools=[*transformation_plan_tools],
     )
