@@ -24,6 +24,7 @@ def check_compilation(working_directory: Path):
     Args:
         working_directory (Path): _description_
     """
+    
     result = subprocess.run(["javac", "*.java"], cwd=working_directory, capture_output=True, text=True)
     return result.returncode == 0, result.stdout, result.stderr
 
