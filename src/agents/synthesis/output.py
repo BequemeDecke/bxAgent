@@ -14,9 +14,6 @@ class SynthesisOutputSchema(BaseModel):
     Schema for the output of the synthesis agent.
     """
 
-    written_files: list[FilePath] = Field(
-        description="A list of paths to the written files."
-    )
     is_transformation_possible: bool = Field(
         description="Indicates whether the transformation is possible."
     )
