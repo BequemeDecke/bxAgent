@@ -5,7 +5,7 @@ from deepagents.backends import LocalShellBackend, CompositeBackend, FilesystemB
 from pathlib import Path
 
 from src.models import build_base_model
-from .test import build_test_agent
+from .testing import build_test_agent
 from .synthesis import build_synthesis_agent
 from .repair import build_repair_agent
 
