@@ -9,7 +9,7 @@ https://docs.langchain.com/oss/python/langchain/middleware/custom#node-style-hoo
 
 import logging
 
-from langchain.messages import ToolMessage
+from langchain.messages import AnyMessage, ToolMessage
 from langchain.agents.middleware import (
     AgentState as BaseAgentState,
     AgentMiddleware,
@@ -41,34 +41,19 @@ class SynthesisAgentStateMiddleware(AgentMiddleware[SynthesisAgentState]):
 
         The sad part: The tool messages don't store the args, so we have to parse the file path from the content of the tool message, which is in the format: "Updated file {file_path}".
         """
+        def extract_written_files(messages: list[AnyMessage]):
+            tool_messages: filter[ToolMessage] = filter(
+                lambda msg: isinstance(msg, ToolMessage), messages
+            )
+            write_file_messages: filter[ToolMessage] = filter(
+                lambda msg: msg.name == "write_file", tool_messages
+            )
+            return [
+                msg.content[UPDATED_FILE_INDEX:] for msg in write_file_messages
+            ]
 
         messages = state.get("messages", [])
-
-        tool_messages: filter[ToolMessage] = filter(
-            lambda msg: isinstance(msg, ToolMessage), messages
-        )
-        write_file_messages: filter[ToolMessage] = filter(
-            lambda msg: msg.name == "write_file", tool_messages
-        )
-        written_files = [
-            msg.content[UPDATED_FILE_INDEX:] for msg in write_file_messages
-        ]
+        written_files = extract_written_files(messages)
+        
         logging.info(f"Agent has written the following files: {written_files}")
         return {"written_files": written_files}
-
-    # def wrap_tool_call(
-    #     self,
-    #     request: ToolCallRequest,
-    #     handler: Callable[[ToolCallRequest], ToolMessage | Command],
-    # ) -> ToolMessage | Command:
-    #     # Only track calls to the write_file tool
-    #     tool_response = handler(request)
-
-    #     if request.tool_call["name"] != "write_file":
-    #         return tool_response
-
-    #     file_path = request.tool_call["args"]["file_path"]
-    #     files_in_state = request.state["written_files"]
-    #     files = files_in_state + [file_path]
-    #     logging.info(f"Tracking written file: {file_path}")
-    #     return Command(update={"written_files": files})
