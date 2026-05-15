@@ -6,7 +6,7 @@ from deepagents import create_deep_agent
 
 from src.models import build_base_model
 from src.tools import transformation_plan_tools
-from .state import SynthesisAgentStateMiddleware, SynthesisAgentState
+from .middleware import SynthesisAgentStateMiddleware
 
 SYNTHESIS_SYSTEM_PROMPT = """
 You are the synthesis agent of the transformation process. 
