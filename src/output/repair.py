@@ -6,8 +6,7 @@ https://docs.langchain.com/oss/python/langchain/structured-output
 https://docs.langchain.com/oss/python/deepagents/customization#structured-output
 """
 
-from os import PathLike
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, FilePath
 
 
 class RepairOutputSchema(BaseModel):
@@ -15,6 +14,6 @@ class RepairOutputSchema(BaseModel):
     Schema for the output of the repair agent.
     """
 
-    repaired_files: list[PathLike] = Field(
+    repaired_files: list[FilePath] = Field(
         description="A list of paths to the repaired files."
     )

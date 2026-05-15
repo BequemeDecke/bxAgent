@@ -6,9 +6,8 @@ https://docs.langchain.com/oss/python/langchain/structured-output
 https://docs.langchain.com/oss/python/deepagents/customization#structured-output
 """
 
-from os import PathLike
 from typing import Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, FilePath
 
 
 class TestingOutputSchema(BaseModel):
@@ -16,13 +15,13 @@ class TestingOutputSchema(BaseModel):
     Schema for the output of the testing agent.
     """
 
-    file_structure_errors: dict[PathLike, list[Exception]] = Field(
+    file_structure_errors: dict[FilePath, list[tuple[str, str]]] = Field(
         description="A dictionary mapping file paths to lists of structure errors."
     )
-    compilation_errors: dict[PathLike, list[Exception]] = Field(
+    compilation_errors: dict[FilePath, list[tuple[str, str]]] = Field(
         description="A dictionary mapping file paths to lists of compilation errors."
     )
-    benchmark_error: Optional[Exception] = Field(
+    benchmark_error: Optional[tuple[str, str]] = Field(
         description="The error encountered during benchmarking, if any."
     )
-    result_path: Optional[PathLike] = Field(description="The path to the test results.")
+    result_path: Optional[FilePath] = Field(description="The path to the test results.")
