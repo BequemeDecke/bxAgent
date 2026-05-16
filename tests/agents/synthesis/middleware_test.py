@@ -1,15 +1,18 @@
 import unittest
 import logging
-import uuid
 
-from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
+from langchain_core.language_models.fake_chat_models import (
+    GenericFakeChatModel,
+)
 from langchain.agents import create_agent
-from langchain.messages import ToolMessage, AIMessage
-from langchain.tools import tool
+from langchain.messages import ToolMessage, AIMessage, HumanMessage, ToolCall
 from pathlib import Path
 
-from src.agents.synthesis.middleware import extract_written_files, create_synthesis_response
-from src.config import Config
+from src.agents.synthesis.middleware import (
+    extract_written_files,
+    create_synthesis_response,
+    SynthesisAgentStateMiddleware,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -27,12 +30,12 @@ class TestSynthesisAgentMiddlewareFunctions(unittest.TestCase):
             ToolMessage(
                 name="write_file",
                 content="Updated file /path/to/file1.txt",
-                tool_call_id=str(uuid.uuid4()),
+                tool_call_id="call_1",
             ),
             ToolMessage(
                 name="write_file",
                 content="Updated file /path/to/file2.txt",
-                tool_call_id=str(uuid.uuid4()),
+                tool_call_id="call_2",
             ),
             AIMessage(content="This is a message from the agent."),
         ]
@@ -52,7 +55,7 @@ class TestSynthesisAgentMiddlewareFunctions(unittest.TestCase):
             ToolMessage(
                 name="some_other_tool",
                 content="This is some other tool message.",
-                tool_call_id=str(uuid.uuid4()),
+                tool_call_id="some_other_tool_call_id",
             ),
         ]
         expected_file_paths = []
@@ -71,22 +74,61 @@ class TestSynthesisAgentMiddlewareFunctions(unittest.TestCase):
         self.assertEqual(response.written_files, file_paths)
 
 
-# class TestSynthesisAgentMiddleware(unittest.TestCase):
-#     """Test the SynthesisAgentMiddleware by invoking it with a simple input and checking the output and state."""
+class TestSynthesisAgentMiddleware(unittest.TestCase):
+    """Test the SynthesisAgentMiddleware by invoking it with a simple input and checking the output and state."""
 
-#     @staticmethod
-#     @tool
-#     def write_file(file_path: str, content: str):
-#         """Simulate the write_file tool by logging the file path and content."""
-#         logger.info(f"Simulating writing to file: {file_path} with content: {content}")
+    def setUp(self):
+        self.UPDATED_FILE_INDEX = 13
+        self.WORKSPACE_PATH = Path("/test")
 
-#     def setUp(self):
-#         self.model = GenericFakeChatModel()
-#         self.agent = create_agent(
-#             model=self.model,
-#             tools=[],
-#             system_prompt="You are a helpful assistant that writes files.",
-#         )
+    def test_middleware_processing(self):
+        self.model = GenericFakeChatModel(
+            messages=iter(
+                [
+                    "This is a message from the agent.",
+                ]
+            )
+        )
 
-#     def test_middleware_processing(self):
-#         pass
+        self.agent = create_agent(
+            model=self.model,
+            tools=[],
+            system_prompt="You are a helpful assistant that writes files.",
+            middleware=[
+                SynthesisAgentStateMiddleware(
+                    updated_file_index=self.UPDATED_FILE_INDEX,
+                    workspace_path=self.WORKSPACE_PATH,
+                )
+            ],
+        )
+
+        # Invoke the first time to get the ai message with the tool calls
+        response = self.agent.invoke(
+            input={
+                "messages": [
+                    HumanMessage(content="Write to file1.txt and file2.txt"),
+                    ToolMessage(
+                        name="write_file",
+                        content="Updated file /path/to/file1.txt",
+                        tool_call_id="call_1",
+                    ),
+                    ToolMessage(
+                        name="write_file",
+                        content="Updated file /path/to/file2.txt",
+                        tool_call_id="call_2",
+                    ),
+                ],
+            },
+            version="v2",
+        )
+
+        # Check that the response is correct
+        expected_file_paths = [
+            self.WORKSPACE_PATH / "/path/to/file1.txt",
+            self.WORKSPACE_PATH / "/path/to/file2.txt",
+        ]
+
+        expected_response = create_synthesis_response(expected_file_paths)
+        actual_response = response.value.get("structured_response")
+
+        self.assertEqual(actual_response, expected_response)

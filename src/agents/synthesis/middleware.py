@@ -76,6 +76,14 @@ class SynthesisAgentStateMiddleware(AgentMiddleware[SynthesisAgentState]):
 
     state_schema = SynthesisAgentState
 
+    def __init__(
+        self,
+        updated_file_index: int = UPDATED_FILE_INDEX,
+        workspace_path: Path = WORKSPACE_PATH,
+    ):
+        self.updated_file_index = updated_file_index
+        self.workspace_path = workspace_path
+
     def after_agent(self, state: SynthesisAgentState, runtime):
         """
         After the agent has completed its execution,
@@ -84,7 +92,9 @@ class SynthesisAgentStateMiddleware(AgentMiddleware[SynthesisAgentState]):
         The sad part: The tool messages don't store the args, so we have to parse the file path from the content of the tool message, which is in the format: "Updated file {file_path}".
         """
         messages = state.get("messages", [])
-        written_files = extract_written_files(messages)
+        written_files = extract_written_files(
+            messages, self.updated_file_index, self.workspace_path
+        )
         response = create_synthesis_response(written_files)
 
         if response is None:
