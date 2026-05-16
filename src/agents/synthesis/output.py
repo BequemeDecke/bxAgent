@@ -10,7 +10,7 @@ https://docs.langchain.com/oss/python/deepagents/customization#structured-output
 """
 
 
-from pydantic import BaseModel, Field, FileUrl
+from pydantic import BaseModel, Field, FilePath
 
 
 class SynthesisResponseFormat(BaseModel):
@@ -23,5 +23,5 @@ class SynthesisResponseFormat(BaseModel):
     #     description="Indicates whether the transformation is possible."
     # )
     # reason: str = Field(description="The reason for the transformation result.")
-    written_files: list[FileUrl] = Field(description="The list of files that have been written by the synthesis agent.")
+    written_files: list[FilePath] = Field(description="The list of files that have been written by the synthesis agent.")
 

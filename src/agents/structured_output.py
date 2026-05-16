@@ -10,7 +10,7 @@ from pydantic import BaseModel
 
 SchemaT = TypeVar("SchemaT", bound=BaseModel)
 
-class ToolStrategy(Generic[SchemaT]):
+class ToolStrategy(BaseModel, Generic[SchemaT]):
     schema: type[SchemaT]
     tool_message_content: str | None
     handle_errors: Union[

@@ -15,10 +15,12 @@ from langchain.agents.middleware import (
     AgentMiddleware,
 )
 from os import PathLike
+from pathlib import Path
 
 from src.config import Config
+from .output import SynthesisResponseFormat
 
-UPDATED_FILE_INDEX = 13
+UPDATED_FILE_INDEX = Config.get_instance().VARIABLES.UPDATED_FILE_INDEX
 
 
 class SynthesisAgentState(BaseAgentState):
@@ -51,10 +53,25 @@ class SynthesisAgentStateMiddleware(AgentMiddleware[SynthesisAgentState]):
             write_file_messages: filter[ToolMessage] = filter(
                 lambda msg: msg.name == "write_file", tool_messages
             )
-            return [msg.content[UPDATED_FILE_INDEX:] for msg in write_file_messages]
+            relative_file_paths: map[str] = map(lambda msg: msg.content[UPDATED_FILE_INDEX:], write_file_messages)
+            absolute_file_paths: map[Path] = map(lambda path: Config().WORKSPACE.PATH / path, relative_file_paths)
+            return list(absolute_file_paths)
+        
+        def validate_file_paths(file_paths: list[Path]):
+            try:
+                response = SynthesisResponseFormat(written_files=file_paths)
+                return response
+            except Exception as e:
+                logging.error(f"Error validating file paths: {e}")
+                return None
 
         messages = state.get("messages", [])
         written_files = extract_written_files(messages)
+        response = validate_file_paths(written_files)
+        
+        if response is None:
+            logging.error("Failed to validate the written file paths. The response format is invalid.")
+            return
 
         logging.info(f"Agent has written the following files: {written_files}")
-        return {"written_files": written_files}
+        return {"structured_response": response}

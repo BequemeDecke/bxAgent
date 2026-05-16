@@ -6,8 +6,6 @@ from deepagents import create_deep_agent
 
 from src.models import build_base_model
 from src.tools import transformation_plan_tools
-from ..structured_output import ToolStrategy
-from .output import SynthesisResponseFormat
 from .middleware import SynthesisAgentStateMiddleware
 
 SYNTHESIS_SYSTEM_PROMPT = """
@@ -58,6 +56,5 @@ def build_synthesis_agent(
         middleware=[SynthesisAgentStateMiddleware()],
         checkpointer=InMemorySaver(),
         backend=backend,
-        tools=[*transformation_plan_tools],
-        response_format=ToolStrategy(SynthesisResponseFormat)
+        tools=[*transformation_plan_tools]
     )
