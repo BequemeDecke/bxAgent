@@ -16,7 +16,7 @@ from langchain.agents.middleware import (
 )
 from os import PathLike
 
-from .output import SynthesisResponseFormat
+from src.config import Config
 
 UPDATED_FILE_INDEX = 13
 
@@ -57,5 +57,4 @@ class SynthesisAgentStateMiddleware(AgentMiddleware[SynthesisAgentState]):
         written_files = extract_written_files(messages)
 
         logging.info(f"Agent has written the following files: {written_files}")
-        structured_response = SynthesisResponseFormat(written_files=written_files)
-        return {"structured_response": structured_response}
+        return {"written_files": written_files}

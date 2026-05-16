@@ -23,6 +23,10 @@ class LangFuseConfig(BaseModel):
 
 class WorkspaceConfig(BaseModel):
     PATH: Path = Field(default=Path.cwd() / ".bx-agent-workspace")
+    
+    
+class VariablesConfig(BaseModel):
+    UPDATED_FILE_INDEX: int = Field(default=13, description="The index at which the file path starts in the tool message content for write_file tool messages.")
 
 
 class Config(BaseModel):
@@ -31,6 +35,7 @@ class Config(BaseModel):
     BX_AGENT: BxAgentConfig
     LANGFUSE: LangFuseConfig
     WORKSPACE: WorkspaceConfig
+    VARIABLES: VariablesConfig
 
     @classmethod
     def get_instance(cls, env_path: Path = Path.cwd() / ".env") -> "Config":
@@ -62,13 +67,18 @@ def load_config(env_path: Path) -> BaseModel:
     workspace_config = WorkspaceConfig(
         PATH=Path(os.getenv("WORKSPACE_PATH", env_path.parent / ".bx-agent-workspace"))
     )
+    
+    variables_config = VariablesConfig(
+        UPDATED_FILE_INDEX=int(os.getenv("UPDATED_FILE_INDEX", 13))
+    )
 
     # Log the loaded configurations
     logging.debug("--- Loaded Configurations ---")
     logging.debug(f"Loaded BxAgentConfig: {agent_config}")
     logging.debug(f"Loaded LangFuseConfig: {langfuse_config}")
     logging.debug(f"Loaded WorkspaceConfig: {workspace_config}")
+    logging.debug(f"Loaded VariablesConfig: {variables_config}")
     logging.debug("-----------------------------")
     return Config(
-        BX_AGENT=agent_config, LANGFUSE=langfuse_config, WORKSPACE=workspace_config
+        BX_AGENT=agent_config, LANGFUSE=langfuse_config, WORKSPACE=workspace_config, VARIABLES=variables_config
     )
