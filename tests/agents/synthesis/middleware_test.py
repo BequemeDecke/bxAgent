@@ -8,7 +8,7 @@ from langchain.messages import ToolMessage, AIMessage
 from langchain.tools import tool
 from pathlib import Path
 
-from src.agents.synthesis.middleware import extract_written_files, validate_file_paths
+from src.agents.synthesis.middleware import extract_written_files, create_synthesis_response
 from src.config import Config
 
 logger = logging.getLogger(__name__)
@@ -61,9 +61,14 @@ class TestSynthesisAgentMiddlewareFunctions(unittest.TestCase):
         )
         self.assertEqual(extracted_file_paths, expected_file_paths)
 
-    def test_validate_file_paths(self):
-        """Test that validate_file_paths correctly validates file paths and returns a structured response."""
-        pass
+    def test_create_synthesis_response(self):
+        """Test that create_synthesis_response correctly creates a structured response."""
+        file_paths = [
+            self.WORKSPACE_PATH / "file1.txt",
+            self.WORKSPACE_PATH / "file2.txt",
+        ]
+        response = create_synthesis_response(file_paths)
+        self.assertEqual(response.written_files, file_paths)
 
 
 # class TestSynthesisAgentMiddleware(unittest.TestCase):

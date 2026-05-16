@@ -56,7 +56,7 @@ def extract_written_files(
     return list(absolute_file_paths)
 
 
-def validate_file_paths(file_paths: list[Path]):
+def create_synthesis_response(file_paths: list[Path]):
     """
     Validate the list of file paths and return a structured response.
     """
@@ -85,11 +85,11 @@ class SynthesisAgentStateMiddleware(AgentMiddleware[SynthesisAgentState]):
         """
         messages = state.get("messages", [])
         written_files = extract_written_files(messages)
-        response = validate_file_paths(written_files)
+        response = create_synthesis_response(written_files)
 
         if response is None:
             logging.error(
-                "Failed to validate the written file paths. The response format is invalid."
+                "Failed to create synthesis response. The response format is invalid."
             )
             return
 
