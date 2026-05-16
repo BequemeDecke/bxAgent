@@ -21,6 +21,7 @@ from src.config import Config
 from .output import SynthesisResponseFormat
 
 UPDATED_FILE_INDEX = Config.get_instance().VARIABLES.UPDATED_FILE_INDEX
+WORKSPACE_PATH = Config.get_instance().WORKSPACE.PATH
 
 
 class SynthesisAgentState(BaseAgentState):
@@ -31,7 +32,11 @@ class SynthesisAgentState(BaseAgentState):
     written_files: list[PathLike] = []
 
 
-def extract_written_files(messages: list[AnyMessage]):
+def extract_written_files(
+    messages: list[AnyMessage],
+    updated_file_index: int = UPDATED_FILE_INDEX,
+    workspace_path: Path = WORKSPACE_PATH,
+) -> list[Path]:
     """
     Extract the paths of files that have been written by the synthesis agent from a list of messages.
     """
@@ -43,10 +48,10 @@ def extract_written_files(messages: list[AnyMessage]):
         lambda msg: msg.name == "write_file", tool_messages
     )
     relative_file_paths: map[str] = map(
-        lambda msg: msg.content[UPDATED_FILE_INDEX:], write_file_messages
+        lambda msg: msg.content[updated_file_index:], write_file_messages
     )
     absolute_file_paths: map[Path] = map(
-        lambda path: Config().WORKSPACE.PATH / path, relative_file_paths
+        lambda path: workspace_path / path, relative_file_paths
     )
     return list(absolute_file_paths)
 
