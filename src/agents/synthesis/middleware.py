@@ -31,6 +31,39 @@ class SynthesisAgentState(BaseAgentState):
     written_files: list[PathLike] = []
 
 
+def extract_written_files(messages: list[AnyMessage]):
+    """
+    Extract the paths of files that have been written by the synthesis agent from a list of messages.
+    """
+
+    tool_messages: filter[ToolMessage] = filter(
+        lambda msg: isinstance(msg, ToolMessage), messages
+    )
+    write_file_messages: filter[ToolMessage] = filter(
+        lambda msg: msg.name == "write_file", tool_messages
+    )
+    relative_file_paths: map[str] = map(
+        lambda msg: msg.content[UPDATED_FILE_INDEX:], write_file_messages
+    )
+    absolute_file_paths: map[Path] = map(
+        lambda path: Config().WORKSPACE.PATH / path, relative_file_paths
+    )
+    return list(absolute_file_paths)
+
+
+def validate_file_paths(file_paths: list[Path]):
+    """
+    Validate the list of file paths and return a structured response.
+    """
+
+    try:
+        response = SynthesisResponseFormat(written_files=file_paths)
+        return response
+    except Exception as e:
+        logging.error(f"Error validating file paths: {e}")
+        return None
+
+
 class SynthesisAgentStateMiddleware(AgentMiddleware[SynthesisAgentState]):
     """
     Middleware for the synthesis agent that manages the state of the agent. This middleware can be used to track the files that have been written by the synthesis agent during its operation.
@@ -45,32 +78,14 @@ class SynthesisAgentStateMiddleware(AgentMiddleware[SynthesisAgentState]):
 
         The sad part: The tool messages don't store the args, so we have to parse the file path from the content of the tool message, which is in the format: "Updated file {file_path}".
         """
-
-        def extract_written_files(messages: list[AnyMessage]):
-            tool_messages: filter[ToolMessage] = filter(
-                lambda msg: isinstance(msg, ToolMessage), messages
-            )
-            write_file_messages: filter[ToolMessage] = filter(
-                lambda msg: msg.name == "write_file", tool_messages
-            )
-            relative_file_paths: map[str] = map(lambda msg: msg.content[UPDATED_FILE_INDEX:], write_file_messages)
-            absolute_file_paths: map[Path] = map(lambda path: Config().WORKSPACE.PATH / path, relative_file_paths)
-            return list(absolute_file_paths)
-        
-        def validate_file_paths(file_paths: list[Path]):
-            try:
-                response = SynthesisResponseFormat(written_files=file_paths)
-                return response
-            except Exception as e:
-                logging.error(f"Error validating file paths: {e}")
-                return None
-
         messages = state.get("messages", [])
         written_files = extract_written_files(messages)
         response = validate_file_paths(written_files)
-        
+
         if response is None:
-            logging.error("Failed to validate the written file paths. The response format is invalid.")
+            logging.error(
+                "Failed to validate the written file paths. The response format is invalid."
+            )
             return
 
         logging.info(f"Agent has written the following files: {written_files}")
