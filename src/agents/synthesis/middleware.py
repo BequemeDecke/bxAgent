@@ -16,6 +16,8 @@ from langchain.agents.middleware import (
 )
 from os import PathLike
 
+from .output import SynthesisResponseFormat
+
 UPDATED_FILE_INDEX = 13
 
 
@@ -41,6 +43,7 @@ class SynthesisAgentStateMiddleware(AgentMiddleware[SynthesisAgentState]):
 
         The sad part: The tool messages don't store the args, so we have to parse the file path from the content of the tool message, which is in the format: "Updated file {file_path}".
         """
+
         def extract_written_files(messages: list[AnyMessage]):
             tool_messages: filter[ToolMessage] = filter(
                 lambda msg: isinstance(msg, ToolMessage), messages
@@ -48,12 +51,11 @@ class SynthesisAgentStateMiddleware(AgentMiddleware[SynthesisAgentState]):
             write_file_messages: filter[ToolMessage] = filter(
                 lambda msg: msg.name == "write_file", tool_messages
             )
-            return [
-                msg.content[UPDATED_FILE_INDEX:] for msg in write_file_messages
-            ]
+            return [msg.content[UPDATED_FILE_INDEX:] for msg in write_file_messages]
 
         messages = state.get("messages", [])
         written_files = extract_written_files(messages)
-        
+
         logging.info(f"Agent has written the following files: {written_files}")
-        return {"written_files": written_files}
+        structured_response = SynthesisResponseFormat(written_files=written_files)
+        return {"structured_response": structured_response}
