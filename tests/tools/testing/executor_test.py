@@ -33,80 +33,33 @@ class FailingAuditCaseImplementation(Audit):
         raise Exception("This audit case is designed to fail.")
 
 
-class TestAuditExecutor(unittest.TestCase):
-    def assert_audit_run_equal_except(self, actual: AuditRun, expected: AuditRun):
-        actual_dict = asdict(actual)
-        expected_dict = asdict(expected)
+def assert_audit_run_equal_except(equal_method, actual: AuditRun, expected: AuditRun):
+    actual_dict = asdict(actual)
+    expected_dict = asdict(expected)
 
-        actual_dict.pop("started_at", None)
-        expected_dict.pop("started_at", None)
-        actual_dict.pop("execution_time_ms", None)
-        expected_dict.pop("execution_time_ms", None)
+    actual_dict.pop("started_at", None)
+    expected_dict.pop("started_at", None)
+    actual_dict.pop("execution_time_ms", None)
+    expected_dict.pop("execution_time_ms", None)
 
-        self.assertEqual(actual_dict, expected_dict)
+    equal_method(actual_dict, expected_dict)
 
-    def test_execute_all(self):
-        self.assertTrue(
-            hasattr(AuditExecutor, "execute_all"),
-            "AuditExecutor should have an 'execute_all' method.",
-        )
 
-        expected_runs = [
-            AuditRun(
-                started_at=datetime.datetime.now(),
-                execution_time_ms=100,
-                iteration=1,
-                results=[AuditResult(content="result1")],
-                errors=[],
-            ),
-            AuditRun(
-                started_at=datetime.datetime.now(),
-                execution_time_ms=100,
-                iteration=1,
-                results=[],
-                errors=[
-                    AuditError(
-                        message="error1", details={"exception_type": "Exception"}
-                    )
-                ],
-            ),
-            AuditRun(
-                started_at=datetime.datetime.now(),
-                execution_time_ms=100,
-                iteration=1,
-                results=[],
-                errors=[
-                    AuditError(
-                        message="This audit case is designed to fail.",
-                        details={"exception_type": "Exception"},
-                    )
-                ],
-            ),
-        ]
-
-        executor = AuditExecutor(
+class TestAuditExecutor__execute_specific(unittest.TestCase):
+    def setUp(self):
+        self.results = [AuditResult(content="result1")]
+        self.errors = []
+        self.executor = AuditExecutor(
             audits={
                 "audit1": MockedAuditCaseImplementation(
-                    results=expected_runs[0].results,
-                    errors=expected_runs[0].errors,
+                    results=self.results,
+                    errors=self.errors,
                 ),
-                "audit2": MockedAuditCaseImplementation(
-                    results=expected_runs[1].results,
-                    errors=expected_runs[1].errors,
-                ),
-                "audit3": FailingAuditCaseImplementation(),
+                "audit2": FailingAuditCaseImplementation(),
             }
         )
 
-        actual: List[AuditRun] = asyncio.run(executor.execute_all())
-        self.assertEqual(
-            len(actual), 3, "Should return runs for all three audit cases."
-        )
-
-        for actual_run, expected_run in zip(actual, expected_runs):
-            self.assert_audit_run_equal_except(actual_run, expected_run)
-
-    def test_execute_specific(self):
+    def test_execute_specific__return_audit_runs(self):
         self.assertTrue(
             hasattr(AuditExecutor, "execute_specific"),
             "AuditExecutor should have an 'execute_specific' method.",
@@ -116,37 +69,38 @@ class TestAuditExecutor(unittest.TestCase):
             started_at=datetime.datetime.now(),
             execution_time_ms=100,
             iteration=1,
-            results=[AuditResult(content="result1")],
-            errors=[],
+            results=self.results,
+            errors=self.errors,
         )
 
-        executor = AuditExecutor(
-            audits={
-                "audit1": MockedAuditCaseImplementation(
-                    results=expected_run.results,
-                    errors=expected_run.errors,
-                ),
-                "audit2": FailingAuditCaseImplementation(),
-            }
-        )
-
-        # Happy path: execute the specific audit and check results
-        run = asyncio.run(executor.execute_specific("audit1"))
+        run = asyncio.run(self.executor.execute_specific("audit1"))
         self.assertEqual(
             run.results,
             expected_run.results,
             "Results should match the expected results.",
         )
+        self.assertEqual(
+            run.iteration,
+            expected_run.iteration,
+            "Iteration number should match the expected iteration number.",
+        )
+        self.assertEqual(
+            len(run.errors),
+            0,
+            "There should be no errors for this audit case.",
+        )
 
+    def test_execute_specific__non_existent_audit(self):
         # Edge case: try to execute a non-existent audit and check for ValueError
         with self.assertRaises(
             ValueError, msg="Should raise ValueError for non-existent audit ID."
         ):
-            asyncio.run(executor.execute_specific("non_existent_audit"))
+            asyncio.run(self.executor.execute_specific("non_existent_audit"))
 
+    def test_execute_specific__audit_raises_exception(self):
         # Edge case: execution of an audit that raises an exception should be handled properly
         # It should return an AuditRun with an appropriate AuditError instead of propagating the exception
-        run = asyncio.run(executor.execute_specific("audit2"))
+        run = asyncio.run(self.executor.execute_specific("audit2"))
         self.assertEqual(
             len(run.errors),
             1,
@@ -158,30 +112,60 @@ class TestAuditExecutor(unittest.TestCase):
             "Error message should match the expected error message.",
         )
 
-    def test_get_latest_results(self):
-        self.assertTrue(
-            hasattr(AuditExecutor, "get_latest_results"),
-            "AuditExecutor should have a 'get_latest_results' method.",
+
+class TestAuditExecutor__execute_all(unittest.TestCase):
+    def setUp(self):
+        self.run_1 = AuditRun(
+            started_at=datetime.datetime.now(),
+            execution_time_ms=100,
+            iteration=1,
+            results=[AuditResult(content="result1")],
+            errors=[],
+        )
+        self.run_2 = AuditRun(
+            started_at=datetime.datetime.now(),
+            execution_time_ms=100,
+            iteration=1,
+            results=[],
+            errors=[
+                AuditError(message="error1", details={"exception_type": "Exception"})
+            ],
+        )
+        self.executor = AuditExecutor(
+            audits={
+                "audit1": MockedAuditCaseImplementation(
+                    results=self.run_1.results,
+                    errors=self.run_1.errors,
+                ),
+                "audit2": MockedAuditCaseImplementation(
+                    results=self.run_2.results,
+                    errors=self.run_2.errors,
+                ),
+                "audit3": FailingAuditCaseImplementation(),
+            }
         )
 
-        expected_results = [
+    def test_execute_all__method_defined(self):
+        self.assertTrue(
+            hasattr(AuditExecutor, "execute_all"),
+            "AuditExecutor should have an 'execute_all' method.",
+        )
+
+    def test_execute_all__return_audit_runs(self):
+        expected_runs = [
             AuditRun(
                 started_at=datetime.datetime.now(),
                 execution_time_ms=100,
                 iteration=1,
-                results=[AuditResult(content="result1")],
-                errors=[],
+                results=self.run_1.results,
+                errors=self.run_1.errors,
             ),
             AuditRun(
                 started_at=datetime.datetime.now(),
                 execution_time_ms=100,
                 iteration=1,
-                results=[],
-                errors=[
-                    AuditError(
-                        message="error1", details={"exception_type": "Exception"}
-                    )
-                ],
+                results=self.run_2.results,
+                errors=self.run_2.errors,
             ),
             AuditRun(
                 started_at=datetime.datetime.now(),
@@ -197,65 +181,80 @@ class TestAuditExecutor(unittest.TestCase):
             ),
         ]
 
-        executor = AuditExecutor(
+        actual: List[AuditRun] = asyncio.run(self.executor.execute_all())
+        self.assertEqual(
+            len(actual), 3, "Should return runs for all three audit cases."
+        )
+
+        for actual_run, expected_run in zip(actual, expected_runs):
+            assert_audit_run_equal_except(self.assertEqual, actual_run, expected_run)
+
+
+class TestAuditExecutor__get_latest_results(unittest.TestCase):
+    def setUp(self):
+        self.run_1 = AuditRun(
+            started_at=datetime.datetime.now(),
+            execution_time_ms=100,
+            iteration=1,
+            results=[AuditResult(content="result1")],
+            errors=[],
+        )
+        self.run_2 = AuditRun(
+            started_at=datetime.datetime.now(),
+            execution_time_ms=100,
+            iteration=1,
+            results=[],
+            errors=[
+                AuditError(message="error1", details={"exception_type": "Exception"})
+            ],
+        )
+        self.executor = AuditExecutor(
             audits={
                 "audit1": MockedAuditCaseImplementation(
-                    results=expected_results[0].results,
-                    errors=expected_results[0].errors,
+                    results=self.run_1.results,
+                    errors=self.run_1.errors,
                 ),
                 "audit2": MockedAuditCaseImplementation(
-                    results=expected_results[1].results,
-                    errors=expected_results[1].errors,
+                    results=self.run_2.results,
+                    errors=self.run_2.errors,
                 ),
             }
         )
 
-        # Execute audits to populate iterations
-        asyncio.run(executor.execute_all())
+    def test_get_latest_results__method_defined(self):
+        self.assertTrue(
+            hasattr(AuditExecutor, "get_latest_results"),
+            "AuditExecutor should have a 'get_latest_results' method.",
+        )
 
-        latest_results = executor.get_latest_results()
+    def test_get_latest_results(self):
+        expected_results = [
+            self.run_1,
+            self.run_2,
+        ]
+
+        asyncio.run(self.executor.execute_all())
+
+        latest_results = self.executor.get_latest_results()
         self.assertEqual(
             len(latest_results),
             2,
             "Should return latest results for both audits.",
         )
 
-        expected_latest_results = [
-            AuditRun(
-                started_at=datetime.datetime.now(),
-                execution_time_ms=100,
-                iteration=1,
-                results=[AuditResult(content="result1")],
-                errors=[],
-            ),
-            AuditRun(
-                started_at=datetime.datetime.now(),
-                execution_time_ms=100,
-                iteration=1,
-                results=[],
-                errors=[
-                    AuditError(
-                        message="error1", details={"exception_type": "Exception"}
-                    )
-                ],
-            ),
-        ]
+    def test_get_latest_results__multiple_iterations(self):
+        self.run_1.iteration = 3
 
-        for actual_run, expected_run in zip(latest_results, expected_latest_results):
-            self.assert_audit_run_equal_except(actual_run, expected_run)
+        expected_results = [
+            self.run_1,
+            self.run_2,
+        ]
+        asyncio.run(self.executor.execute_all())
 
         # Then execute one specific audit again to create a new iteration and check if get_latest_results returns the updated latest result
-        asyncio.run(executor.execute_specific("audit1"))
-        asyncio.run(executor.execute_specific("audit1"))
+        asyncio.run(self.executor.execute_specific("audit1"))
+        asyncio.run(self.executor.execute_specific("audit1"))
 
-        latest_results = executor.get_latest_results()
-        self.assertEqual(
-            len(latest_results),
-            2,
-            "Should return latest results for both audits after executing one audit again.",
-        )
-        self.assertEqual(
-            latest_results[0].iteration,
-            3,
-            "Iteration number for the first audit should be updated to 2 after executing it again.",
-        )
+        latest_results = self.executor.get_latest_results()
+        for actual_run, expected_run in zip(latest_results, expected_results):
+            assert_audit_run_equal_except(self.assertEqual, actual_run, expected_run)
