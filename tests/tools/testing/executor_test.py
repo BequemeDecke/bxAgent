@@ -12,11 +12,9 @@ from src.tools.audit.executor import AuditExecutor
 class MockedAuditCaseImplementation(Audit):
     def __init__(
         self,
-        audit_id: str,
         results: List[AuditResult] = None,
         errors: List[AuditError] = None,
     ):
-        super().__init__(audit_id)
         self.results = results or []
         self.errors = errors or []
 
@@ -28,9 +26,6 @@ class MockedAuditCaseImplementation(Audit):
 
 
 class FailingAuditCaseImplementation(Audit):
-    def __init__(self, audit_id: str):
-        super().__init__(audit_id)
-
     async def setup(self):
         return
 
@@ -90,21 +85,17 @@ class TestAuditExecutor(unittest.TestCase):
         ]
 
         executor = AuditExecutor(
-            audits=[
-                MockedAuditCaseImplementation(
-                    audit_id="audit1",
+            audits={
+                "audit1": MockedAuditCaseImplementation(
                     results=expected_runs[0].results,
                     errors=expected_runs[0].errors,
                 ),
-                MockedAuditCaseImplementation(
-                    audit_id="audit2",
+                "audit2": MockedAuditCaseImplementation(
                     results=expected_runs[1].results,
                     errors=expected_runs[1].errors,
                 ),
-                FailingAuditCaseImplementation(
-                    audit_id="audit3",
-                ),
-            ]
+                "audit3": FailingAuditCaseImplementation(),
+            }
         )
 
         actual: List[AuditRun] = asyncio.run(executor.execute_all())
@@ -130,16 +121,13 @@ class TestAuditExecutor(unittest.TestCase):
         )
 
         executor = AuditExecutor(
-            audits=[
-                MockedAuditCaseImplementation(
-                    audit_id="audit1",
+            audits={
+                "audit1": MockedAuditCaseImplementation(
                     results=expected_run.results,
                     errors=expected_run.errors,
                 ),
-                FailingAuditCaseImplementation(
-                    audit_id="audit2",
-                ),
-            ]
+                "audit2": FailingAuditCaseImplementation(),
+            }
         )
 
         # Happy path: execute the specific audit and check results
@@ -210,18 +198,16 @@ class TestAuditExecutor(unittest.TestCase):
         ]
 
         executor = AuditExecutor(
-            audits=[
-                MockedAuditCaseImplementation(
-                    audit_id="audit1",
+            audits={
+                "audit1": MockedAuditCaseImplementation(
                     results=expected_results[0].results,
                     errors=expected_results[0].errors,
                 ),
-                MockedAuditCaseImplementation(
-                    audit_id="audit2",
+                "audit2": MockedAuditCaseImplementation(
                     results=expected_results[1].results,
                     errors=expected_results[1].errors,
                 ),
-            ]
+            }
         )
 
         # Execute audits to populate iterations
@@ -261,7 +247,7 @@ class TestAuditExecutor(unittest.TestCase):
         # Then execute one specific audit again to create a new iteration and check if get_latest_results returns the updated latest result
         asyncio.run(executor.execute_specific("audit1"))
         asyncio.run(executor.execute_specific("audit1"))
-        
+
         latest_results = executor.get_latest_results()
         self.assertEqual(
             len(latest_results),

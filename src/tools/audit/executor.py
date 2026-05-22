@@ -7,10 +7,10 @@ from .types import Audit, AuditRun, AuditError
 
 
 class AuditExecutor:
-    def __init__(self, audits: List[Audit]):
-        self.audits: Dict[str, Audit] = {audit.audit_id: audit for audit in audits}
+    def __init__(self, audits: Dict[str, Audit]):
+        self.audits: Dict[str, Audit] = audits
         self.iterations: Dict[str, List[AuditRun]] = {
-            audit.audit_id: [] for audit in audits
+            audit_id: [] for audit_id in audits
         }
 
     async def execute_all(self) -> List[AuditRun]:

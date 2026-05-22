@@ -26,11 +26,6 @@ class AuditRun:
 
 
 class Audit(ABC):
-    audit_id: str
-
-    def __init__(self, audit_id: str):
-        self.audit_id = audit_id
-
     @abstractmethod
     async def setup(self) -> None:
         pass
