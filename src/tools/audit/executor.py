@@ -45,11 +45,16 @@ class AuditExecutor:
         execution_time_ms = int(
             (datetime.datetime.now() - started_at).total_seconds() * 1000
         )
-
-        return AuditRun(
+        
+        run = AuditRun(
             started_at=started_at,
             execution_time_ms=execution_time_ms,
             iteration=iteration,
             results=run_tuple[0],
             errors=run_tuple[1],
         )
+        self.iterations[audit_id].append(run)
+        return run
+
+    def get_latest_results(self) -> List[AuditRun]:
+        return [runs[-1] for runs in self.iterations.values() if runs]

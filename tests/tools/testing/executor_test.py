@@ -260,6 +260,8 @@ class TestAuditExecutor(unittest.TestCase):
 
         # Then execute one specific audit again to create a new iteration and check if get_latest_results returns the updated latest result
         asyncio.run(executor.execute_specific("audit1"))
+        asyncio.run(executor.execute_specific("audit1"))
+        
         latest_results = executor.get_latest_results()
         self.assertEqual(
             len(latest_results),
@@ -268,6 +270,6 @@ class TestAuditExecutor(unittest.TestCase):
         )
         self.assertEqual(
             latest_results[0].iteration,
-            2,
+            3,
             "Iteration number for the first audit should be updated to 2 after executing it again.",
         )
