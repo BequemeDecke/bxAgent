@@ -1,6 +1,7 @@
 import asyncio
 import unittest
 import datetime
+from dataclasses import asdict
 
 from typing import List
 
@@ -9,7 +10,12 @@ from src.tools.audit.executor import AuditExecutor
 
 
 class MockedAuditCaseImplementation(Audit):
-    def __init__(self, audit_id: str, results: List[AuditResult] = None, errors: List[AuditError] = None):
+    def __init__(
+        self,
+        audit_id: str,
+        results: List[AuditResult] = None,
+        errors: List[AuditError] = None,
+    ):
         super().__init__(audit_id)
         self.results = results or []
         self.errors = errors or []
@@ -19,7 +25,7 @@ class MockedAuditCaseImplementation(Audit):
 
     async def run(self):
         return (self.results, self.errors)
-    
+
 
 class FailingAuditCaseImplementation(Audit):
     def __init__(self, audit_id: str):
@@ -33,6 +39,17 @@ class FailingAuditCaseImplementation(Audit):
 
 
 class TestAuditExecutor(unittest.TestCase):
+    def assert_audit_run_equal_except(self, actual: AuditRun, expected: AuditRun):
+        actual_dict = asdict(actual)
+        expected_dict = asdict(expected)
+
+        actual_dict.pop("started_at", None)
+        expected_dict.pop("started_at", None)
+        actual_dict.pop("execution_time_ms", None)
+        expected_dict.pop("execution_time_ms", None)
+
+        self.assertEqual(actual_dict, expected_dict)
+
     def test_execute_all(self):
         self.assertTrue(
             hasattr(AuditExecutor, "execute_all"),
@@ -52,14 +69,23 @@ class TestAuditExecutor(unittest.TestCase):
                 execution_time_ms=100,
                 iteration=1,
                 results=[],
-                errors=[AuditError(message="error1", details={"exception_type": "Exception"})],
+                errors=[
+                    AuditError(
+                        message="error1", details={"exception_type": "Exception"}
+                    )
+                ],
             ),
             AuditRun(
                 started_at=datetime.datetime.now(),
                 execution_time_ms=100,
                 iteration=1,
                 results=[],
-                errors=[AuditError(message="This audit case is designed to fail.", details={"exception_type": "Exception"})],
+                errors=[
+                    AuditError(
+                        message="This audit case is designed to fail.",
+                        details={"exception_type": "Exception"},
+                    )
+                ],
             ),
         ]
 
@@ -82,19 +108,12 @@ class TestAuditExecutor(unittest.TestCase):
         )
 
         actual: List[AuditRun] = asyncio.run(executor.execute_all())
-        self.assertEqual(len(actual), 3, "Should return runs for all three audit cases.")
+        self.assertEqual(
+            len(actual), 3, "Should return runs for all three audit cases."
+        )
 
         for actual_run, expected_run in zip(actual, expected_runs):
-            self.assertEqual(
-                actual_run.results,
-                expected_run.results,
-                "Results should match the expected results.",
-            )
-            self.assertEqual(
-                actual_run.errors,
-                expected_run.errors,
-                "Errors should match the expected errors.",
-            )
+            self.assert_audit_run_equal_except(actual_run, expected_run)
 
     def test_execute_specific(self):
         self.assertTrue(
@@ -136,7 +155,7 @@ class TestAuditExecutor(unittest.TestCase):
             ValueError, msg="Should raise ValueError for non-existent audit ID."
         ):
             asyncio.run(executor.execute_specific("non_existent_audit"))
-            
+
         # Edge case: execution of an audit that raises an exception should be handled properly
         # It should return an AuditRun with an appropriate AuditError instead of propagating the exception
         run = asyncio.run(executor.execute_specific("audit2"))
@@ -155,4 +174,100 @@ class TestAuditExecutor(unittest.TestCase):
         self.assertTrue(
             hasattr(AuditExecutor, "get_latest_results"),
             "AuditExecutor should have a 'get_latest_results' method.",
+        )
+
+        expected_results = [
+            AuditRun(
+                started_at=datetime.datetime.now(),
+                execution_time_ms=100,
+                iteration=1,
+                results=[AuditResult(content="result1")],
+                errors=[],
+            ),
+            AuditRun(
+                started_at=datetime.datetime.now(),
+                execution_time_ms=100,
+                iteration=1,
+                results=[],
+                errors=[
+                    AuditError(
+                        message="error1", details={"exception_type": "Exception"}
+                    )
+                ],
+            ),
+            AuditRun(
+                started_at=datetime.datetime.now(),
+                execution_time_ms=100,
+                iteration=1,
+                results=[],
+                errors=[
+                    AuditError(
+                        message="This audit case is designed to fail.",
+                        details={"exception_type": "Exception"},
+                    )
+                ],
+            ),
+        ]
+
+        executor = AuditExecutor(
+            audits=[
+                MockedAuditCaseImplementation(
+                    audit_id="audit1",
+                    results=expected_results[0].results,
+                    errors=expected_results[0].errors,
+                ),
+                MockedAuditCaseImplementation(
+                    audit_id="audit2",
+                    results=expected_results[1].results,
+                    errors=expected_results[1].errors,
+                ),
+            ]
+        )
+
+        # Execute audits to populate iterations
+        asyncio.run(executor.execute_all())
+
+        latest_results = executor.get_latest_results()
+        self.assertEqual(
+            len(latest_results),
+            2,
+            "Should return latest results for both audits.",
+        )
+
+        expected_latest_results = [
+            AuditRun(
+                started_at=datetime.datetime.now(),
+                execution_time_ms=100,
+                iteration=1,
+                results=[AuditResult(content="result1")],
+                errors=[],
+            ),
+            AuditRun(
+                started_at=datetime.datetime.now(),
+                execution_time_ms=100,
+                iteration=1,
+                results=[],
+                errors=[
+                    AuditError(
+                        message="error1", details={"exception_type": "Exception"}
+                    )
+                ],
+            ),
+        ]
+
+        for actual_run, expected_run in zip(latest_results, expected_latest_results):
+            self.assert_audit_run_equal_except(actual_run, expected_run)
+
+        # Then execute one specific audit again to create a new iteration and check if get_latest_results returns the updated latest result
+        asyncio.run(executor.execute_specific("audit1"))
+        latest_results = executor.get_latest_results()
+        self.assertEqual(
+            len(latest_results),
+            2,
+            "Should return latest results for both audits after executing one audit again.",
+        )
+        self.assertEqual(
+            latest_results[0].iteration,
+            2,
+            "Iteration number for the first audit should be updated to 2 after executing it again.",
         )
