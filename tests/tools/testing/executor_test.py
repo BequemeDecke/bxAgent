@@ -52,14 +52,14 @@ class TestAuditExecutor(unittest.TestCase):
                 execution_time_ms=100,
                 iteration=1,
                 results=[],
-                errors=[AuditError(message="error1")],
+                errors=[AuditError(message="error1", details={"exception_type": "Exception"})],
             ),
             AuditRun(
                 started_at=datetime.datetime.now(),
                 execution_time_ms=100,
                 iteration=1,
                 results=[],
-                errors=[AuditError(message="This audit case is designed to fail.")],
+                errors=[AuditError(message="This audit case is designed to fail.", details={"exception_type": "Exception"})],
             ),
         ]
 

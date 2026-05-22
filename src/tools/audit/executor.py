@@ -15,12 +15,7 @@ class AuditExecutor:
 
     async def execute_all(self) -> List[AuditRun]:
         results = []
-        tasks = []
-
-        for audit in self.audits:
-            started_at = datetime.datetime.now()
-            tasks.append(audit.run())
-
+        tasks = [self.execute_specific(audit_id) for audit_id in self.audits.keys()]
         results = await asyncio.gather(*tasks)
         return results
 
