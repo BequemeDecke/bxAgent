@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 
 @dataclass
@@ -36,5 +36,5 @@ class Audit(ABC):
         pass
 
     @abstractmethod
-    async def run(self) -> AuditRun:
+    async def run(self) -> Tuple[List[AuditResult], List[AuditError]]:
         pass
