@@ -5,36 +5,36 @@ from typing import Any, Dict, List, Optional
 
 
 @dataclass
-class TestResult:
+class AuditResult:
     content: str
     format: Optional[str] = None
 
 
 @dataclass
-class TestError:
+class AuditError:
     message: str
     details: Optional[Dict[str, Any]] = None
 
 
 @dataclass
-class TestRun:
+class AuditRun:
     started_at: datetime
     execution_time_ms: int
     iteration: int
-    results: List[TestResult]
-    errors: List[TestError]
+    results: List[AuditResult]
+    errors: List[AuditError]
 
 
-class TestCase(ABC):
-    test_id: str
+class Audit(ABC):
+    audit_id: str
 
-    def __init__(self, test_id: str):
-        self.test_id = test_id
+    def __init__(self, audit_id: str):
+        self.audit_id = audit_id
 
     @abstractmethod
     async def setup(self) -> None:
         pass
 
     @abstractmethod
-    async def run(self) -> TestRun:
+    async def run(self) -> AuditRun:
         pass

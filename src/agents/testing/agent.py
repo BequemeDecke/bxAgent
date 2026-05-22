@@ -5,7 +5,7 @@ from deepagents.backends import BackendProtocol
 from typing import Optional
 
 from src.models import build_coding_model
-from src.tools.testing import check_file_existence
+from src.tools.audit import check_file_existence
 from src.tools.transformation import read_transformation_plan
 
 TEST_SYSTEM_PROMPT = """

@@ -6,7 +6,7 @@ from langchain.messages import SystemMessage
 from langgraph.checkpoint.memory import InMemorySaver
 
 from src.models import build_coding_model
-from src.tools.testing import check_file_existence, check_compilation
+from src.tools.audit import check_file_existence, check_compilation
 from src.output.repair import RepairOutputSchema
 
 REPAIR_SYSTEM_PROMPT = """
