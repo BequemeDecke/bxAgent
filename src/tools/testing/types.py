@@ -1,6 +1,7 @@
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
 from datetime import datetime
+from typing import Any, Dict, List, Optional
 
 
 @dataclass
@@ -22,3 +23,18 @@ class TestRun:
     iteration: int
     results: List[TestResult]
     errors: List[TestError]
+
+
+class TestCase(ABC):
+    test_id: str
+
+    def __init__(self, test_id: str):
+        self.test_id = test_id
+
+    @abstractmethod
+    async def setup(self) -> None:
+        pass
+
+    @abstractmethod
+    async def run(self) -> TestRun:
+        pass
