@@ -3,7 +3,7 @@ import logging
 import re
 import subprocess
 
-from typing import List, Optional, Tuple
+from typing import List, Tuple
 
 from ..types import AuditResult, AuditError, Audit
 
@@ -38,7 +38,7 @@ class JavaCompilationAudit(Audit):
         """
         results: List[AuditResult] = []
         errors: List[AuditError] = []
-        
+
         for file in self.files:
             try:
                 subprocess_result = subprocess.run(
@@ -63,7 +63,7 @@ class JavaCompilationAudit(Audit):
                         details={"file": file},
                     )
                 )
-        
+
         return results, errors
 
 

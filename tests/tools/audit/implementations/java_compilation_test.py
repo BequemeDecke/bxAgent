@@ -122,11 +122,15 @@ class TestJavaCompilation(TestCase):
             3,
             "There should be three AuditErrors for the provided javac error output.",
         )
-        
+
         for error in errors:
             self.assertIn(
                 error.message,
-                ["Fehler: <ID> erwartet", "Fehler: ';' erwartet", "Fehler: class, interface, enum oder record erwartet"],
+                [
+                    "Fehler: <ID> erwartet",
+                    "Fehler: ';' erwartet",
+                    "Fehler: class, interface, enum oder record erwartet",
+                ],
                 f"Expected error message not found in actual error message '{error.message}'.",
             )
 
