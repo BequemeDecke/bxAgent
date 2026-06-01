@@ -1,13 +1,26 @@
-import unittest
+import asyncio
+
+from unittest import TestCase
+
+from src.tools.audit.implementations.java_compilation import JavaCompilationAudit
 
 
-class TestJavaCompilation(unittest.TestCase):
-    def test_prepare(self):
-        # This is a placeholder test to ensure that the test suite runs without errors.
-        # In a real implementation, you would replace this with actual tests for the FileExistence tool.
-        self.assertTrue(False)
-        
-    def test_execute(self):
-        # This is a placeholder test to ensure that the test suite runs without errors.
-        # In a real implementation, you would replace this with actual tests for the FileExistence tool.
-        self.assertTrue(False)
+class TestJavaCompilation(TestCase):
+    def test_setup__do_nothing(self):
+        self.assertTrue(
+            hasattr(JavaCompilationAudit, "setup"),
+            "JavaCompilationAudit should have a 'setup' method.",
+        )
+
+        java_compilation_audit = JavaCompilationAudit(files=[])
+
+        self.assertIsNone(
+            asyncio.run(java_compilation_audit.setup()),
+            "JavaCompilationAudit's 'setup' method should return None.",
+        )
+
+    def test_execute__method_defined(self):
+        self.assertTrue(
+            hasattr(JavaCompilationAudit, "run"),
+            "JavaCompilationAudit should have a 'run' method.",
+        )
