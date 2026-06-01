@@ -22,7 +22,7 @@ Always protocol your thoughts with the tools:
 - read_transformation_plan: This tool reads the markdown file and returns the existing transformation plan.
 
 Your final output should be the transformation class which is a class that transforms the source model into the target model.
-For this, write the transformation class in the transformation plan with the filesystem tools.
+For this, write the transformation class in the transformation plan with the filesystem tools. Note that the programming language of the transformation class should be Java.
 
 In summary, this is your workflow:
 Input: 
