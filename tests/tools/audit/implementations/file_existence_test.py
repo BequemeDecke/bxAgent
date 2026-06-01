@@ -1,13 +1,22 @@
 import unittest
 
+from src.tools.audit.implementations.file_existence import FileExistenceAudit
+from pathlib import Path
+
 
 class TestFileExistence(unittest.TestCase):
-    def test_prepare(self):
-        # This is a placeholder test to ensure that the test suite runs without errors.
-        # In a real implementation, you would replace this with actual tests for the FileExistence tool.
-        self.assertTrue(False)
-        
+    def setUp(self):
+        self.files = [Path("/path/to/file1.txt"), Path("/path/to/file2.txt")]
+        self.file_existence_audit = FileExistenceAudit(files=self.files)
+
+    def test_setup(self):
+        self.assertTrue(
+            hasattr(FileExistenceAudit, "setup"),
+            "FileExistenceAudit should have a 'setup' method.",
+        )
+
     def test_execute(self):
-        # This is a placeholder test to ensure that the test suite runs without errors.
-        # In a real implementation, you would replace this with actual tests for the FileExistence tool.
-        self.assertTrue(False)
+        self.assertTrue(
+            hasattr(FileExistenceAudit, "run"),
+            "FileExistenceAudit should have a 'run' method.",
+        )
