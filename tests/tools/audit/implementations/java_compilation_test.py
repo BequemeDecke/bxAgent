@@ -33,6 +33,39 @@ JAVAC_ERROR_OUTPUT = f"""
 
 JAVAC_SUCCESS_OUTPUT = ""
 
+SYMBOL_ERRORS = """
+./.bx-agent-workspace/transformation/transformation/Family.java:29: Fehler: Symbol nicht gefunden
+    FamilyMember getFather();
+    ^
+  Symbol: Klasse FamilyMember
+  Ort: Schnittstelle Family
+./.bx-agent-workspace/transformation/transformation/Family.java:36: Fehler: Symbol nicht gefunden
+    void setFather(FamilyMember father);
+                   ^
+  Symbol: Klasse FamilyMember
+  Ort: Schnittstelle Family
+./.bx-agent-workspace/transformation/transformation/Family.java:43: Fehler: Symbol nicht gefunden
+    FamilyMember getMother();
+    ^
+  Symbol: Klasse FamilyMember
+  Ort: Schnittstelle Family
+./.bx-agent-workspace/transformation/transformation/Family.java:50: Fehler: Symbol nicht gefunden
+    void setMother(FamilyMember mother);
+                   ^
+  Symbol: Klasse FamilyMember
+  Ort: Schnittstelle Family
+./.bx-agent-workspace/transformation/transformation/Family.java:57: Fehler: Symbol nicht gefunden
+    List<FamilyMember> getSons();
+         ^
+  Symbol: Klasse FamilyMember
+  Ort: Schnittstelle Family
+./.bx-agent-workspace/transformation/transformation/Family.java:64: Fehler: Symbol nicht gefunden
+    List<FamilyMember> getDaughters();
+         ^
+  Symbol: Klasse FamilyMember
+  Ort: Schnittstelle Family
+6 Fehler"""
+
 
 class TestJavaCompilation(TestCase):
 
@@ -115,4 +148,24 @@ class TestJavaCompilationAudit__parse_javac_output(TestCase):
                 expected_error.message,
                 error.message,
                 f"Expected error message '{expected_error.message}' not found in actual error message '{error.message}'.",
+            )
+
+    def test_parse_javac_output__symbol_errors(self):
+        errors = parse_javac_output(SYMBOL_ERRORS)
+
+        self.assertEqual(
+            len(errors),
+            6,
+            "There should be six AuditErrors for the provided javac symbol error output.",
+        )
+
+        expected_error_messages = [
+            "Fehler: Symbol nicht gefunden",
+        ]
+
+        for error in errors:
+            self.assertIn(
+                error.message,
+                expected_error_messages,
+                f"Expected error message not found in actual error message '{error.message}'.",
             )
