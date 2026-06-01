@@ -1,7 +1,8 @@
 import shutil
 import logging
+import subprocess
 
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 from ..types import AuditResult, AuditError, Audit
 
@@ -17,13 +18,29 @@ class JavaCompilationAudit(Audit):
         self.files = files
 
     async def setup(self):
-        """Check if `javac` is available on the system. If not, raise a RuntimeError.
-        """
+        """Check if `javac` is available on the system. If not, raise a RuntimeError."""
         if shutil.which("javac") is None:
-            logging.error("javac is not installed on the system, but is required for Java compilation.")
-            raise RuntimeError("javac is not installed on the system.")        
-        
-        logging.debug("javac is available on the system. JavaCompilationAudit setup completed successfully.")
+            logging.error(
+                "javac is not installed on the system, but is required for Java compilation."
+            )
+            raise RuntimeError("javac is not installed on the system.")
+
+        logging.debug(
+            "javac is available on the system. JavaCompilationAudit setup completed successfully."
+        )
 
     async def run(self) -> Tuple[AuditResult, List[AuditError]]:
-        return [], []
+        pass
+
+
+def parse_javac_output(output: str) -> List[AuditError]:
+    """
+    Parse the output of the `javac` command to extract compilation errors.
+
+    Args:
+        output (str): The output from the `javac` command.
+
+    Returns:
+        List[AuditError]: A list of AuditError objects representing the compilation errors.
+    """
+    errors = []
