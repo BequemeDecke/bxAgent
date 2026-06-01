@@ -133,6 +133,29 @@ class TestJavaCompilation(TestCase):
                 ],
                 f"Expected error message not found in actual error message '{error.message}'.",
             )
+            
+    @patch("subprocess.run")
+    def test_execute__valid_syntax(self, mock_subprocess_run):
+        mock_subprocess_run.return_value = subprocess.CompletedProcess(
+            args=["javac", "Test.java"],
+            returncode=0,
+            stdout=JAVAC_SUCCESS_OUTPUT,
+            stderr="",
+        )
+        
+        java_compilation_audit = JavaCompilationAudit(files=[Path("Test.java")])
+        results, errors = asyncio.run(java_compilation_audit.run())
+        
+        self.assertEqual(
+            len(results),
+            1,
+            "There should be one AuditResult when javac returns a success output (since we haven't implemented result parsing yet).",
+        )
+        self.assertEqual(
+            len(errors),
+            0,
+            "There should be no AuditErrors when javac returns a success output.",
+        )
 
 
 class TestJavaCompilationAudit__parse_javac_output(TestCase):

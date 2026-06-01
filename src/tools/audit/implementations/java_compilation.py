@@ -55,6 +55,7 @@ class JavaCompilationAudit(Audit):
                     errors.extend(parse_javac_output(subprocess_result.stderr))
                 else:
                     logging.debug(f"Compilation succeeded for {file}.")
+                    results.append(AuditResult(content=f"Compilation succeeded for {file}"))
             except Exception as e:
                 logging.exception(f"An error occurred while compiling {file}: {e}")
                 errors.append(
