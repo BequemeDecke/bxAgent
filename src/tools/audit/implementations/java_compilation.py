@@ -1,5 +1,6 @@
 import shutil
 import logging
+import re
 import subprocess
 
 from typing import List, Optional, Tuple
@@ -35,7 +36,7 @@ class JavaCompilationAudit(Audit):
 
 def parse_javac_output(output: str) -> List[AuditError]:
     """
-    Parse the output of the `javac` command to extract compilation errors.
+    Parse the output of the `javac` command to extract compilation errors. It uses regular expressions to identify error messages and their associated file, line number, and code block. The extracted information is then used to create a list of AuditError objects.
 
     Args:
         output (str): The output from the `javac` command.
@@ -44,3 +45,18 @@ def parse_javac_output(output: str) -> List[AuditError]:
         List[AuditError]: A list of AuditError objects representing the compilation errors.
     """
     errors = []
+    error_pattern = re.compile(r"^(.*\.java):(\d+): (.*)$", re.MULTILINE)
+    matches = error_pattern.findall(output)
+
+    for file, line, message in matches:
+        errors.append(
+            AuditError(
+                message=message,
+                details={
+                    "file": file,
+                    "line": int(line),
+                },
+            )
+        )
+
+    return errors

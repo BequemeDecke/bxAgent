@@ -85,7 +85,7 @@ class TestJavaCompilationAudit__parse_javac_output(TestCase):
 
         expected_errors: List[AuditError] = [
             AuditError(
-                message="<ID> expected",
+                message="Fehler: <ID> erwartet",
                 details={
                     "file": "./.bx-agent-workspace/test/Family.java",
                     "line": 2,
@@ -93,7 +93,7 @@ class TestJavaCompilationAudit__parse_javac_output(TestCase):
                 },
             ),
             AuditError(
-                message="';' expected",
+                message="Fehler: ';' erwartet",
                 details={
                     "file": "./.bx-agent-workspace/test/Family.java",
                     "line": 6,
@@ -101,7 +101,7 @@ class TestJavaCompilationAudit__parse_javac_output(TestCase):
                 },
             ),
             AuditError(
-                message="class, interface, enum or record expected",
+                message="Fehler: class, interface, enum oder record erwartet",
                 details={
                     "file": "./.bx-agent-workspace/test/Family.java",
                     "line": 10,
