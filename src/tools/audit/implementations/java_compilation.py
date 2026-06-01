@@ -30,8 +30,41 @@ class JavaCompilationAudit(Audit):
             "javac is available on the system. JavaCompilationAudit setup completed successfully."
         )
 
-    async def run(self) -> Tuple[AuditResult, List[AuditError]]:
-        pass
+    async def run(self) -> Tuple[List[AuditResult], List[AuditError]]:
+        """Attempt to compile the provided Java files using `javac`. If there are compilation errors, parse the output and return them as AuditErrors.
+
+        Returns:
+            Tuple[List[AuditResult], List[AuditError]]: A tuple containing a list of successful audit results and a list of audit errors.
+        """
+        results: List[AuditResult] = []
+        errors: List[AuditError] = []
+        
+        for file in self.files:
+            try:
+                subprocess_result = subprocess.run(
+                    ["javac", file],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                )
+
+                if subprocess_result.returncode != 0:
+                    logging.error(
+                        f"Compilation failed for {file} with error: {subprocess_result.stderr}"
+                    )
+                    errors.extend(parse_javac_output(subprocess_result.stderr))
+                else:
+                    logging.debug(f"Compilation succeeded for {file}.")
+            except Exception as e:
+                logging.exception(f"An error occurred while compiling {file}: {e}")
+                errors.append(
+                    AuditError(
+                        message=f"An error occurred while compiling {file}: {str(e)}",
+                        details={"file": file},
+                    )
+                )
+        
+        return results, errors
 
 
 def parse_javac_output(output: str) -> List[AuditError]:

@@ -1,4 +1,5 @@
 import asyncio
+import subprocess
 
 from typing import List
 from unittest import TestCase
@@ -94,6 +95,40 @@ class TestJavaCompilation(TestCase):
             hasattr(JavaCompilationAudit, "run"),
             "JavaCompilationAudit should have a 'run' method.",
         )
+
+    @patch("subprocess.run")
+    def test_execute__invalid_syntax(self, mock_subprocess_run):
+        """
+        Test that the run method returns an AuditError when javac returns a syntax error.
+        """
+
+        mock_subprocess_run.return_value = subprocess.CompletedProcess(
+            args=["javac", "Test.java"],
+            returncode=1,
+            stdout="",
+            stderr=JAVAC_ERROR_OUTPUT,
+        )
+
+        java_compilation_audit = JavaCompilationAudit(files=[Path("Test.java")])
+        results, errors = asyncio.run(java_compilation_audit.run())
+
+        self.assertEqual(
+            len(results),
+            0,
+            "There should be no AuditResults when javac returns a syntax error.",
+        )
+        self.assertEqual(
+            len(errors),
+            3,
+            "There should be three AuditErrors for the provided javac error output.",
+        )
+        
+        for error in errors:
+            self.assertIn(
+                error.message,
+                ["Fehler: <ID> erwartet", "Fehler: ';' erwartet", "Fehler: class, interface, enum oder record erwartet"],
+                f"Expected error message not found in actual error message '{error.message}'.",
+            )
 
 
 class TestJavaCompilationAudit__parse_javac_output(TestCase):
