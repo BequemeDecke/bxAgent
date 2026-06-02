@@ -23,10 +23,22 @@ class LangFuseConfig(BaseModel):
 
 class WorkspaceConfig(BaseModel):
     PATH: Path = Field(default=Path.cwd() / ".bx-agent-workspace")
-    
-    
+
+
 class VariablesConfig(BaseModel):
-    UPDATED_FILE_INDEX: int = Field(default=13, description="The index at which the file path starts in the tool message content for write_file tool messages.")
+    UPDATED_FILE_INDEX: int = Field(
+        default=13,
+        description="The index at which the file path starts in the tool message content for write_file tool messages.",
+    )
+
+
+class WorkflowApproachConfig(BaseModel):
+    """Configuration class for the workflow approach."""
+
+    WORKFLOW_MAX_ITERATIONS: int = Field(
+        default=5,
+        description="Maximum number of iterations for the workflow transformation process.",
+    )
 
 
 class Config(BaseModel):
@@ -36,6 +48,7 @@ class Config(BaseModel):
     LANGFUSE: LangFuseConfig
     WORKSPACE: WorkspaceConfig
     VARIABLES: VariablesConfig
+    WORKFLOW_APPROACH: WorkflowApproachConfig
 
     @classmethod
     def get_instance(cls, env_path: Path = Path.cwd() / ".env") -> "Config":
@@ -67,9 +80,13 @@ def load_config(env_path: Path) -> BaseModel:
     workspace_config = WorkspaceConfig(
         PATH=Path(os.getenv("WORKSPACE_PATH", env_path.parent / ".bx-agent-workspace"))
     )
-    
+
     variables_config = VariablesConfig(
         UPDATED_FILE_INDEX=int(os.getenv("UPDATED_FILE_INDEX", 13))
+    )
+
+    workflow_approach_config = WorkflowApproachConfig(
+        WORKFLOW_MAX_ITERATIONS=int(os.getenv("WORKFLOW_MAX_ITERATIONS", 5))
     )
 
     # Log the loaded configurations
@@ -78,7 +95,12 @@ def load_config(env_path: Path) -> BaseModel:
     logging.debug(f"Loaded LangFuseConfig: {langfuse_config}")
     logging.debug(f"Loaded WorkspaceConfig: {workspace_config}")
     logging.debug(f"Loaded VariablesConfig: {variables_config}")
+    logging.debug(f"Loaded WorkflowApproachConfig: {workflow_approach_config}")
     logging.debug("-----------------------------")
     return Config(
-        BX_AGENT=agent_config, LANGFUSE=langfuse_config, WORKSPACE=workspace_config, VARIABLES=variables_config
+        BX_AGENT=agent_config,
+        LANGFUSE=langfuse_config,
+        WORKSPACE=workspace_config,
+        VARIABLES=variables_config,
+        WORKFLOW_APPROACH=workflow_approach_config,
     )
