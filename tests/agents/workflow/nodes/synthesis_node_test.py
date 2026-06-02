@@ -3,13 +3,39 @@ This test checks if the synthesis node correctly utilizes the synthesis subagent
 It has to write the plan into the `TRANSFORMATION.md` file.
 """
 
+from typing import TypedDict
 from unittest import TestCase
+from langgraph.graph import StateGraph, START
+
+from bxagent.agents.workflow.nodes.synthesis_node import (
+    create_call_synthesis_agent_function,
+)
 
 
 class TestSynthesisNode(TestCase):
-    def test_synthesis_node(self):
-        # Here we would set up the agent, the model transformation task, and the synthesis node.
-        # We would then run the agent and check if the synthesis node correctly utilizes the synthesis subagent to think about the transformation itself and think about how to implement the transformation.
-        # We would also check if it writes the plan into the `TRANSFORMATION.md` file.
-        # Since this is a placeholder, we will just assert False for now.
-        self.assertTrue(False)
+    def setUp(self):
+        class DummyState(TypedDict):
+            pass
+
+        graph_builder = StateGraph(DummyState)
+        graph_builder.add_node("synthesis", lambda state: {"started": True})
+        graph_builder.add_edge(START, "synthesis")
+        self.graph = graph_builder.compile()
+
+    def test_synthesis_node__invoke_subgraph(self):
+        call_sub = create_call_synthesis_agent_function(self.graph)
+
+        result = call_sub(
+            {
+                "transformation_source_model_description": "A model that does X",
+                "transformation_target_model_description": "A model that does Y",
+                "iteration": 0,
+                "latest_audit_runs": [],
+            }
+        )
+
+        self.assertEqual(
+            result["iteration"],
+            1,
+            "The iteration should be incremented by 1 after calling the synthesis agent.",
+        )
