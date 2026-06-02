@@ -6,7 +6,6 @@ from langchain.messages import SystemMessage
 from langgraph.checkpoint.memory import InMemorySaver
 
 from src.models import build_coding_model
-from src.tools.audit import check_file_existence, check_compilation
 from src.output.repair import RepairOutputSchema
 
 REPAIR_SYSTEM_PROMPT = """
@@ -30,7 +29,7 @@ def build_repair_agent(
         model=model,
         system_prompt=SystemMessage(system_prompt),
         checkpointer=InMemorySaver(),
-        tools=[check_file_existence, check_compilation], # Exploration and editing tools are added by deepagents
+        # tools=[check_file_existence, check_compilation], # Exploration and editing tools are added by deepagents
         backend=backend,
         # response_format=RepairOutputSchema
     )

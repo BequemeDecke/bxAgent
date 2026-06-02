@@ -5,7 +5,6 @@ from deepagents.backends import LocalShellBackend, CompositeBackend, FilesystemB
 from pathlib import Path
 
 from src.models import build_base_model
-from .testing import build_test_agent
 from .synthesis import build_synthesis_agent
 from .repair import build_repair_agent
 
@@ -89,12 +88,6 @@ def build_bx_agent(
         runnable=build_synthesis_agent(),
     )
 
-    test_agent = CompiledSubAgent(
-        name="test_agent",
-        description="Agent responsible for testing the synthesized transformation logic.",
-        runnable=build_test_agent(),
-    )
-
     repair_agent = CompiledSubAgent(
         name="repair_agent",
         description="Agent responsible for repairing any issues found during testing of the synthesized transformation logic.",
@@ -106,6 +99,6 @@ def build_bx_agent(
         backend=backend,
         system_prompt=SystemMessage(system_prompt),
         checkpointer=InMemorySaver(),
-        subagents=[synthesis_agent, test_agent, repair_agent],
+        subagents=[synthesis_agent, repair_agent],
         skills=["/skills/"],
     )
