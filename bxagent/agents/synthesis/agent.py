@@ -4,8 +4,8 @@ from langgraph.checkpoint.memory import InMemorySaver
 from deepagents.backends import BackendProtocol
 from deepagents import create_deep_agent
 
-from src.models import build_base_model
-from src.tools import transformation_plan_tools
+from bxagent.models import build_base_model
+from bxagent.tools import transformation_plan_tools
 from .middleware import SynthesisAgentStateMiddleware
 
 SYNTHESIS_SYSTEM_PROMPT = """

@@ -8,7 +8,7 @@ from langchain.agents import create_agent
 from langchain.messages import ToolMessage, AIMessage, HumanMessage, ToolCall
 from pathlib import Path
 
-from src.agents.synthesis.middleware import (
+from bxagent.agents.synthesis.middleware import (
     extract_written_files,
     create_synthesis_response,
     SynthesisAgentStateMiddleware,

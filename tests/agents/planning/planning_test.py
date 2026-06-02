@@ -2,7 +2,7 @@ from unittest import TestCase
 
 from langgraph.graph.state import StateGraph
 
-from src.agents.planning import build_planning_agent
+from bxagent.agents.planning import build_planning_agent
 
 
 class TestPlanningAgent(TestCase):

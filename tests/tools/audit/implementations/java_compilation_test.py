@@ -6,7 +6,7 @@ from unittest import TestCase
 from unittest.mock import patch
 from pathlib import Path
 
-from src.tools.audit.implementations.java_compilation import (
+from bxagent.tools.audit.implementations.java_compilation import (
     JavaCompilationAudit,
     parse_javac_output,
     AuditError,

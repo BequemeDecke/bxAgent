@@ -1,7 +1,7 @@
 import unittest
 
 from langchain.tools import BaseTool
-from src.tools.audit.factory import create_audit_tools
+from bxagent.tools.audit.factory import create_audit_tools
 
 class TestAuditToolFactory(unittest.TestCase):
     def test_create_audit_tools__defined(self):

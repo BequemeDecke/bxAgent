@@ -17,7 +17,7 @@ from langchain.agents.middleware import (
 from os import PathLike
 from pathlib import Path
 
-from src.config import Config
+from bxagent.config import Config
 from .output import SynthesisResponseFormat
 
 UPDATED_FILE_INDEX = Config.get_instance().VARIABLES.UPDATED_FILE_INDEX

@@ -5,8 +5,8 @@ from deepagents.backends import BackendProtocol
 from langchain.messages import SystemMessage
 from langgraph.checkpoint.memory import InMemorySaver
 
-from src.models import build_coding_model
-from src.output.repair import RepairOutputSchema
+from bxagent.models import build_coding_model
+from bxagent.output.repair import RepairOutputSchema
 
 REPAIR_SYSTEM_PROMPT = """
 You are a subagent resp onsible for repairing code. 

@@ -1,7 +1,7 @@
 from langchain.tools import tool
 from pathlib import Path
 
-from src.config import Config
+from bxagent.config import Config
 
 TRANSFORMATION_FILE_PATH = Config.get_instance().WORKSPACE.PATH / "transformation.md"
 

@@ -1,6 +1,6 @@
 from langchain.chat_models import init_chat_model
 
-from src.config import Config
+from bxagent.config import Config
 
 
 def build_base_model():

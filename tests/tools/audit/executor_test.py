@@ -5,8 +5,8 @@ from dataclasses import asdict
 
 from typing import List
 
-from src.tools.audit.types import AuditRun, AuditResult, Audit, AuditError
-from src.tools.audit.executor import AuditExecutor
+from bxagent.tools.audit.types import AuditRun, AuditResult, Audit, AuditError
+from bxagent.tools.audit.executor import AuditExecutor
 
 
 class MockedAuditCaseImplementation(Audit):

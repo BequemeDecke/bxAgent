@@ -4,7 +4,7 @@ from deepagents import create_deep_agent, CompiledSubAgent
 from deepagents.backends import LocalShellBackend, CompositeBackend, FilesystemBackend
 from pathlib import Path
 
-from src.models import build_base_model
+from bxagent.models import build_base_model
 from .synthesis import build_synthesis_agent
 from .repair import build_repair_agent
 
