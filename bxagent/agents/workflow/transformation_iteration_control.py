@@ -14,5 +14,16 @@ def check_transformation_iteration(state: WorkflowState, max_iterations: int = W
     if state['iteration'] >= max_iterations:
         return "stop"
     
-    return "continue"
+    runs = state["latest_audit_runs"]
+    all_results = []
+    
+    for run in runs:
+        if len(run.errors) > 0: # If there are any errors in the audit runs, continue with the transformation process, as it might be able to fix the issues in the next iteration.
+            return "continue"
+
+        all_results.extend(run.results)
+        
+    # TODO: Call LLM and decide whether to continue or stop based on the audit results and the descriptions of the source and target models. For now, we will just continue.
+    
+    return "stop"
     
