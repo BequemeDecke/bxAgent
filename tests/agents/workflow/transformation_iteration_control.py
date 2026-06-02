@@ -4,15 +4,22 @@ This test checks if the transformation iteration control node correctly limits t
 
 from datetime import datetime, timedelta
 from unittest import TestCase
+from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
 
 from bxagent.agents.workflow.state import WorkflowState
 from bxagent.agents.workflow.transformation_iteration_control import (
-    check_transformation_iteration,
+    create_check_transformation_iteration_function,
 )
 from bxagent.tools.audit.types import AuditRun, AuditResult, AuditError
 
 
 class TestTransformationIterationControl(TestCase):
+    def setUp(self):
+        self.llm = GenericFakeChatModel(messages=iter([]))
+        self.check_transformation_iteration = (
+            create_check_transformation_iteration_function(llm=self.llm)
+        )
+
     def test_transformation_iteration_control__stop_on_max_iterations(self):
         max_iterations = 3
         state: WorkflowState = {
@@ -21,7 +28,7 @@ class TestTransformationIterationControl(TestCase):
             "iteration": 3,
             "latest_audit_runs": [],
         }
-        result = check_transformation_iteration(state, max_iterations)
+        result = self.check_transformation_iteration(state, max_iterations)
         self.assertEqual(result, "stop")
 
     def test_transformation_iteration_control__continue_before_max_iterations(self):
@@ -32,7 +39,7 @@ class TestTransformationIterationControl(TestCase):
             "iteration": 2,
             "latest_audit_runs": [],
         }
-        result = check_transformation_iteration(state, max_iterations)
+        result = self.check_transformation_iteration(state, max_iterations)
         self.assertEqual(result, "continue")
 
     def test_transformation_iteration_control__run_results_have_errors(self):
@@ -63,7 +70,7 @@ class TestTransformationIterationControl(TestCase):
                 )
             ],
         }
-        result = check_transformation_iteration(state, max_iterations)
+        result = self.check_transformation_iteration(state, max_iterations)
         self.assertEqual(result, "continue")
 
     def test_transformation_iteration_control__run_results_no_errors(self):
@@ -86,5 +93,5 @@ class TestTransformationIterationControl(TestCase):
                 )
             ],
         }
-        result = check_transformation_iteration(state, max_iterations)
+        result = self.check_transformation_iteration(state, max_iterations)
         self.assertEqual(result, "stop")
