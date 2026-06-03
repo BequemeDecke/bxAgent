@@ -8,3 +8,4 @@ class WorkflowState(TypedDict):
     transformation_target_model_description: str
     latest_audit_runs: list[AuditRun]
     iteration: int
+    implementation_instructions: str

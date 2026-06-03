@@ -5,8 +5,11 @@ It has to write the plan into the `TRANSFORMATION.md` file.
 
 from typing import TypedDict
 from unittest import TestCase
+from unittest.mock import Mock
+from langchain.chat_models import BaseChatModel
 from langgraph.graph import StateGraph, START
 
+from bxagent.agents.synthesis.output import SynthesisResponseFormat
 from bxagent.agents.workflow.nodes.synthesis_node import (
     create_call_synthesis_agent_function,
 )
@@ -15,10 +18,17 @@ from bxagent.agents.workflow.nodes.synthesis_node import (
 class TestSynthesisNode(TestCase):
     def setUp(self):
         class DummyState(TypedDict):
-            pass
+            structured_response: SynthesisResponseFormat
+
+        def generate_response(state: DummyState) -> DummyState:
+            return {
+                "structured_response": SynthesisResponseFormat(
+                    implementation_instructions="Some instructions on how to implement the transformation."
+                )
+            }
 
         graph_builder = StateGraph(DummyState)
-        graph_builder.add_node("synthesis", lambda state: {"started": True})
+        graph_builder.add_node("synthesis", generate_response)
         graph_builder.add_edge(START, "synthesis")
         self.graph = graph_builder.compile()
 
@@ -38,4 +48,9 @@ class TestSynthesisNode(TestCase):
             result["iteration"],
             1,
             "The iteration should be incremented by 1 after calling the synthesis agent.",
+        )
+        self.assertEqual(
+            result["implementation_instructions"],
+            "Some instructions on how to implement the transformation.",
+            "The implementation instructions should match the output of the synthesis agent.",  
         )
