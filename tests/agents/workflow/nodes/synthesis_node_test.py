@@ -5,8 +5,6 @@ It has to write the plan into the `TRANSFORMATION.md` file.
 
 from typing import TypedDict
 from unittest import TestCase
-from unittest.mock import Mock
-from langchain.chat_models import BaseChatModel
 from langgraph.graph import StateGraph, START
 
 from bxagent.agents.synthesis.output import SynthesisResponseFormat
@@ -52,7 +50,7 @@ class TestSynthesisNode(TestCase):
         self.assertEqual(
             result["implementation_instructions"],
             "Some instructions on how to implement the transformation.",
-            "The implementation instructions should match the output of the synthesis agent.",  
+            "The implementation instructions should match the output of the synthesis agent.",
         )
         self.assertEqual(
             result["iteration"],
