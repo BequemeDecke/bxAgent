@@ -54,3 +54,8 @@ class TestSynthesisNode(TestCase):
             "Some instructions on how to implement the transformation.",
             "The implementation instructions should match the output of the synthesis agent.",  
         )
+        self.assertEqual(
+            result["iteration"],
+            1,
+            "The iteration should be incremented by 1 after calling the synthesis agent.",
+        )
