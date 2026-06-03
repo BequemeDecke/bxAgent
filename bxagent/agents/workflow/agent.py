@@ -1,13 +1,15 @@
-from langgraph.graph import StateGraph, END
+from langgraph.graph import StateGraph, START, END
 
 from bxagent.models import build_base_model
 from bxagent.agents.synthesis import build_synthesis_agent
+from bxagent.tools.audit import JavaCompilationAudit, FileExistenceAudit
 
 from .state import WorkflowState
 from .transformation_iteration_control import (
     create_check_transformation_iteration_function,
 )
 from .nodes.synthesis_node import create_call_synthesis_agent_function
+from .nodes.auditing_node import create_audit_agent_work_function
 
 
 def build_workflow_agent() -> StateGraph:
@@ -16,11 +18,22 @@ def build_workflow_agent() -> StateGraph:
     call_synthesis_agent = create_call_synthesis_agent_function(
         synthesis_agent=build_synthesis_agent()
     )
+    # TODO: The files will be in some state and the audits therefore have to be able to update
+    audit_agent_work = create_audit_agent_work_function(
+        audits={
+            "file_existence_audit": FileExistenceAudit(files=[]),
+            "java_compilation_audit": JavaCompilationAudit(files=[]),
+        }
+    )
 
     builder = StateGraph(WorkflowState)
 
     # TODO: Add the rest of the workflow nodes and edges!
     builder.add_node("call_synthesis_agent", call_synthesis_agent)
+    builder.add_node("audit_agent", audit_agent_work)
+    
+    builder.add_edge(START, "call_synthesis_agent")
+    builder.add_edge("call_synthesis_agent", "audit_agent")
 
     builder.add_conditional_edges(
         "check_transformation_iteration",
