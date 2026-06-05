@@ -10,6 +10,7 @@ from unittest import TestCase
 from unittest.mock import Mock
 
 from bxagent.tools.audit.types import Audit, AuditResult, AuditError
+from bxagent.tools.audit import AuditExecutor
 from bxagent.agents.workflow.nodes.auditing_node import create_audit_agent_work_function
 from bxagent.agents.workflow.state import WorkflowState
 
@@ -22,9 +23,8 @@ class TestAuditingNode(TestCase):
             [AuditError(message="Some audit error")],
         )
 
-        audit_agent_work = create_audit_agent_work_function(
-            audits={"test_audit": mocked_audit}
-        )
+        audit_executor = AuditExecutor(audits={"test_audit": mocked_audit})
+        audit_agent_work = create_audit_agent_work_function(audit_executor=audit_executor)
 
         result = asyncio.run(audit_agent_work(WorkflowState()))
 
