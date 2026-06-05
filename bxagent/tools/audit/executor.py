@@ -13,13 +13,13 @@ class AuditExecutor:
             audit_id: [] for audit_id in audits
         }
 
-    async def execute_all(self) -> List[AuditRun]:
+    async def execute_all(self, **kwargs) -> List[AuditRun]:
         results = []
-        tasks = [self.execute_specific(audit_id) for audit_id in self.audits.keys()]
+        tasks = [self.execute_specific(audit_id, **kwargs) for audit_id in self.audits.keys()]
         results = await asyncio.gather(*tasks)
         return results
 
-    async def execute_specific(self, audit_id: str) -> AuditRun:
+    async def execute_specific(self, audit_id: str, **kwargs) -> AuditRun:
         if audit_id not in self.audits:
             raise ValueError(f"Audit with id {audit_id} not found.")
 
@@ -32,7 +32,7 @@ class AuditExecutor:
         )
 
         try:
-            run_tuple = await audit.run()
+            run_tuple = await audit.run(**kwargs)
         except Exception as e:
             run_tuple = (
                 [],
