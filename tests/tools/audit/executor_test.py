@@ -1,9 +1,10 @@
 import asyncio
 import unittest
 import datetime
-from dataclasses import asdict
 
+from dataclasses import asdict
 from typing import List
+from pydantic import BaseModel
 
 from bxagent.tools.audit.types import AuditRun, AuditResult, Audit, AuditError
 from bxagent.tools.audit.executor import AuditExecutor
@@ -21,15 +22,19 @@ class MockedAuditCaseImplementation(Audit):
     async def setup(self):
         return
 
-    async def run(self):
+    async def run(self, **kwargs):
         return (self.results, self.errors)
+
+
+class MockedAuditSchema(BaseModel):
+    param1: str
 
 
 class FailingAuditCaseImplementation(Audit):
     async def setup(self):
         return
 
-    async def run(self):
+    async def run(self, **kwargs):
         raise Exception("This audit case is designed to fail.")
 
 
@@ -51,11 +56,17 @@ class TestAuditExecutor__execute_specific(unittest.TestCase):
         self.errors = []
         self.executor = AuditExecutor(
             audits={
-                "audit1": MockedAuditCaseImplementation(
-                    results=self.results,
-                    errors=self.errors,
-                ),
-                "audit2": FailingAuditCaseImplementation(),
+                "audit1": {
+                    "audit": MockedAuditCaseImplementation(
+                        results=self.results,
+                        errors=self.errors,
+                    ),
+                    "audit_schema": MockedAuditSchema(param1="value1"),
+                },
+                "audit2": {
+                    "audit": FailingAuditCaseImplementation(),
+                    "audit_schema": MockedAuditSchema(param1="value2"),
+                },
             }
         )
 
@@ -73,7 +84,9 @@ class TestAuditExecutor__execute_specific(unittest.TestCase):
             errors=self.errors,
         )
 
-        run = asyncio.run(self.executor.execute_specific("audit1"))
+        run = asyncio.run(
+            self.executor.execute_specific("audit1", input={"param1": "value1"})
+        )
         self.assertEqual(
             run.results,
             expected_run.results,
@@ -95,12 +108,12 @@ class TestAuditExecutor__execute_specific(unittest.TestCase):
         with self.assertRaises(
             ValueError, msg="Should raise ValueError for non-existent audit ID."
         ):
-            asyncio.run(self.executor.execute_specific("non_existent_audit"))
+            asyncio.run(self.executor.execute_specific("non_existent_audit", input={"param1": "value"}))
 
     def test_execute_specific__audit_raises_exception(self):
         # Edge case: execution of an audit that raises an exception should be handled properly
         # It should return an AuditRun with an appropriate AuditError instead of propagating the exception
-        run = asyncio.run(self.executor.execute_specific("audit2"))
+        run = asyncio.run(self.executor.execute_specific("audit2", input={"param1": "value2"}))
         self.assertEqual(
             len(run.errors),
             1,
@@ -133,15 +146,24 @@ class TestAuditExecutor__execute_all(unittest.TestCase):
         )
         self.executor = AuditExecutor(
             audits={
-                "audit1": MockedAuditCaseImplementation(
-                    results=self.run_1.results,
-                    errors=self.run_1.errors,
-                ),
-                "audit2": MockedAuditCaseImplementation(
-                    results=self.run_2.results,
-                    errors=self.run_2.errors,
-                ),
-                "audit3": FailingAuditCaseImplementation(),
+                "audit1": {
+                    "audit": MockedAuditCaseImplementation(
+                        results=self.run_1.results,
+                        errors=self.run_1.errors,
+                    ),
+                    "audit_schema": MockedAuditSchema(param1="value1"),
+                },
+                "audit2": {
+                    "audit": MockedAuditCaseImplementation(
+                        results=self.run_2.results,
+                        errors=self.run_2.errors,
+                    ),
+                    "audit_schema": MockedAuditSchema(param1="value2"),
+                },
+                "audit3": {
+                    "audit": FailingAuditCaseImplementation(),
+                    "audit_schema": MockedAuditSchema(param1="value3"),
+                },
             }
         )
 
@@ -181,7 +203,13 @@ class TestAuditExecutor__execute_all(unittest.TestCase):
             ),
         ]
 
-        actual: List[AuditRun] = asyncio.run(self.executor.execute_all())
+        actual: List[AuditRun] = asyncio.run(self.executor.execute_all(
+            input={
+                "audit1": {"param1": "value1"},
+                "audit2": {"param1": "value2"},
+                "audit3": {"param1": "value3"},
+            }
+        ))
         self.assertEqual(
             len(actual), 3, "Should return runs for all three audit cases."
         )
@@ -210,14 +238,20 @@ class TestAuditExecutor__get_latest_results(unittest.TestCase):
         )
         self.executor = AuditExecutor(
             audits={
-                "audit1": MockedAuditCaseImplementation(
-                    results=self.run_1.results,
-                    errors=self.run_1.errors,
-                ),
-                "audit2": MockedAuditCaseImplementation(
-                    results=self.run_2.results,
-                    errors=self.run_2.errors,
-                ),
+                "audit1": {
+                    "audit": MockedAuditCaseImplementation(
+                        results=self.run_1.results,
+                        errors=self.run_1.errors,
+                    ),
+                    "audit_schema": MockedAuditSchema(param1="value1"),
+                },
+                "audit2": {
+                    "audit": MockedAuditCaseImplementation(
+                        results=self.run_2.results,
+                        errors=self.run_2.errors,
+                    ),
+                    "audit_schema": MockedAuditSchema(param1="value2"),
+                },
             }
         )
 
@@ -233,7 +267,13 @@ class TestAuditExecutor__get_latest_results(unittest.TestCase):
             self.run_2,
         ]
 
-        asyncio.run(self.executor.execute_all())
+        asyncio.run(self.executor.execute_all(
+            input={
+                "audit1": {"param1": "value1"},
+                "audit2": {"param1": "value2"},
+                "audit3": {"param1": "value3"},
+            }
+        ))
 
         latest_results = self.executor.get_latest_results()
         self.assertEqual(
@@ -249,11 +289,17 @@ class TestAuditExecutor__get_latest_results(unittest.TestCase):
             self.run_1,
             self.run_2,
         ]
-        asyncio.run(self.executor.execute_all())
+        asyncio.run(self.executor.execute_all(
+            input={
+                "audit1": {"param1": "value1"},
+                "audit2": {"param1": "value2"},
+                "audit3": {"param1": "value3"},
+            }
+        ))
 
         # Then execute one specific audit again to create a new iteration and check if get_latest_results returns the updated latest result
-        asyncio.run(self.executor.execute_specific("audit1"))
-        asyncio.run(self.executor.execute_specific("audit1"))
+        asyncio.run(self.executor.execute_specific("audit1", input={"param1": "value1"}))
+        asyncio.run(self.executor.execute_specific("audit1", input={"param1": "value1"}))
 
         latest_results = self.executor.get_latest_results()
         for actual_run, expected_run in zip(latest_results, expected_results):

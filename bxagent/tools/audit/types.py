@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Callable
 
 
 @dataclass
@@ -23,6 +23,9 @@ class AuditRun:
     iteration: int
     results: List[AuditResult]
     errors: List[AuditError]
+
+
+StateToAuditMapper = Callable[[Dict[str, Any]], Dict[str, Any]]
 
 
 class Audit(ABC):
