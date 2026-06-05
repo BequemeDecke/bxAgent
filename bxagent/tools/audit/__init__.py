@@ -10,8 +10,8 @@ def build_audit_tools(audits: Optional[dict[str, Audit]] = None):
     """Factory function to create audit tools. This can be extended to include more audits in the future."""
     if audits is None:
         audits = {
-            "file_existence": FileExistenceAudit,
-            "java_compilation": JavaCompilationAudit,
+            "file_existence": FileExistenceAudit(),
+            "java_compilation": JavaCompilationAudit(),
         }
     return create_audit_tools(audits=audits)
 
