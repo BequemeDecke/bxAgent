@@ -15,9 +15,6 @@ class JavaCompilationAudit(Audit):
     It uses the `javac` command to attempt to compile the provided Java files. If `javac` is not installed on the system, the setup will fail. The run method will return an empty list of results and errors for now, as the actual compilation logic is not implemented yet.
     """
 
-    def __init__(self, files: List[str]):
-        self.files = files
-
     async def setup(self):
         """Check if `javac` is available on the system. If not, raise a RuntimeError."""
         if shutil.which("javac") is None:
@@ -30,16 +27,23 @@ class JavaCompilationAudit(Audit):
             "javac is available on the system. JavaCompilationAudit setup completed successfully."
         )
 
-    async def run(self) -> Tuple[List[AuditResult], List[AuditError]]:
+    async def run(self, **kwargs) -> Tuple[List[AuditResult], List[AuditError]]:
         """Attempt to compile the provided Java files using `javac`. If there are compilation errors, parse the output and return them as AuditErrors.
 
         Returns:
             Tuple[List[AuditResult], List[AuditError]]: A tuple containing a list of successful audit results and a list of audit errors.
         """
+        if "files" not in kwargs:
+            raise ValueError("Missing required parameter: 'files'")
+
+        files = kwargs["files"]
+        if not isinstance(files, list):
+            raise ValueError("Parameter 'files' must be a list of file paths.")
+
         results: List[AuditResult] = []
         errors: List[AuditError] = []
 
-        for file in self.files:
+        for file in files:
             try:
                 subprocess_result = subprocess.run(
                     ["javac", file],

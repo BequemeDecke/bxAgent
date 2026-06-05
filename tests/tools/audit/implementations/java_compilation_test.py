@@ -82,7 +82,7 @@ class TestJavaCompilation(TestCase):
         )
 
         mock_which.return_value = None
-        java_compilation_audit = JavaCompilationAudit(files=[])
+        java_compilation_audit = JavaCompilationAudit()
 
         with self.assertRaises(
             RuntimeError,
@@ -90,14 +90,14 @@ class TestJavaCompilation(TestCase):
         ):
             asyncio.run(java_compilation_audit.setup())
 
-    def test_execute__method_defined(self):
+    def test_run__method_defined(self):
         self.assertTrue(
             hasattr(JavaCompilationAudit, "run"),
             "JavaCompilationAudit should have a 'run' method.",
         )
 
     @patch("subprocess.run")
-    def test_execute__invalid_syntax(self, mock_subprocess_run):
+    def test_run__invalid_syntax(self, mock_subprocess_run):
         """
         Test that the run method returns an AuditError when javac returns a syntax error.
         """
@@ -109,8 +109,8 @@ class TestJavaCompilation(TestCase):
             stderr=JAVAC_ERROR_OUTPUT,
         )
 
-        java_compilation_audit = JavaCompilationAudit(files=[Path("Test.java")])
-        results, errors = asyncio.run(java_compilation_audit.run())
+        java_compilation_audit = JavaCompilationAudit()
+        results, errors = asyncio.run(java_compilation_audit.run(files=[Path("Test.java")]))
 
         self.assertEqual(
             len(results),
@@ -135,7 +135,7 @@ class TestJavaCompilation(TestCase):
             )
             
     @patch("subprocess.run")
-    def test_execute__valid_syntax(self, mock_subprocess_run):
+    def test_run__valid_syntax(self, mock_subprocess_run):
         mock_subprocess_run.return_value = subprocess.CompletedProcess(
             args=["javac", "Test.java"],
             returncode=0,
@@ -143,8 +143,8 @@ class TestJavaCompilation(TestCase):
             stderr="",
         )
         
-        java_compilation_audit = JavaCompilationAudit(files=[Path("Test.java")])
-        results, errors = asyncio.run(java_compilation_audit.run())
+        java_compilation_audit = JavaCompilationAudit()
+        results, errors = asyncio.run(java_compilation_audit.run(files=[Path("Test.java")]))
         
         self.assertEqual(
             len(results),
@@ -156,6 +156,24 @@ class TestJavaCompilation(TestCase):
             0,
             "There should be no AuditErrors when javac returns a success output.",
         )
+        
+    def test_run__missing_files_parameter(self):
+        java_compilation_audit = JavaCompilationAudit()
+        
+        with self.assertRaises(
+            ValueError,
+            msg="JavaCompilationAudit's 'run' method should raise ValueError if 'files' parameter is missing.",
+        ):
+            asyncio.run(java_compilation_audit.run())
+            
+    def test_run__files_parameter_not_a_list(self):
+        java_compilation_audit = JavaCompilationAudit()
+        
+        with self.assertRaises(
+            ValueError,
+            msg="JavaCompilationAudit's 'run' method should raise ValueError if 'files' parameter is not a list.",
+        ):
+            asyncio.run(java_compilation_audit.run(files="not_a_list"))
 
 
 class TestJavaCompilationAudit__parse_javac_output(TestCase):
