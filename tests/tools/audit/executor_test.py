@@ -108,12 +108,18 @@ class TestAuditExecutor__execute_specific(unittest.TestCase):
         with self.assertRaises(
             ValueError, msg="Should raise ValueError for non-existent audit ID."
         ):
-            asyncio.run(self.executor.execute_specific("non_existent_audit", input={"param1": "value"}))
+            asyncio.run(
+                self.executor.execute_specific(
+                    "non_existent_audit", input={"param1": "value"}
+                )
+            )
 
     def test_execute_specific__audit_raises_exception(self):
         # Edge case: execution of an audit that raises an exception should be handled properly
         # It should return an AuditRun with an appropriate AuditError instead of propagating the exception
-        run = asyncio.run(self.executor.execute_specific("audit2", input={"param1": "value2"}))
+        run = asyncio.run(
+            self.executor.execute_specific("audit2", input={"param1": "value2"})
+        )
         self.assertEqual(
             len(run.errors),
             1,
@@ -124,6 +130,22 @@ class TestAuditExecutor__execute_specific(unittest.TestCase):
             "This audit case is designed to fail.",
             "Error message should match the expected error message.",
         )
+
+    def test_execute_specific__raises_validation_error(self):
+        # Edge case: execution of an audit with invalid input should be handled properly
+        with self.assertRaises(
+            ValueError, msg="Should raise ValueError for invalid input."
+        ):
+            asyncio.run(
+                self.executor.execute_specific(
+                    "audit1", input={"invalid_param": "value"}
+                )
+            )
+
+        with self.assertRaises(
+            ValueError, msg="Should raise ValueError for missing required parameter."
+        ):
+            asyncio.run(self.executor.execute_specific("audit1", input={}))
 
 
 class TestAuditExecutor__execute_all(unittest.TestCase):
@@ -203,13 +225,15 @@ class TestAuditExecutor__execute_all(unittest.TestCase):
             ),
         ]
 
-        actual: List[AuditRun] = asyncio.run(self.executor.execute_all(
-            input={
-                "audit1": {"param1": "value1"},
-                "audit2": {"param1": "value2"},
-                "audit3": {"param1": "value3"},
-            }
-        ))
+        actual: List[AuditRun] = asyncio.run(
+            self.executor.execute_all(
+                input={
+                    "audit1": {"param1": "value1"},
+                    "audit2": {"param1": "value2"},
+                    "audit3": {"param1": "value3"},
+                }
+            )
+        )
         self.assertEqual(
             len(actual), 3, "Should return runs for all three audit cases."
         )
@@ -267,13 +291,15 @@ class TestAuditExecutor__get_latest_results(unittest.TestCase):
             self.run_2,
         ]
 
-        asyncio.run(self.executor.execute_all(
-            input={
-                "audit1": {"param1": "value1"},
-                "audit2": {"param1": "value2"},
-                "audit3": {"param1": "value3"},
-            }
-        ))
+        asyncio.run(
+            self.executor.execute_all(
+                input={
+                    "audit1": {"param1": "value1"},
+                    "audit2": {"param1": "value2"},
+                    "audit3": {"param1": "value3"},
+                }
+            )
+        )
 
         latest_results = self.executor.get_latest_results()
         self.assertEqual(
@@ -289,17 +315,23 @@ class TestAuditExecutor__get_latest_results(unittest.TestCase):
             self.run_1,
             self.run_2,
         ]
-        asyncio.run(self.executor.execute_all(
-            input={
-                "audit1": {"param1": "value1"},
-                "audit2": {"param1": "value2"},
-                "audit3": {"param1": "value3"},
-            }
-        ))
+        asyncio.run(
+            self.executor.execute_all(
+                input={
+                    "audit1": {"param1": "value1"},
+                    "audit2": {"param1": "value2"},
+                    "audit3": {"param1": "value3"},
+                }
+            )
+        )
 
         # Then execute one specific audit again to create a new iteration and check if get_latest_results returns the updated latest result
-        asyncio.run(self.executor.execute_specific("audit1", input={"param1": "value1"}))
-        asyncio.run(self.executor.execute_specific("audit1", input={"param1": "value1"}))
+        asyncio.run(
+            self.executor.execute_specific("audit1", input={"param1": "value1"})
+        )
+        asyncio.run(
+            self.executor.execute_specific("audit1", input={"param1": "value1"})
+        )
 
         latest_results = self.executor.get_latest_results()
         for actual_run, expected_run in zip(latest_results, expected_results):
