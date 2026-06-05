@@ -31,5 +31,5 @@ class Audit(ABC):
         pass
 
     @abstractmethod
-    async def run(self) -> Tuple[List[AuditResult], List[AuditError]]:
+    async def run(self, **kwargs) -> Tuple[List[AuditResult], List[AuditError]]:
         pass
