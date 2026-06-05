@@ -1,4 +1,5 @@
 from typing import TypedDict
+from pathlib import Path
 
 from bxagent.tools.audit.types import AuditRun
 
@@ -9,3 +10,4 @@ class WorkflowState(TypedDict):
     latest_audit_runs: list[AuditRun]
     iteration: int
     implementation_instructions: str
+    written_files: list[Path]
