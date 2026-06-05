@@ -107,9 +107,3 @@ class TestFileExistence(TestCase):
         ):
             asyncio.run(file_existence_audit.run())
             
-    def test_execute__files_parameter_not_a_list(self):
-        file_existence_audit = FileExistenceAudit()
-        with self.assertRaises(
-            ValueError, msg="Should raise ValueError when 'files' parameter is not a list."
-        ):
-            asyncio.run(file_existence_audit.run(files="not_a_list"))

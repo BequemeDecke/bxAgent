@@ -1,7 +1,12 @@
-from pathlib import Path
 from typing import List, Tuple
+from pathlib import Path
+from pydantic import BaseModel
 
 from ..types import Audit, AuditResult, AuditError
+
+
+class FileExistenceAuditConfig(BaseModel):
+    files: List[Path]
 
 
 class FileExistenceAudit(Audit):
@@ -9,12 +14,8 @@ class FileExistenceAudit(Audit):
         pass
 
     async def run(self, **kwargs) -> Tuple[List[AuditResult], List[AuditError]]:
-        if "files" not in kwargs:
-            raise ValueError("Missing required parameter: 'files'")
-        
-        files = kwargs["files"]
-        if not isinstance(files, list):
-            raise ValueError("Parameter 'files' must be a list of file paths.")
+        config = FileExistenceAuditConfig(**kwargs)
+        files = config.files
         
         results = []
         errors = []
