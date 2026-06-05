@@ -33,7 +33,7 @@ class TestAuditingNode(TestCase):
             [AuditResult(content="Some audit result")],
             [AuditError(message="Some audit error")],
         )
-        
+
         audit_id = "test_audit"
 
         audit_executor = AuditExecutor(
@@ -76,3 +76,23 @@ class TestAuditingNode(TestCase):
             {"some_field": "some_value"},
             "The audit should have been called with the mapped parameters.",
         )
+
+    def test_auditing_node__audit_has_no_mapper(self):
+        mocked_audit = Mock(spec=Audit)
+        mocked_audit.run.return_value = (
+            [AuditResult(content="Some audit result")],
+            [AuditError(message="Some audit error")],
+        )
+
+        audit_id = "test_audit"
+
+        audit_executor = AuditExecutor(
+            audits={audit_id: {"audit": mocked_audit, "audit_schema": MockedSchema}}
+        )
+        audit_agent_work = create_audit_agent_work_function(
+            audit_executor=audit_executor,
+            mapper={},  # No mapper provided
+        )
+
+        with self.assertRaises(KeyError, msg="A KeyError should be raised when no mapper is provided for the audit."):
+            asyncio.run(audit_agent_work(WorkflowState()))
