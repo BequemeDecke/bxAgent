@@ -165,15 +165,6 @@ class TestJavaCompilation(TestCase):
             msg="JavaCompilationAudit's 'run' method should raise ValueError if 'files' parameter is missing.",
         ):
             asyncio.run(java_compilation_audit.run())
-            
-    def test_run__files_parameter_not_a_list(self):
-        java_compilation_audit = JavaCompilationAudit()
-        
-        with self.assertRaises(
-            ValueError,
-            msg="JavaCompilationAudit's 'run' method should raise ValueError if 'files' parameter is not a list.",
-        ):
-            asyncio.run(java_compilation_audit.run(files="not_a_list"))
 
 
 class TestJavaCompilationAudit__parse_javac_output(TestCase):

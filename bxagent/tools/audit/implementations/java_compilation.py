@@ -4,8 +4,14 @@ import re
 import subprocess
 
 from typing import List, Tuple
+from pydantic import BaseModel
+from pathlib import Path
 
 from ..types import AuditResult, AuditError, Audit
+
+
+class JavaCompilationAuditConfig(BaseModel):
+    files: List[Path]
 
 
 class JavaCompilationAudit(Audit):
@@ -33,12 +39,8 @@ class JavaCompilationAudit(Audit):
         Returns:
             Tuple[List[AuditResult], List[AuditError]]: A tuple containing a list of successful audit results and a list of audit errors.
         """
-        if "files" not in kwargs:
-            raise ValueError("Missing required parameter: 'files'")
-
-        files = kwargs["files"]
-        if not isinstance(files, list):
-            raise ValueError("Parameter 'files' must be a list of file paths.")
+        config = JavaCompilationAuditConfig(**kwargs)
+        files = config.files
 
         results: List[AuditResult] = []
         errors: List[AuditError] = []
@@ -59,7 +61,9 @@ class JavaCompilationAudit(Audit):
                     errors.extend(parse_javac_output(subprocess_result.stderr))
                 else:
                     logging.debug(f"Compilation succeeded for {file}.")
-                    results.append(AuditResult(content=f"Compilation succeeded for {file}"))
+                    results.append(
+                        AuditResult(content=f"Compilation succeeded for {file}")
+                    )
             except Exception as e:
                 logging.exception(f"An error occurred while compiling {file}: {e}")
                 errors.append(
