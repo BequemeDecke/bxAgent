@@ -5,16 +5,20 @@ from ..types import Audit, AuditResult, AuditError
 
 
 class FileExistenceAudit(Audit):
-    def __init__(self, files: List[Path]):
-        self.files = files
-
     async def setup(self):
         pass
 
-    async def run(self) -> Tuple[List[AuditResult], List[AuditError]]:
+    async def run(self, **kwargs) -> Tuple[List[AuditResult], List[AuditError]]:
+        if "files" not in kwargs:
+            raise ValueError("Missing required parameter: 'files'")
+        
+        files = kwargs["files"]
+        if not isinstance(files, list):
+            raise ValueError("Parameter 'files' must be a list of file paths.")
+        
         results = []
         errors = []
-        for file in self.files:
+        for file in files:
             if file.exists():
                 results.append(AuditResult(content=f"File exists: {file}"))
             else:
