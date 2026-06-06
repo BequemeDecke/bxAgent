@@ -3,7 +3,12 @@ from typing import Dict, Any
 
 from bxagent.models import build_base_model
 from bxagent.agents.synthesis import build_synthesis_agent
-from bxagent.tools.audit import JavaCompilationAudit, FileExistenceAudit
+from bxagent.tools.audit.implementations import (
+    FileExistenceAudit,
+    JavaCompilationAudit,
+    FileExistenceAuditConfig,
+    JavaCompilationAuditConfig,
+)
 from bxagent.tools.audit.executor import AuditExecutor
 
 from .state import WorkflowState
@@ -29,8 +34,14 @@ def build_workflow_agent() -> StateGraph:
     )
     audit_executor = AuditExecutor(
         audits={
-            "file_existence_audit": FileExistenceAudit(files=[]),
-            "java_compilation_audit": JavaCompilationAudit(files=[]),
+            "file_existence_audit": {
+                "audit": FileExistenceAudit(),
+                "audit_schema": FileExistenceAuditConfig,
+            },
+            "java_compilation_audit": {
+                "audit": JavaCompilationAudit(),
+                "audit_schema": JavaCompilationAuditConfig,
+            },
         }
     )
     audit_agent_work = create_audit_agent_work_function(
