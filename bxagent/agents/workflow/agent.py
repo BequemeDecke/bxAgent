@@ -1,7 +1,7 @@
 from langgraph.graph import StateGraph, START, END
-from typing import Dict, Any
 
 from bxagent.models import build_base_model
+from bxagent.mapping import map_workflow_to_file
 from bxagent.agents.synthesis import build_synthesis_agent
 from bxagent.tools.audit.implementations import (
     FileExistenceAudit,
@@ -16,17 +16,10 @@ from .transformation_iteration_control import (
     create_check_transformation_iteration_function,
 )
 from .nodes.synthesis_node import create_call_synthesis_agent_function
-from .nodes.auditing_node import (
-    create_audit_agent_work_function,
-    StateToAuditParameterMapper,
-)
+from .nodes.auditing_node import create_audit_agent_work_function
 
 
-def build_workflow_agent() -> StateGraph:
-    class WorkflowToAuditMapper(StateToAuditParameterMapper):
-        def map(self, state: WorkflowState) -> Dict[str, Any]:
-            return {"files": state.get("written_files", [])}
-
+def build_workflow_agent() -> StateGraph[WorkflowState]:
     llm = build_base_model()
     check_transformation_iteration = create_check_transformation_iteration_function(llm)
     call_synthesis_agent = create_call_synthesis_agent_function(
@@ -45,7 +38,11 @@ def build_workflow_agent() -> StateGraph:
         }
     )
     audit_agent_work = create_audit_agent_work_function(
-        audit_executor=audit_executor, mapper=[WorkflowToAuditMapper()]
+        audit_executor=audit_executor,
+        mapper={
+            "file_existence_audit": map_workflow_to_file,
+            "java_compilation_audit": map_workflow_to_file,
+        },
     )
 
     builder = StateGraph(WorkflowState)
