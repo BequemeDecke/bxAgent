@@ -5,6 +5,8 @@ exclude/
 
 notebooks/*/test_results/
 
+.DS_Store
+
 # ---- LangChain ----
 # gitignore template for LangChain products, e.g., LangGraph, LangSmith
 # website: https://www.langchain.com/

@@ -1,0 +1,43 @@
+---
+source_model_package: {{source_model_package}}
+target_model_package: {{target_model_package}}
+iteration: {{iteration}}
+---
+
+# Transformation Plan
+
+## 1. Model Implementations
+
+The implementation of the source model looks as followed:
+--- BEGIN SOURCE MODEL ---
+{{source_model_implementation}}
+--- END SOURCE MODEL ---
+
+The implementation of the target model looks as followed:
+--- BEGIN TARGET MODEL ---
+{{target_model_implementation}}
+--- END TARGET MODEL ---
+
+## 2. Transformation Direction
+
+Bidirectional transformation is required, meaning source to target and target to source:
+{{transformation_direction}}
+
+---
+
+## 3. Identified Difficulties
+
+Several difficulties with the transformation itself have been identified:
+--- BEGIN DIFFICULTIES ---
+{{difficulties}}
+--- END DIFFICULTIES ---
+
+Please note that you have to provide Configuration parameters if there are multiple strategies to resolve a difficulty.
+
+---
+
+## 4. Implementation Steps
+
+--- BEGIN IMPLEMENTATION STEPS ---
+{{implementation_steps}}
+--- END IMPLEMENTATION STEPS ---
