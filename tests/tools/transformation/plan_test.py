@@ -252,7 +252,7 @@ class TestFileTransformationPlanParser(TestCase):
             ValueError, msg="Failed to parse transformation plan data."
         ):
             parser._parse_header("Invalid header format without the expected fields")
-            
+
     def test_file_transformation_plan_parser_parse_header__valid_format(self):
         parser = FileTransformationPlanParser(file_path=Path("valid_file.md"))
         header_content = """
@@ -266,33 +266,41 @@ class TestFileTransformationPlanParser(TestCase):
         self.assertEqual(parsed_header["source_model_package"], "test_source_package")
         self.assertEqual(parsed_header["target_model_package"], "test_target_package")
         self.assertEqual(parsed_header["iteration"], 3)
-    
-    def test_file_transformation_plan_parser_parse_model_implementation__invalid_format(self):
-        parser = FileTransformationPlanParser(file_path=Path("invalid_file.md"))
-        with self.assertRaises(
-            ValueError, msg="Failed to parse model implementation."
-        ):
-            parser._parse_model_implementation("Invalid content without the expected markers", "source")
-            
-        with self.assertRaises(
-            ValueError, msg="Failed to parse model implementation."
-        ):
-            parser._parse_model_implementation("Invalid content without the expected markers", "target")
 
-    def test_file_transformation_plan_parser_parse_model_implementation__valid_format(self):
+    def test_file_transformation_plan_parser_parse_model_implementation__invalid_format(
+        self,
+    ):
+        parser = FileTransformationPlanParser(file_path=Path("invalid_file.md"))
+        with self.assertRaises(ValueError, msg="Failed to parse model implementation."):
+            parser._parse_model_implementation(
+                "Invalid content without the expected markers", "source"
+            )
+
+        with self.assertRaises(ValueError, msg="Failed to parse model implementation."):
+            parser._parse_model_implementation(
+                "Invalid content without the expected markers", "target"
+            )
+
+    def test_file_transformation_plan_parser_parse_model_implementation__valid_format(
+        self,
+    ):
         parser = FileTransformationPlanParser(file_path=Path("valid_file.md"))
         source_model_implementation_text = """
         This is the source model implementation.
         """
-        
+
         content = f"""
         --- BEGIN SOURCE MODEL ---
         {source_model_implementation_text}
         --- END SOURCE MODEL ---
         """
-        source_model_implementation = parser._parse_model_implementation(content, "source")
-        self.assertEqual(source_model_implementation, source_model_implementation_text.strip())
-        
+        source_model_implementation = parser._parse_model_implementation(
+            content, "source"
+        )
+        self.assertEqual(
+            source_model_implementation, source_model_implementation_text.strip()
+        )
+
         target_model_implementation = """
         This is the multiline 
         target model implementation.
@@ -303,6 +311,35 @@ class TestFileTransformationPlanParser(TestCase):
         {target_model_implementation}
         --- END TARGET MODEL ---
         """
-        target_model_implementation = parser._parse_model_implementation(content, "target")
-        self.assertEqual(target_model_implementation, target_model_implementation.strip())
-        
+        target_model_implementation = parser._parse_model_implementation(
+            content, "target"
+        )
+        self.assertEqual(
+            target_model_implementation, target_model_implementation.strip()
+        )
+
+    def test_file_transformation_plan_parser_parse_transformation_direction__invalid_format(
+        self,
+    ):
+        parser = FileTransformationPlanParser(file_path=Path("invalid_file.md"))
+        with self.assertRaises(
+            ValueError, msg="Failed to parse transformation direction."
+        ):
+            parser._parse_transformation_direction(
+                "Invalid content without the expected markers"
+            )
+
+    def test_file_transformation_plan_parser_parse_transformation_direction__valid_format(
+        self,
+    ):
+        parser = FileTransformationPlanParser(file_path=Path("valid_file.md"))
+        transformation_direction_text = "source to target"
+        content = f"""
+        --- BEGIN TRANSFORMATION DIRECTION ---
+        {transformation_direction_text}
+        --- END TRANSFORMATION DIRECTION ---
+        """
+        transformation_direction = parser._parse_transformation_direction(content)
+        self.assertEqual(
+            transformation_direction, transformation_direction_text.strip()
+        )

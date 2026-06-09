@@ -92,6 +92,27 @@ class FileTransformationPlanParser(TransformationPlanParser):
             raise ValueError("Failed to parse model implementation.")
 
         return match.group(f"{model_type}_model_implementation")
+    
+    def _parse_transformation_direction(self, content: str) -> str:
+        """
+        Parses the transformation direction from the transformation plan file.
+        With following regex:
+        ```md
+        --- BEGIN TRANSFORMATION DIRECTION ---
+        {{transformation_direction}}
+        --- END TRANSFORMATION DIRECTION ---
+        ```
+        """
+        match = re.search(
+            r"---\s*BEGIN TRANSFORMATION DIRECTION\s*---\s*(?P<transformation_direction>.*?)\s*---\s*END TRANSFORMATION DIRECTION\s*---",
+            content,
+            re.DOTALL,
+        )
+
+        if not match:
+            raise ValueError("Failed to parse transformation direction.")
+
+        return match.group("transformation_direction")
 
     def parse(self) -> TransformationPlanData:
         if not self.file_path.exists():
@@ -105,6 +126,7 @@ class FileTransformationPlanParser(TransformationPlanParser):
         header_data = self._parse_header(content)
         source_model_implementation = self._parse_model_implementation(content, "source")
         target_model_implementation = self._parse_model_implementation(content, "target")
+        transformation_direction = self._parse_transformation_direction(content)
 
         return {
             "source_model_package": header_data["source_model_package"],
@@ -112,7 +134,7 @@ class FileTransformationPlanParser(TransformationPlanParser):
             "iteration": header_data["iteration"],
             "source_model_implementation": source_model_implementation,
             "target_model_implementation": target_model_implementation,
-            "transformation_direction": "",
+            "transformation_direction": transformation_direction,
             "difficulties": "",
             "implementation_steps": "",
         }
