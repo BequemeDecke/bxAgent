@@ -1,3 +1,5 @@
+import re
+
 from abc import ABC, abstractmethod
 from jinja2 import Environment, FileSystemLoader, Template
 from pathlib import Path
@@ -34,6 +36,36 @@ class TransformationPlanParser(ABC):
 class FileTransformationPlanParser(TransformationPlanParser):
     def __init__(self, file_path: Path):
         self.file_path = file_path
+        
+    def _parse_header(self, content: str) -> dict:
+        """
+        Parses the header of the transformation plan file to extract source_model_package, target_model_package, and iteration.
+        
+        ---
+        source_model_package: {{source_model_package}}
+        target_model_package: {{target_model_package}}
+        iteration: {{iteration}}
+        ---
+        
+        Args:
+            content (str): The content of the transformation plan file.
+        Returns:
+            dict: A dictionary containing source_model_package, target_model_package, and iteration.
+        """
+        match = re.search(
+            r"---\s*source_model_package:\s*(?P<source_model_package>.*?)\s*target_model_package:\s*(?P<target_model_package>.*?)\s*iteration:\s*(?P<iteration>\d+)\s*---",
+            content,
+            re.DOTALL,
+        )
+        
+        if not match:
+            raise ValueError("Failed to parse transformation plan header.")
+
+        return {
+            "source_model_package": match.group("source_model_package"),
+            "target_model_package": match.group("target_model_package"),
+            "iteration": int(match.group("iteration")),
+        }
 
     def parse(self) -> TransformationPlanData:
         if not self.file_path.exists():
@@ -41,10 +73,15 @@ class FileTransformationPlanParser(TransformationPlanParser):
                 f"Transformation plan file not found at {self.file_path}"
             )
         content = self.file_path.read_text()
+        if content.strip() == "":
+            raise ValueError("The transformation plan file is empty.")
+        
+        header_data = self._parse_header(content)
+
         return {
-            "source_model_package": "",
-            "target_model_package": "",
-            "iteration": 0,
+            "source_model_package": header_data["source_model_package"],
+            "target_model_package": header_data["target_model_package"],
+            "iteration": header_data["iteration"],
             "source_model_implementation": "",
             "target_model_implementation": "",
             "transformation_direction": "",

@@ -15,6 +15,7 @@ from jinja2 import Template, Environment, FileSystemLoader
 from bxagent.tools.transformation.plan import (
     TransformationPlan,
     TransformationPlanParser,
+    TransformationPlanData,
     FileTransformationPlanParser,
 )
 
@@ -231,3 +232,38 @@ class TestFileTransformationPlanParser(TestCase):
         parser = FileTransformationPlanParser(file_path=Path("non_existent_file.md"))
         with self.assertRaises(FileNotFoundError):
             parser.parse()
+
+    @patch("pathlib.Path.exists")
+    @patch("pathlib.Path.read_text")
+    def test_file_transformation_plan_parser__file_empty(
+        self, mock_read_text, mock_exists
+    ):
+        mock_exists.return_value = True
+        mock_read_text.return_value = ""
+        parser = FileTransformationPlanParser(file_path=Path("empty_file.md"))
+        with self.assertRaises(
+            ValueError, msg="The transformation plan file is empty."
+        ):
+            parser.parse()
+
+    def test_file_transformation_plan_parser_parse_header__invalid_format(self):
+        parser = FileTransformationPlanParser(file_path=Path("invalid_file.md"))
+        with self.assertRaises(
+            ValueError, msg="Failed to parse transformation plan data."
+        ):
+            parser._parse_header("Invalid header format without the expected fields")
+            
+    def test_file_transformation_plan_parser_parse_header__valid_format(self):
+        parser = FileTransformationPlanParser(file_path=Path("valid_file.md"))
+        header_content = """
+        ---
+        source_model_package: test_source_package
+        target_model_package: test_target_package
+        iteration: 3
+        ---
+        """
+        parsed_header = parser._parse_header(header_content)
+        self.assertEqual(parsed_header["source_model_package"], "test_source_package")
+        self.assertEqual(parsed_header["target_model_package"], "test_target_package")
+        self.assertEqual(parsed_header["iteration"], 3)
+    
