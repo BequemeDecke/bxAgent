@@ -343,3 +343,47 @@ class TestFileTransformationPlanParser(TestCase):
         self.assertEqual(
             transformation_direction, transformation_direction_text.strip()
         )
+
+    def test_file_transformation_plan_parser_parse_difficulties__invalid_format(
+        self,
+    ):
+        parser = FileTransformationPlanParser(file_path=Path("invalid_file.md"))
+        with self.assertRaises(
+            ValueError, msg="Failed to parse transformation difficulties."
+        ):
+            parser._parse_difficulties("Invalid content without the expected markers")
+
+    def test_file_transformation_plan_parser_parse_difficulties__valid_format(
+        self,
+    ):
+        parser = FileTransformationPlanParser(file_path=Path("valid_file.md"))
+        difficulties_text = "Some difficulties with the transformation."
+        content = f"""
+        --- BEGIN DIFFICULTIES ---
+        {difficulties_text}
+        --- END DIFFICULTIES ---
+        """
+        difficulties = parser._parse_difficulties(content)
+        self.assertEqual(difficulties, difficulties_text.strip())
+
+    def test_file_transformation_plan_parser_parse_implementation_steps__invalid_format(
+        self,
+    ):
+        parser = FileTransformationPlanParser(file_path=Path("invalid_file.md"))
+        with self.assertRaises(ValueError, msg="Failed to parse implementation steps."):
+            parser._parse_implementation_steps(
+                "Invalid content without the expected markers"
+            )
+
+    def test_file_transformation_plan_parser_parse_implementation_steps__valid_format(
+        self,
+    ):
+        parser = FileTransformationPlanParser(file_path=Path("valid_file.md"))
+        steps_text = "1. First step\n2. Second step\n3. Third step"
+        content = f"""
+        --- BEGIN IMPLEMENTATION STEPS ---
+        {steps_text}
+        --- END IMPLEMENTATION STEPS ---
+        """
+        implementation_steps = parser._parse_implementation_steps(content)
+        self.assertEqual(implementation_steps, steps_text.strip())

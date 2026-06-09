@@ -113,6 +113,48 @@ class FileTransformationPlanParser(TransformationPlanParser):
             raise ValueError("Failed to parse transformation direction.")
 
         return match.group("transformation_direction")
+    
+    def _parse_difficulties(self, content: str) -> str:
+        """
+        Parses the transformation difficulties from the transformation plan file.
+        With following regex:
+        ```md
+        --- BEGIN DIFFICULTIES ---
+        {{difficulties}}
+        --- END DIFFICULTIES ---
+        ```
+        """
+        match = re.search(
+            r"---\s*BEGIN DIFFICULTIES\s*---\s*(?P<difficulties>.*?)\s*---\s*END DIFFICULTIES\s*---",
+            content,
+            re.DOTALL,
+        )
+
+        if not match:
+            raise ValueError("Failed to parse transformation difficulties.")
+
+        return match.group("difficulties")
+    
+    def _parse_implementation_steps(self, content: str) -> str:
+        """
+        Parses the implementation steps from the transformation plan file.
+        With following regex:
+        ```md
+        --- BEGIN IMPLEMENTATION STEPS ---
+        {{implementation_steps}}
+        --- END IMPLEMENTATION STEPS ---
+        ```
+        """
+        match = re.search(
+            r"---\s*BEGIN IMPLEMENTATION STEPS\s*---\s*(?P<implementation_steps>.*?)\s*---\s*END IMPLEMENTATION STEPS\s*---",
+            content,
+            re.DOTALL,
+        )
+
+        if not match:
+            raise ValueError("Failed to parse implementation steps.")
+
+        return match.group("implementation_steps")
 
     def parse(self) -> TransformationPlanData:
         if not self.file_path.exists():
@@ -127,6 +169,8 @@ class FileTransformationPlanParser(TransformationPlanParser):
         source_model_implementation = self._parse_model_implementation(content, "source")
         target_model_implementation = self._parse_model_implementation(content, "target")
         transformation_direction = self._parse_transformation_direction(content)
+        difficulties = self._parse_difficulties(content)
+        implementation_steps = self._parse_implementation_steps(content)
 
         return {
             "source_model_package": header_data["source_model_package"],
@@ -135,8 +179,8 @@ class FileTransformationPlanParser(TransformationPlanParser):
             "source_model_implementation": source_model_implementation,
             "target_model_implementation": target_model_implementation,
             "transformation_direction": transformation_direction,
-            "difficulties": "",
-            "implementation_steps": "",
+            "difficulties": difficulties,
+            "implementation_steps": implementation_steps,
         }
 
     def save(self, data: str) -> None:
