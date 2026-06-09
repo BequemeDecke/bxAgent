@@ -15,6 +15,7 @@ from jinja2 import Template, Environment, FileSystemLoader
 from bxagent.tools.transformation.plan import (
     TransformationPlan,
     TransformationPlanParser,
+    FileTransformationPlanParser,
 )
 
 
@@ -221,3 +222,12 @@ class TestTransformationPlan(TestCase):
         plan.update_implementation_steps(updated_steps)
         self.assertEqual(plan.data["implementation_steps"], updated_steps)
         mocked_save_function.assert_called_with(str(plan))
+
+
+class TestFileTransformationPlanParser(TestCase):
+    @patch("pathlib.Path.exists")
+    def test_file_transformation_plan_parser__file_not_found(self, mock_exists):
+        mock_exists.return_value = False
+        parser = FileTransformationPlanParser(file_path=Path("non_existent_file.md"))
+        with self.assertRaises(FileNotFoundError):
+            parser.parse()

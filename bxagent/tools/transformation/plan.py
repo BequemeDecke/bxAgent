@@ -27,16 +27,33 @@ class TransformationPlanParser(ABC):
         pass
 
     @abstractmethod
-    def save(self, data: TransformationPlanData) -> None:
+    def save(self, data: str) -> None:
         pass
-    
+
 
 class FileTransformationPlanParser(TransformationPlanParser):
     def __init__(self, file_path: Path):
         self.file_path = file_path
 
     def parse(self) -> TransformationPlanData:
-        file_content = self.file_path.read_text()
+        if not self.file_path.exists():
+            raise FileNotFoundError(
+                f"Transformation plan file not found at {self.file_path}"
+            )
+        content = self.file_path.read_text()
+        return {
+            "source_model_package": "",
+            "target_model_package": "",
+            "iteration": 0,
+            "source_model_implementation": "",
+            "target_model_implementation": "",
+            "transformation_direction": "",
+            "difficulties": "",
+            "implementation_steps": "",
+        }
+
+    def save(self, data: str) -> None:
+        self.file_path.write_text(data)
 
 
 class TransformationPlan:
@@ -46,9 +63,9 @@ class TransformationPlan:
 
     def __init__(self, parser: TransformationPlanParser):
         self.parser = parser
-        self.template = Environment(
-            loader=FileSystemLoader("templates")
-        ).get_template("transformation_plan.jinja")
+        self.template = Environment(loader=FileSystemLoader("templates")).get_template(
+            "transformation_plan.jinja"
+        )
 
         try:
             self.data = self.parser.parse()
