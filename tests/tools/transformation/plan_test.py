@@ -226,6 +226,17 @@ class TestTransformationPlan(TestCase):
 
 
 class TestFileTransformationPlanParser(TestCase):
+    @patch("pathlib.Path.write_text")
+    def test_file_transformation_plan_parser_save__writes_to_file(
+        self, mocked_write_text
+    ):
+        mocked_write_text.return_value = None  # write_text does not return anything
+        test_file_path = Path("test_transformation_plan.md")
+        parser = FileTransformationPlanParser(file_path=test_file_path)
+        test_data = "Test transformation plan content"
+        parser.save(test_data)
+        self.assertTrue(mocked_write_text.called)
+
     @patch("pathlib.Path.exists")
     def test_file_transformation_plan_parser__file_not_found(self, mock_exists):
         mock_exists.return_value = False
@@ -387,3 +398,85 @@ class TestFileTransformationPlanParser(TestCase):
         """
         implementation_steps = parser._parse_implementation_steps(content)
         self.assertEqual(implementation_steps, steps_text.strip())
+
+simpson_model = """
+```java
+class Simpson {
+    private String movie;
+}
+```
+"""
+family_member_model = """
+```java
+class FamilyMember {
+    private String name;
+}
+```
+"""
+
+class TestTransformationPlanFileIntegration(TestCase):
+    def setUp(self):
+        self.maxDiff = None  # To see the full diff in case of assertion failures
+        
+        self.input_file = Path(
+            "tests/tools/transformation/files/EXISTED_TRANSFORMATION.md"
+        )
+        self.expected_file = Path(
+            "tests/tools/transformation/files/EXPECTED_TRANSFORMATION.md"
+        )
+
+        self.assertTrue(
+            self.input_file.exists(),
+            f"Input file does not exist at {self.input_file.resolve()}",
+        )
+        self.assertTrue(
+            self.expected_file.exists(),
+            f"Expected file does not exist at {self.expected_file.resolve()}",
+        )
+
+        self.parser = FileTransformationPlanParser(file_path=self.input_file)
+        self.plan = TransformationPlan(self.parser)
+
+    @patch("pathlib.Path.write_text")
+    def test_transformation_plan_file_integration__round_trip_of_usage(self, mock_write_text):
+        mock_write_text.return_value = None  # write_text does not return anything
+        
+        # Update the package information and check if the file is updated accordingly.
+        self.plan.update_package_information(
+            source_model_package="de.hof-university.models.simpson",
+            target_model_package="de.hof-university.models.family",
+        )
+        self.assertTrue(mock_write_text.called)
+
+        # Update the iteration and check if the file is updated accordingly.
+        self.plan.update_iteration(2)
+        self.assertTrue(mock_write_text.called)
+
+        # Update the model implementations and check if the file is updated accordingly.
+       
+
+        self.plan.update_model_implementation(
+            source_model_implementation=simpson_model.strip(),
+            target_model_implementation=family_member_model.strip(),
+        )
+        self.assertTrue(mock_write_text.called)
+
+        # Update the transformation direction and check if the file is updated accordingly.
+        self.plan.update_transformation_direction("Do everything!")
+        self.assertTrue(mock_write_text.called)
+
+        # Update the difficulties and check if the file is updated accordingly.
+        self.plan.update_transformation_difficulties(
+            "No difficulties. Looks pretty simple!"
+        )
+
+        # Update the implementation steps and check if the file is updated accordingly.
+        self.plan.update_implementation_steps("1. Start IMPLEMENTING!!!")
+
+        expected_content = self.expected_file.read_text()
+        actual_content = str(self.plan)
+        self.assertEqual(
+            expected_content.strip(),
+            actual_content.strip(),
+            "The content of the transformation plan file does not match the expected content after updates.",
+        )
