@@ -47,7 +47,7 @@ class TransformationPlan:
     def __init__(self, parser: TransformationPlanParser):
         self.parser = parser
         self.template = Environment(
-            loader=FileSystemLoader("bxagent/templates")
+            loader=FileSystemLoader("templates")
         ).get_template("transformation_plan.jinja")
 
         try:
@@ -65,10 +65,10 @@ class TransformationPlan:
                 "implementation_steps": "",
             }
 
-    def __str__(self):
+    def __str__(self) -> str:
         rendered_content = self.template.render(
-            source_model=self.data["source_model_package"],
-            target_model=self.data["target_model_package"],
+            source_model_package=self.data["source_model_package"],
+            target_model_package=self.data["target_model_package"],
             iteration=self.data["iteration"],
             source_model_implementation=self.data["source_model_implementation"],
             target_model_implementation=self.data["target_model_implementation"],
