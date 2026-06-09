@@ -11,6 +11,58 @@ This component uses a few llm calls which will make testing more difficult. Ther
 """
 
 from unittest import TestCase
+from unittest.mock import patch
+
+from bxagent.tools.coding.implement_transformation import (
+    get_transformation_plan,
+    create_implement_transformation_node,
+)
+
+
+class TestGetTransformationPlan(TestCase):
+    @patch("bxagent.tools.transformation._read_transformation_plan")
+    def test_get_transformation_plan__empty_transformation_md(self, mock_read_plan):
+        transformation_md = "Some content of the transformation ..."
+        mock_read_plan.return_value = transformation_md
+
+        actual = get_transformation_plan(None)
+        self.assertEqual(
+            actual,
+            transformation_md,
+            "If None is provided, read the transformation plan from the TRANSFORMATION.md file",
+        )
+
+        actual = get_transformation_plan("")
+        self.assertEqual(
+            actual,
+            transformation_md,
+            "If an empty string is provided, read the transformation plan from the TRANSFORMATION.md file",
+        )
+
+        mock_read_plan.return_value = ""
+        with self.assertRaises(
+            ValueError,
+            msg="If the transformation plan is empty, a ValueError should be raised",
+        ):
+            get_transformation_plan(None)
+
+        with self.assertRaises(
+            ValueError,
+            msg="If the transformation plan is empty, a ValueError should be raised",
+        ):
+            get_transformation_plan("")
+
+    @patch("bxagent.tools.transformation._read_transformation_plan")
+    def test_get_transformation_plan__provided_transformation_md(self, mock_read_plan):
+        transformation_md = "Some content of the transformation ..."
+        mock_read_plan.return_value = "This should not be returned"
+
+        actual = get_transformation_plan(transformation_md)
+        self.assertEqual(
+            actual,
+            transformation_md,
+            "If a non-empty transformation_md is provided, it should be returned instead of reading from the TRANSFORMATION.md file",
+        )
 
 
 class TestImplementTransformation(TestCase):
