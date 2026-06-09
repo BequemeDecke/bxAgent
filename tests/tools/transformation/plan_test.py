@@ -20,7 +20,10 @@ from bxagent.tools.transformation.plan import (
 
 class MockedTransformationPlanParser(TransformationPlanParser):
     def __init__(
-        self, mocked_save: Mock, fake_data: Dict[str, str], fail_parsing: bool = False
+        self,
+        mocked_save: Mock,
+        fake_data: Dict[str, str] = {},
+        fail_parsing: bool = False,
     ):
         self.fake_data = fake_data
         self.mocked_save = mocked_save
@@ -45,6 +48,17 @@ class TestTransformationPlan(TestCase):
             loader=FileSystemLoader("templates")
         ).get_template("transformation_plan.jinja")
 
+        self.fake_data = {
+            "source_model_package": "source_package",
+            "target_model_package": "target_package",
+            "iteration": "1",
+            "source_model_implementation": "source implementation",
+            "target_model_implementation": "target implementation",
+            "transformation_direction": "source to target",
+            "difficulties": "some difficulties",
+            "implementation_steps": "some steps",
+        }
+
     @patch("jinja2.Environment.get_template")
     def test_transformation_plan__create_plan_existing_file(self, mock_get_template):
         """
@@ -54,16 +68,7 @@ class TestTransformationPlan(TestCase):
 
         mocked_save_function = Mock(spec=Callable)
         mocked_parser = MockedTransformationPlanParser(
-            fake_data={
-                "source_model_package": "source_package",
-                "target_model_package": "target_package",
-                "iteration": "1",
-                "source_model_implementation": "source implementation",
-                "target_model_implementation": "target implementation",
-                "transformation_direction": "source to target",
-                "difficulties": "some difficulties",
-                "implementation_steps": "some steps",
-            },
+            fake_data=self.fake_data,
             mocked_save=mocked_save_function,
         )
 
@@ -105,16 +110,7 @@ class TestTransformationPlan(TestCase):
 
     def test_transformation_plan__stringify_plan(self):
         mocked_parser = MockedTransformationPlanParser(
-            fake_data={
-                "source_model_package": "source_package",
-                "target_model_package": "target_package",
-                "iteration": "1",
-                "source_model_implementation": "source implementation",
-                "target_model_implementation": "target implementation",
-                "transformation_direction": "source to target",
-                "difficulties": "some difficulties",
-                "implementation_steps": "some steps",
-            },
+            fake_data=self.fake_data,
             mocked_save=Mock(spec=Callable),
         )
         plan = TransformationPlan(mocked_parser)
@@ -131,19 +127,97 @@ class TestTransformationPlan(TestCase):
         self.assertIn("some steps", str(plan))
 
     def test_transformation_plan__update_package_information(self):
-        self.assertTrue(False)
+        mocked_save_function = Mock(spec=Callable)
+        mocked_parser = MockedTransformationPlanParser(
+            fake_data=self.fake_data,
+            mocked_save=mocked_save_function,
+        )
+        plan = TransformationPlan(mocked_parser)
+
+        updated_source_package = "updated_source_package"
+        updated_target_package = "updated_target_package"
+
+        plan.update_package_information(
+            source_model_package=updated_source_package,
+            target_model_package=updated_target_package,
+        )
+        self.assertEqual(plan.data["source_model_package"], updated_source_package)
+        self.assertEqual(plan.data["target_model_package"], updated_target_package)
+        mocked_save_function.assert_called_with(str(plan))
 
     def test_transformation_plan__update_iteration(self):
-        self.assertTrue(False)
+        mocked_save_function = Mock(spec=Callable)
+        mocked_parser = MockedTransformationPlanParser(
+            fake_data=self.fake_data,
+            mocked_save=mocked_save_function,
+        )
+        plan = TransformationPlan(mocked_parser)
+
+        updated_iteration = 2
+        plan.update_iteration(updated_iteration)
+        self.assertEqual(plan.data["iteration"], updated_iteration)
+        mocked_save_function.assert_called_with(str(plan))
 
     def test_transformation_plan__update_model_implementation(self):
-        self.assertTrue(False)
+        mocked_save_function = Mock(spec=Callable)
+        mocked_parser = MockedTransformationPlanParser(
+            fake_data=self.fake_data,
+            mocked_save=mocked_save_function,
+        )
+        plan = TransformationPlan(mocked_parser)
+
+        updated_source_implementation = "updated source implementation"
+        updated_target_implementation = "updated target implementation"
+
+        plan.update_model_implementation(
+            source_model_implementation=updated_source_implementation,
+            target_model_implementation=updated_target_implementation,
+        )
+        self.assertEqual(
+            plan.data["source_model_implementation"], updated_source_implementation
+        )
+        self.assertEqual(
+            plan.data["target_model_implementation"], updated_target_implementation
+        )
+        mocked_save_function.assert_called_with(str(plan))
 
     def test_transformation_plan__update_transformation_direction(self):
-        self.assertTrue(False)
+        mocked_save_function = Mock(spec=Callable)
+        mocked_parser = MockedTransformationPlanParser(
+            fake_data=self.fake_data,
+            mocked_save=mocked_save_function,
+        )
+        plan = TransformationPlan(mocked_parser)
+
+        updated_transformation_direction = "updated transformation direction"
+        plan.update_transformation_direction(updated_transformation_direction)
+        self.assertEqual(
+            plan.data["transformation_direction"], updated_transformation_direction
+        )
+        mocked_save_function.assert_called_with(str(plan))
 
     def test_transformation_plan__update_transformation_difficulties(self):
-        self.assertTrue(False)
+        mocked_save_function = Mock(spec=Callable)
+        mocked_parser = MockedTransformationPlanParser(
+            fake_data=self.fake_data,
+            mocked_save=mocked_save_function,
+        )
+        plan = TransformationPlan(mocked_parser)
+
+        updated_difficulties = "updated difficulties"
+        plan.update_transformation_difficulties(updated_difficulties)
+        self.assertEqual(plan.data["difficulties"], updated_difficulties)
+        mocked_save_function.assert_called_with(str(plan))
 
     def test_transformation_plan__update_implementation_steps(self):
-        self.assertTrue(False)
+        mocked_save_function = Mock(spec=Callable)
+        mocked_parser = MockedTransformationPlanParser(
+            fake_data=self.fake_data,
+            mocked_save=mocked_save_function,
+        )
+        plan = TransformationPlan(mocked_parser)
+
+        updated_steps = "updated steps"
+        plan.update_implementation_steps(updated_steps)
+        self.assertEqual(plan.data["implementation_steps"], updated_steps)
+        mocked_save_function.assert_called_with(str(plan))
