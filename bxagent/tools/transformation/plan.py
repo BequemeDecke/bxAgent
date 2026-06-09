@@ -3,7 +3,7 @@ import re
 from abc import ABC, abstractmethod
 from jinja2 import Environment, FileSystemLoader, Template
 from pathlib import Path
-from typing import TypedDict
+from typing import Literal, TypedDict
 
 
 class TransformationPlanData(TypedDict):
@@ -67,9 +67,9 @@ class FileTransformationPlanParser(TransformationPlanParser):
             "iteration": int(match.group("iteration")),
         }
 
-    def _parse_source_model_implementation(self, content: str) -> str:
+    def _parse_model_implementation(self, content: str, model_type: Literal["source", "target"]) -> str:
         """
-        Parses the source model implementation from the transformation plan file.
+        Parses the source or target model implementation from the transformation plan file.
         With following regex:
         ```md
         --- BEGIN SOURCE MODEL ---
@@ -77,16 +77,21 @@ class FileTransformationPlanParser(TransformationPlanParser):
         --- END SOURCE MODEL ---
         ```
         """
+        if model_type == "source":
+            pattern = r"---\s*BEGIN SOURCE MODEL\s*---\s*(?P<source_model_implementation>.*?)\s*---\s*END SOURCE MODEL\s*---"
+        else:
+            pattern = r"---\s*BEGIN TARGET MODEL\s*---\s*(?P<target_model_implementation>.*?)\s*---\s*END TARGET MODEL\s*---"
+
         match = re.search(
-            r"---\s*BEGIN SOURCE MODEL\s*---\s*(?P<source_model_implementation>.*?)\s*---\s*END SOURCE MODEL\s*---",
+            pattern,
             content,
             re.DOTALL,
         )
 
         if not match:
-            raise ValueError("Failed to parse source model implementation.")
+            raise ValueError("Failed to parse model implementation.")
 
-        return match.group("source_model_implementation")
+        return match.group(f"{model_type}_model_implementation")
 
     def parse(self) -> TransformationPlanData:
         if not self.file_path.exists():
@@ -98,14 +103,15 @@ class FileTransformationPlanParser(TransformationPlanParser):
             raise ValueError("The transformation plan file is empty.")
 
         header_data = self._parse_header(content)
-        source_model_implementation = self._parse_source_model_implementation(content)
+        source_model_implementation = self._parse_model_implementation(content, "source")
+        target_model_implementation = self._parse_model_implementation(content, "target")
 
         return {
             "source_model_package": header_data["source_model_package"],
             "target_model_package": header_data["target_model_package"],
             "iteration": header_data["iteration"],
             "source_model_implementation": source_model_implementation,
-            "target_model_implementation": "",
+            "target_model_implementation": target_model_implementation,
             "transformation_direction": "",
             "difficulties": "",
             "implementation_steps": "",

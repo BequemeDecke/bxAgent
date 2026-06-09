@@ -267,19 +267,42 @@ class TestFileTransformationPlanParser(TestCase):
         self.assertEqual(parsed_header["target_model_package"], "test_target_package")
         self.assertEqual(parsed_header["iteration"], 3)
     
-    def test_file_transformation_plan_parser_parse_source_model_implementation__invalid_format(self):
+    def test_file_transformation_plan_parser_parse_model_implementation__invalid_format(self):
         parser = FileTransformationPlanParser(file_path=Path("invalid_file.md"))
         with self.assertRaises(
-            ValueError, msg="Failed to parse source model implementation."
+            ValueError, msg="Failed to parse model implementation."
         ):
-            parser._parse_source_model_implementation("Invalid content without the expected markers")
+            parser._parse_model_implementation("Invalid content without the expected markers", "source")
             
-    def test_file_transformation_plan_parser_parse_source_model_implementation__valid_format(self):
+        with self.assertRaises(
+            ValueError, msg="Failed to parse model implementation."
+        ):
+            parser._parse_model_implementation("Invalid content without the expected markers", "target")
+
+    def test_file_transformation_plan_parser_parse_model_implementation__valid_format(self):
         parser = FileTransformationPlanParser(file_path=Path("valid_file.md"))
-        content = """
-        --- BEGIN SOURCE MODEL ---
+        source_model_implementation_text = """
         This is the source model implementation.
+        """
+        
+        content = f"""
+        --- BEGIN SOURCE MODEL ---
+        {source_model_implementation_text}
         --- END SOURCE MODEL ---
         """
-        source_model_implementation = parser._parse_source_model_implementation(content)
-        self.assertEqual(source_model_implementation, "This is the source model implementation.")
+        source_model_implementation = parser._parse_model_implementation(content, "source")
+        self.assertEqual(source_model_implementation, source_model_implementation_text.strip())
+        
+        target_model_implementation = """
+        This is the multiline 
+        target model implementation.
+        Normally this would be some java code block, but for testing purposes we keep it simple.
+        """
+        content = f"""
+        --- BEGIN TARGET MODEL ---
+        {target_model_implementation}
+        --- END TARGET MODEL ---
+        """
+        target_model_implementation = parser._parse_model_implementation(content, "target")
+        self.assertEqual(target_model_implementation, target_model_implementation.strip())
+        
