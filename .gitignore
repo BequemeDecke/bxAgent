@@ -3,6 +3,8 @@ agent_data/
 exclude/
 .bx-agent-workspace/
 
+notebooks/*/test_results/
+
 # ---- LangChain ----
 # gitignore template for LangChain products, e.g., LangGraph, LangSmith
 # website: https://www.langchain.com/

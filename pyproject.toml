@@ -8,6 +8,7 @@ dependencies = [
     "deepagents==0.5.1",
     "dotenv==0.9.9",
     "ipykernel==7.2.0",
+    "jinja2>=3.1.6",
     "langchain-openai==1.1.12",
     "langfuse==4.0.6",
     "pydantic>=2.12.5",
