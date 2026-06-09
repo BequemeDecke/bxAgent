@@ -267,3 +267,19 @@ class TestFileTransformationPlanParser(TestCase):
         self.assertEqual(parsed_header["target_model_package"], "test_target_package")
         self.assertEqual(parsed_header["iteration"], 3)
     
+    def test_file_transformation_plan_parser_parse_source_model_implementation__invalid_format(self):
+        parser = FileTransformationPlanParser(file_path=Path("invalid_file.md"))
+        with self.assertRaises(
+            ValueError, msg="Failed to parse source model implementation."
+        ):
+            parser._parse_source_model_implementation("Invalid content without the expected markers")
+            
+    def test_file_transformation_plan_parser_parse_source_model_implementation__valid_format(self):
+        parser = FileTransformationPlanParser(file_path=Path("valid_file.md"))
+        content = """
+        --- BEGIN SOURCE MODEL ---
+        This is the source model implementation.
+        --- END SOURCE MODEL ---
+        """
+        source_model_implementation = parser._parse_source_model_implementation(content)
+        self.assertEqual(source_model_implementation, "This is the source model implementation.")

@@ -36,17 +36,17 @@ class TransformationPlanParser(ABC):
 class FileTransformationPlanParser(TransformationPlanParser):
     def __init__(self, file_path: Path):
         self.file_path = file_path
-        
+
     def _parse_header(self, content: str) -> dict:
         """
         Parses the header of the transformation plan file to extract source_model_package, target_model_package, and iteration.
-        
+
         ---
         source_model_package: {{source_model_package}}
         target_model_package: {{target_model_package}}
         iteration: {{iteration}}
         ---
-        
+
         Args:
             content (str): The content of the transformation plan file.
         Returns:
@@ -57,7 +57,7 @@ class FileTransformationPlanParser(TransformationPlanParser):
             content,
             re.DOTALL,
         )
-        
+
         if not match:
             raise ValueError("Failed to parse transformation plan header.")
 
@@ -67,6 +67,27 @@ class FileTransformationPlanParser(TransformationPlanParser):
             "iteration": int(match.group("iteration")),
         }
 
+    def _parse_source_model_implementation(self, content: str) -> str:
+        """
+        Parses the source model implementation from the transformation plan file.
+        With following regex:
+        ```md
+        --- BEGIN SOURCE MODEL ---
+        {{source_model_implementation}}
+        --- END SOURCE MODEL ---
+        ```
+        """
+        match = re.search(
+            r"---\s*BEGIN SOURCE MODEL\s*---\s*(?P<source_model_implementation>.*?)\s*---\s*END SOURCE MODEL\s*---",
+            content,
+            re.DOTALL,
+        )
+
+        if not match:
+            raise ValueError("Failed to parse source model implementation.")
+
+        return match.group("source_model_implementation")
+
     def parse(self) -> TransformationPlanData:
         if not self.file_path.exists():
             raise FileNotFoundError(
@@ -75,14 +96,15 @@ class FileTransformationPlanParser(TransformationPlanParser):
         content = self.file_path.read_text()
         if content.strip() == "":
             raise ValueError("The transformation plan file is empty.")
-        
+
         header_data = self._parse_header(content)
+        source_model_implementation = self._parse_source_model_implementation(content)
 
         return {
             "source_model_package": header_data["source_model_package"],
             "target_model_package": header_data["target_model_package"],
             "iteration": header_data["iteration"],
-            "source_model_implementation": "",
+            "source_model_implementation": source_model_implementation,
             "target_model_implementation": "",
             "transformation_direction": "",
             "difficulties": "",
