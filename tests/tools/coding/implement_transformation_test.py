@@ -10,13 +10,19 @@ This component uses a few llm calls which will make testing more difficult. Ther
 2. Agent Evaluation: This will be an end-to-end test where the node is tested as part of the entire agent.
 """
 
+from pathlib import Path
 from unittest import TestCase
-from unittest.mock import patch
+from unittest.mock import Mock
+
+from langgraph.graph.state import CompiledStateGraph
+from langgraph.types import GraphOutput
 
 from bxagent.tools.coding.implement_transformation import (
-    create_implement_transformation_node,
     create_input_prompt,
+    create_implement_transformation_node,
 )
+from bxagent.tools.coding.state import CodingAgentState
+from bxagent.tools.transformation.plan import TransformationPlan
 
 
 class TestCreateInputPrompt(TestCase):
@@ -36,4 +42,36 @@ class TestCreateInputPrompt(TestCase):
 
 class TestImplementTransformation(TestCase):
     def test_implement_transformation__return_compiled_code(self):
-        self.assertTrue(False)
+        mocked_agent = Mock(spec=CompiledStateGraph)
+        mocked_parser = Mock(spec=TransformationPlan)
+
+        output = GraphOutput(
+            value={
+                "data": {
+                    "written_java_files": [
+                        Path("/path/to/GeneratedTransformation.java")
+                    ]
+                }
+            }
+        )
+        mocked_agent.invoke.return_value = output
+
+        func = create_implement_transformation_node(
+            coding_agent=mocked_agent,
+            optional_plan_factory=lambda: TransformationPlan(parser=mocked_parser),
+        )
+
+        agent_state: CodingAgentState = {
+            "task_specification": "Implement the transformation from model Anton to model Berta.",
+            "transformation_md": None,
+            "written_java_files": [],
+        }
+
+        actual_state = func(agent_state)
+
+        self.assertTrue(mocked_agent.invoke.called)
+        self.assertIn("written_java_files", actual_state)
+        self.assertEqual(
+            actual_state["written_java_files"],
+            [Path("/path/to/GeneratedTransformation.java")],
+        )
