@@ -5,7 +5,7 @@ from langchain.chat_models import BaseChatModel
 from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
 from langgraph.graph.state import CompiledStateGraph
 
-from bxagent.config import Config
+from bxagent.config import Config, VariablesConfig, WorkspaceConfig
 from bxagent.agents.coding.agent import build_coding_deep_agent
 
 
@@ -17,6 +17,9 @@ class TestCodingAgent(TestCase):
     ):
         mock_build_coding_model.return_value = GenericFakeChatModel(messages=iter([]))
         config = Mock(spec=Config)
+        config.VARIABLES = VariablesConfig()
+        config.WORKSPACE = WorkspaceConfig()
+
         mock_get_instance.return_value = config
         agent = build_coding_deep_agent()
         self.assertIsInstance(agent, CompiledStateGraph)
