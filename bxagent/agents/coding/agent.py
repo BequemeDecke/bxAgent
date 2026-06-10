@@ -11,6 +11,7 @@ def build_coding_deep_agent():
 
     agent = create_deep_agent(
         model=model,
+        state_schema=CodingDeepAgentState,
         middleware=[
             CodingDeepAgentStateMiddleware(
                 updated_file_index=config.VARIABLES.UPDATED_FILE_INDEX,
