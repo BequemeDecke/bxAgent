@@ -5,20 +5,19 @@ from langchain_core.language_models.fake_chat_models import (
     GenericFakeChatModel,
 )
 from langchain.agents import create_agent
-from langchain.messages import ToolMessage, AIMessage, HumanMessage, ToolCall
+from langchain.messages import ToolMessage, AIMessage, HumanMessage
 from pathlib import Path
 
-from bxagent.agents.synthesis.middleware import (
+from bxagent.agents.coding.middleware import (
     extract_written_files,
-    create_synthesis_response,
-    SynthesisAgentStateMiddleware,
+    CodingDeepAgentStateMiddleware,
 )
 
 logger = logging.getLogger(__name__)
 
 
 class TestSynthesisAgentMiddlewareFunctions(unittest.TestCase):
-    """Test the extract_written_files and validate_file_paths functions of the SynthesisAgentStateMiddleware."""
+    """Test the extract_written_files and validate_file_paths functions of the CodingDeepAgentStateMiddleware."""
 
     def setUp(self):
         self.WORKSPACE_PATH = Path("/test")
@@ -64,15 +63,6 @@ class TestSynthesisAgentMiddlewareFunctions(unittest.TestCase):
         )
         self.assertEqual(extracted_file_paths, expected_file_paths)
 
-    def test_create_synthesis_response(self):
-        """Test that create_synthesis_response correctly creates a structured response."""
-        file_paths = [
-            self.WORKSPACE_PATH / "file1.txt",
-            self.WORKSPACE_PATH / "file2.txt",
-        ]
-        response = create_synthesis_response(file_paths)
-        self.assertEqual(response.written_files, file_paths)
-
 
 class TestSynthesisAgentMiddleware(unittest.TestCase):
     """Test the SynthesisAgentMiddleware by invoking it with a simple input and checking the output and state."""
@@ -95,7 +85,7 @@ class TestSynthesisAgentMiddleware(unittest.TestCase):
             tools=[],
             system_prompt="You are a helpful assistant that writes files.",
             middleware=[
-                SynthesisAgentStateMiddleware(
+                CodingDeepAgentStateMiddleware(
                     updated_file_index=self.UPDATED_FILE_INDEX,
                     workspace_path=self.WORKSPACE_PATH,
                 )
@@ -127,8 +117,6 @@ class TestSynthesisAgentMiddleware(unittest.TestCase):
             self.WORKSPACE_PATH / "/path/to/file1.txt",
             self.WORKSPACE_PATH / "/path/to/file2.txt",
         ]
+        actual_file_paths = response.value["written_files"]
 
-        expected_response = create_synthesis_response(expected_file_paths)
-        actual_response = response.value.get("structured_response")
-
-        self.assertEqual(actual_response, expected_response)
+        self.assertEqual(actual_file_paths, expected_file_paths)

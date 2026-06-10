@@ -1,5 +1,5 @@
 """
-State management for the synthesis agent.
+State management for the Coding agent.
 
 Uses a Node-style hook, because as mentioned in the documentation:
 Run sequentially at specific execution points. Use for logging, validation, and state updates.
@@ -18,15 +18,14 @@ from os import PathLike
 from pathlib import Path
 
 from bxagent.config import Config
-from .output import SynthesisResponseFormat
 
 UPDATED_FILE_INDEX = Config.get_instance().VARIABLES.UPDATED_FILE_INDEX
 WORKSPACE_PATH = Config.get_instance().WORKSPACE.PATH
 
 
-class SynthesisAgentState(BaseAgentState):
+class CodingDeepAgentState(BaseAgentState):
     """
-    State class for the synthesis agent. This class can be extended to include any additional state information that the synthesis agent may need to maintain during its operation.
+    State class for the Coding agent. This class can be extended to include any additional state information that the Coding agent may need to maintain during its operation.
     """
 
     written_files: list[PathLike] = []
@@ -38,7 +37,7 @@ def extract_written_files(
     workspace_path: Path = WORKSPACE_PATH,
 ) -> list[Path]:
     """
-    Extract the paths of files that have been written by the synthesis agent from a list of messages.
+    Extract the paths of files that have been written by the Coding agent from a list of messages.
     """
 
     tool_messages: filter[ToolMessage] = filter(
@@ -56,25 +55,12 @@ def extract_written_files(
     return list(absolute_file_paths)
 
 
-def create_synthesis_response(file_paths: list[Path]):
+class CodingDeepAgentStateMiddleware(AgentMiddleware[CodingDeepAgentState]):
     """
-    Validate the list of file paths and return a structured response.
-    """
-
-    try:
-        response = SynthesisResponseFormat(written_files=file_paths)
-        return response
-    except Exception as e:
-        logging.error(f"Error validating file paths: {e}")
-        return None
-
-
-class SynthesisAgentStateMiddleware(AgentMiddleware[SynthesisAgentState]):
-    """
-    Middleware for the synthesis agent that manages the state of the agent. This middleware can be used to track the files that have been written by the synthesis agent during its operation.
+    Middleware for the Coding agent that manages the state of the agent. This middleware can be used to track the files that have been written by the Coding agent during its operation.
     """
 
-    state_schema = SynthesisAgentState
+    state_schema = CodingDeepAgentState
 
     def __init__(
         self,
@@ -84,7 +70,7 @@ class SynthesisAgentStateMiddleware(AgentMiddleware[SynthesisAgentState]):
         self.updated_file_index = updated_file_index
         self.workspace_path = workspace_path
 
-    def after_agent(self, state: SynthesisAgentState, runtime):
+    def after_agent(self, state: CodingDeepAgentState, runtime):
         """
         After the agent has completed its execution,
         this method is called to update the state with the files that have been written by aggregating the calls to the write_file tool.
@@ -95,13 +81,6 @@ class SynthesisAgentStateMiddleware(AgentMiddleware[SynthesisAgentState]):
         written_files = extract_written_files(
             messages, self.updated_file_index, self.workspace_path
         )
-        response = create_synthesis_response(written_files)
-
-        if response is None:
-            logging.error(
-                "Failed to create synthesis response. The response format is invalid."
-            )
-            return
 
         logging.info(f"Agent has written the following files: {written_files}")
-        return {"structured_response": response}
+        return {"written_files": written_files}
