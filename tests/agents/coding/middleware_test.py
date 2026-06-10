@@ -120,3 +120,53 @@ class TestSynthesisAgentMiddleware(unittest.TestCase):
         actual_file_paths = response.value["written_files"]
 
         self.assertEqual(actual_file_paths, expected_file_paths)
+        
+    def test_middleware_processing__only_java_files(self):
+        self.model = GenericFakeChatModel(
+            messages=iter(
+                [
+                    "This is a message from the agent.",
+                ]
+            )
+        )
+
+        self.agent = create_agent(
+            model=self.model,
+            tools=[],
+            system_prompt="You are a helpful assistant that writes files.",
+            middleware=[
+                CodingDeepAgentStateMiddleware(
+                    updated_file_index=self.UPDATED_FILE_INDEX,
+                    workspace_path=self.WORKSPACE_PATH,
+                    file_extension_filter=".java",
+                )
+            ],
+        )
+
+        # Invoke the first time to get the ai message with the tool calls
+        response = self.agent.invoke(
+            input={
+                "messages": [
+                    HumanMessage(content="Write to Test.java and file2.txt"),
+                    ToolMessage(
+                        name="write_file",
+                        content="Updated file /path/to/Test.java",
+                        tool_call_id="call_1",
+                    ),
+                    ToolMessage(
+                        name="write_file",
+                        content="Updated file /path/to/file2.txt",
+                        tool_call_id="call_2",
+                    ),
+                ],
+            },
+            version="v2",
+        )
+
+        # Check that the response is correct
+        expected_file_paths = [
+            self.WORKSPACE_PATH / "/path/to/Test.java",
+        ]
+        actual_file_paths = response.value["written_files"]
+
+        self.assertEqual(actual_file_paths, expected_file_paths)

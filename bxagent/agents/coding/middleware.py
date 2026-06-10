@@ -66,9 +66,11 @@ class CodingDeepAgentStateMiddleware(AgentMiddleware[CodingDeepAgentState]):
         self,
         updated_file_index: int = UPDATED_FILE_INDEX,
         workspace_path: Path = WORKSPACE_PATH,
+        file_extension_filter: str | None = None,
     ):
         self.updated_file_index = updated_file_index
         self.workspace_path = workspace_path
+        self.file_extension_filter = file_extension_filter
 
     def after_agent(self, state: CodingDeepAgentState, runtime):
         """
@@ -81,6 +83,13 @@ class CodingDeepAgentStateMiddleware(AgentMiddleware[CodingDeepAgentState]):
         written_files = extract_written_files(
             messages, self.updated_file_index, self.workspace_path
         )
+
+        if self.file_extension_filter is not None:
+            written_files = [
+                file
+                for file in written_files
+                if file.suffix == self.file_extension_filter
+            ]
 
         logging.info(f"Agent has written the following files: {written_files}")
         return {"written_files": written_files}
