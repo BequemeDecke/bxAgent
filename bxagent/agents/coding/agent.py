@@ -1,4 +1,5 @@
 from deepagents import create_deep_agent
+from deepagents.backends import FilesystemBackend
 
 from bxagent.config import Config
 from bxagent import models
@@ -8,6 +9,7 @@ from .middleware import CodingDeepAgentState, CodingDeepAgentStateMiddleware
 def build_coding_deep_agent():
     config = Config.get_instance()
     model = models.build_coding_model()
+    backend = FilesystemBackend(root_dir=config.WORKSPACE.PATH, virtual_mode=True)
 
     agent = create_deep_agent(
         model=model,
@@ -19,6 +21,7 @@ def build_coding_deep_agent():
                 file_extension_filter=".java",  # Only track Java files in the coding agent state
             )
         ],
+        backend=backend
     )
 
     return agent

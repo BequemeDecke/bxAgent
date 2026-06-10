@@ -192,9 +192,9 @@ class TransformationPlan:
     parser: TransformationPlanParser
     template: Template
 
-    def __init__(self, parser: TransformationPlanParser):
+    def __init__(self, parser: TransformationPlanParser, template_path: Path = Path.cwd() / "templates"):
         self.parser = parser
-        self.template = Environment(loader=FileSystemLoader("templates")).get_template(
+        self.template = Environment(loader=FileSystemLoader(template_path)).get_template(
             "transformation_plan.jinja"
         )
 
