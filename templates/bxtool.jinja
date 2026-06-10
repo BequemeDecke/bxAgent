@@ -1,0 +1,155 @@
+{{transformation_package}}
+
+import static org.junit.Assert.fail;
+
+import java.io.IOException;
+import java.util.function.Supplier;
+
+import org.benchmarx.config.Configurator;
+import org.benchmarx.edit.IEdit;
+import org.benchmarx.emf.BXToolForEMF;
+import org.eclipse.emf.common.util.URI;
+import org.eclipse.emf.ecore.EObject;
+import org.eclipse.emf.ecore.resource.Resource;
+import org.eclipse.emf.ecore.resource.ResourceSet;
+import org.eclipse.emf.ecore.resource.impl.ResourceSetImpl;
+import org.eclipse.emf.ecore.util.EcoreUtil;
+import org.eclipse.emf.ecore.xmi.impl.XMIResourceFactoryImpl;
+
+{% comment %} Some depend on the source and target model if there are some benchmarx implementations {% endcomment %}
+import {{transformation_implementation.decisions.import_path}};
+import {{benchmarx.source_model.comparator.import_path}};
+import {{benchmarx.target_model.comparator.import_path}};
+import {{source_model.factory.import_path}};
+import {{source_model.register.import_path}};
+import {{target_model.factory.import_path}};
+import {{target_model.register.import_path}};
+import {{transformation_implementation.import_path}};
+
+{{
+    f"import {additional_import};" for additional_import in additional_imports if additional_import != ""
+}}
+
+
+public class {{transformation_implementation.class_name}} extends BXToolForEMF<{{source_model.register.class_name}}, {{target_model.register.class_name}}, Decisions> {
+	private ResourceSet set = new ResourceSetImpl();
+	private Resource source;
+	private Resource target;
+	private Resource corr;
+	private {{transformation_implementation.class_name}} javaTrans;
+	private Configurator<Decisions> conf;
+	private Configurator<Decisions> defaultConf;
+	private {{source_model.register.class_name}} {{source_model.register.instance_name}};
+	private {{target_model.register.class_name}} {{target_model.register.instance_name}};
+
+	private static final String RESULTPATH = "results/Java";
+
+    {% comment %} These also depend on the source and target model and have to be implemented in the test cases by the user{% endcomment %}
+	public {{transformation_implementation.class_name}}() {
+		super(new {{source_model.comparator.class_name}}(), new {{target_model.comparator.class_name}}());
+	}
+	
+	@Override
+	public String getName() {
+		return "{{transformation_implementation.class_name}}";
+	}
+
+	@Override
+	public void initiateSynchronisationDialogue() {
+		//setConfigurator(new Configurator<Decisions>().makeDecision(Decisions.PREFER_CREATING_PARENT_TO_CHILD, true)
+		//	  	.makeDecision(Decisions.PREFER_EXISTING_FAMILY_TO_NEW, true));
+        {{transformation_implementation.initiation_dialogue.setConfigurator}}
+
+		set.getResourceFactoryRegistry().getExtensionToFactoryMap().put({{source_model.name}}, new XMIResourceFactoryImpl());
+		set.getResourceFactoryRegistry().getExtensionToFactoryMap().put({{target_model.name}}, new XMIResourceFactoryImpl());
+		set.getResourceFactoryRegistry().getExtensionToFactoryMap().put("corr", new XMIResourceFactoryImpl());
+
+		source = set.createResource(URI.createURI("sourceModel.{{source_model.name}}"));
+		target = set.createResource(URI.createURI("targetModel.{{target_model.name}}"));
+		corr = set.createResource(URI.createURI("corrModel.corr"));
+        
+		{{source_model.register.instance_name}} = {{source_model.factory.class_name}}.eINSTANCE.create{{source_model.register.class_name}}();
+		{{target_model.register.instance_name}} = {{target_model.factory.class_name}}.eINSTANCE.create{{target_model.register.class_name}}();
+		source.getContents().add({{source_model.register.instance_name}});
+		target.getContents().add({{target_model.register.instance_name}});
+
+		{{transformation_implementation.initiation_dialogue.initiateDialogue}}
+	}
+	
+	/**
+	 * Perform an edit delta on the target model and propagate the change to the
+	 * source model
+	 * 
+	 * @param edit : the source edit delta
+	 */
+	@Override
+	public void performAndPropagateTargetEdit(Supplier<IEdit<{{target_model.register.class_name}}>> edit) {
+		edit.get();
+		{{transformation_implementation.perform_and_propagate_target_edit}}
+	}
+
+	/**
+	 * Perform an edit delta on the source model and propagate the change to the
+	 * target model
+	 * 
+	 * @param edit : the source edit delta
+	 */
+	@Override
+	public void performAndPropagateSourceEdit(Supplier<IEdit<{{source_model.register.class_name}}>> edit) {
+		edit.get();		
+		{{transformation_implementation.perform_and_propagate_source_edit}}
+	}	
+
+	@Override
+	public void performAndPropagateEdit(Supplier<IEdit<{{source_model.register.class_name}}>> sourceEdit,
+			Supplier<IEdit<{{target_model.register.class_name}}>> targetEdit) {
+		// TODO Auto-generated method stub
+		//fail("Concurrent edits not supported.");
+		sourceEdit.get();
+		targetEdit.get();
+		{{transformation_implementation.perform_and_propagate_concurrent_edit}}
+	}
+
+	@Override
+	public void setConfigurator(Configurator<Decisions> configurator) {
+		if (defaultConf == null)
+			defaultConf = configurator;
+		conf = configurator;
+	}
+
+	@Override
+	public {{source_model.register.class_name}} getSourceModel() {
+		return {{source_model.register.instance_name}};
+	}
+
+	@Override
+	public {{target_model.register.class_name}} getTargetModel() {
+		return {{target_model.register.instance_name}};
+	}
+
+	@Override
+	public void saveModels(String name) {
+		ResourceSet set = new ResourceSetImpl();
+		set.getResourceFactoryRegistry().getExtensionToFactoryMap().put(Resource.Factory.Registry.DEFAULT_EXTENSION,
+				new XMIResourceFactoryImpl());
+		URI srcURI = URI.createFileURI(RESULTPATH + "/" + name + "{{source_model.name}}.xmi");
+		URI trgURI = URI.createFileURI(RESULTPATH + "/" + name + "{{target_model.name}}.xmi");
+		Resource resSource = set.createResource(srcURI);
+		Resource resTarget = set.createResource(trgURI);
+
+		EObject colSource = EcoreUtil.copy(getSourceModel());
+		EObject colTarget = EcoreUtil.copy(getTargetModel());
+
+		resSource.getContents().add(colSource);
+		resTarget.getContents().add(colTarget);
+
+		try {
+			resSource.save(null);
+			resTarget.save(null);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+
+}
