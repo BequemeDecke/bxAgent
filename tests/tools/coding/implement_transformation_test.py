@@ -14,55 +14,24 @@ from unittest import TestCase
 from unittest.mock import patch
 
 from bxagent.tools.coding.implement_transformation import (
-    get_transformation_plan,
     create_implement_transformation_node,
+    create_input_prompt,
 )
 
 
-class TestGetTransformationPlan(TestCase):
-    @patch("bxagent.tools.transformation._read_transformation_plan")
-    def test_get_transformation_plan__empty_transformation_md(self, mock_read_plan):
-        transformation_md = "Some content of the transformation ..."
-        mock_read_plan.return_value = transformation_md
-
-        actual = get_transformation_plan(None)
-        self.assertEqual(
-            actual,
-            transformation_md,
-            "If None is provided, read the transformation plan from the TRANSFORMATION.md file",
+class TestCreateInputPrompt(TestCase):
+    def test_create_input_prompt__returns_correctly_formatted_prompt(self):
+        task_specification = (
+            "Implement the transformation from model Anton to model Berta."
         )
+        transformation_plan = "This is the transformation plan."
 
-        actual = get_transformation_plan("")
-        self.assertEqual(
-            actual,
-            transformation_md,
-            "If an empty string is provided, read the transformation plan from the TRANSFORMATION.md file",
-        )
+        actual_prompt = create_input_prompt(task_specification, transformation_plan)
 
-        mock_read_plan.return_value = ""
-        with self.assertRaises(
-            ValueError,
-            msg="If the transformation plan is empty, a ValueError should be raised",
-        ):
-            get_transformation_plan(None)
-
-        with self.assertRaises(
-            ValueError,
-            msg="If the transformation plan is empty, a ValueError should be raised",
-        ):
-            get_transformation_plan("")
-
-    @patch("bxagent.tools.transformation._read_transformation_plan")
-    def test_get_transformation_plan__provided_transformation_md(self, mock_read_plan):
-        transformation_md = "Some content of the transformation ..."
-        mock_read_plan.return_value = "This should not be returned"
-
-        actual = get_transformation_plan(transformation_md)
-        self.assertEqual(
-            actual,
-            transformation_md,
-            "If a non-empty transformation_md is provided, it should be returned instead of reading from the TRANSFORMATION.md file",
-        )
+        self.assertIn("--- BEGIN TASK SPECIFICATION ---", actual_prompt)
+        self.assertIn(task_specification, actual_prompt)
+        self.assertIn("--- BEGIN TRANSFORMATION PLAN ---", actual_prompt)
+        self.assertIn(transformation_plan, actual_prompt)
 
 
 class TestImplementTransformation(TestCase):
