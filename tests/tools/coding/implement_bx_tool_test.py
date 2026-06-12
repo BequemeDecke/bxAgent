@@ -7,8 +7,20 @@ Two types of tests should be implemented:
 """
 
 from unittest import TestCase
+from unittest.mock import Mock
+from langchain.chat_models import BaseChatModel
 
+from bxagent.tools.coding.implement_bx_tool import create_implement_bx_tool_node, create_input_prompt
+from bxagent.tools.coding.state import CodingAgentState
 
 class TestImplementBxTool(TestCase):
-    def test_implement_bx_tool__return_compiled_code(self):
-        self.assertTrue(False)
+    def setUp(self):
+        mocked_llm = Mock(spec=BaseChatModel)
+        mocked_llm_structured_output = Mock(spec=BaseChatModel)
+        mocked_llm.with_structured_output.return_value = mocked_llm_structured_output
+        # TODO: Define the output
+        self.implement_bx_tool = create_implement_bx_tool_node(mocked_llm)
+        
+    def test_implement_bx_tool__return_bxtool_implementation(self):
+        self.fail("Not implemented yet")
+        
