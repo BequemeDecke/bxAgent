@@ -30,7 +30,7 @@ class TransformationImplementation(Class):
 class Model(BaseModel):
     name: str
     factory: Class
-    registry: Class
+    register: Class
     comparator: Class
 
 

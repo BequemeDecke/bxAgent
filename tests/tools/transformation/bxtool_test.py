@@ -11,6 +11,7 @@ from bxagent.tools.transformation.bxtool import BxToolForEMF, BxToolTemplateReso
 class TestBxToolTemplateResolver(TestCase):
     @patch("jinja2.Environment.get_template")
     def setUp(self, mock_get_template) -> None:
+        self.maxDiff = None  # type: ignore
         # It references the correct template, but due to the testing environment, there might be issues with loading the template. We can mock the template loading to ensure that the tests run without issues.
         path = Path("templates/bxtool.jinja")
         logging.debug(f"Path: {path.resolve()}, Exists: {path.exists()}")
@@ -28,7 +29,7 @@ class TestBxToolTemplateResolver(TestCase):
                     "import_path": "com.example.transformation.Decisions",
                 },
                 "initiation_dialogue": {
-                    "set_configuration": "setConfiguration();",
+                    "set_configuration": "setConfigurator();",
                     "initiate_dialogue": "initiateDialogue();",
                 },
                 "perform_and_propagate_target_edit": "performAndPropagateTargetEdit();",
@@ -42,10 +43,10 @@ class TestBxToolTemplateResolver(TestCase):
                     "class_name": "SourceFactory",
                     "instance_name": "sourceFactoryInstance",
                 },
-                "registry": {
-                    "import_path": "com.example.source.Registry",
-                    "class_name": "SourceRegistry",
-                    "instance_name": "sourceRegistryInstance",
+                "register": {
+                    "import_path": "com.example.source.Register",
+                    "class_name": "SourceRegister",
+                    "instance_name": "sourceRegisterInstance",
                 },
                 "comparator": {
                     "import_path": "com.example.source.Comparator",
@@ -60,10 +61,10 @@ class TestBxToolTemplateResolver(TestCase):
                     "class_name": "TargetFactory",
                     "instance_name": "targetFactoryInstance",
                 },
-                "registry": {
-                    "import_path": "com.example.target.Registry",
-                    "class_name": "TargetRegistry",
-                    "instance_name": "targetRegistryInstance",
+                "register": {
+                    "import_path": "com.example.target.Register",
+                    "class_name": "TargetRegister",
+                    "instance_name": "targetRegisterInstance",
                 },
                 "comparator": {
                     "import_path": "com.example.target.Comparator",
@@ -85,23 +86,41 @@ class TestBxToolTemplateResolver(TestCase):
         self.assertIn("import org.benchmarx.config.Configurator;", rendered_content)
         self.assertIn("import com.example.additional.Import1;", rendered_content)
         self.assertIn(
-            "public class TransformationImplementation extends BXToolForEMF<SourceRegistry, TargetRegistry, Decisions> {",
+            "public class TransformationImplementation extends BXToolForEMF<SourceRegister, TargetRegister, Decisions> {",
             rendered_content,
         )
-        self.assertIn("private TargetRegistry targetRegistryInstance;", rendered_content)
+        self.assertIn(
+            "private TargetRegister targetRegisterInstance;", rendered_content
+        )
         self.assertIn("public TransformationImplementation() {", rendered_content)
         self.assertIn(
             "super(new SourceComparator(), new TargetComparator());",
             rendered_content,
         )
         self.assertIn(
-            "source.getContents().add(sourceRegistryInstance);", rendered_content
+            "source.getContents().add(sourceRegisterInstance);", rendered_content
         )
         self.assertIn(
-            "target.getContents().add(targetRegistryInstance);", rendered_content
+            "target.getContents().add(targetRegisterInstance);", rendered_content
         )
         self.assertIn("initiateDialogue();", rendered_content)
         self.assertIn(
-            "public void performAndPropagateEdit(Supplier<IEdit<SourceRegistry>> sourceEdit,",
+            "public void performAndPropagateEdit(Supplier<IEdit<SourceRegister>> sourceEdit,",
             rendered_content,
         )
+
+    def test_bxtool_template_resolver__complete_file(self):
+        expected_file_path = Path(
+            "tests/tools/transformation/files/TransformationImplementation.java"
+        )
+        self.assertTrue(
+            expected_file_path.exists(),
+            f"Expected file {expected_file_path} does not exist.",
+        )
+        expected_file_content = expected_file_path.read_text().strip()
+
+        resolver = BxToolTemplateResolver()
+        bx_tool_for_emf = BxToolForEMF.model_construct(**self.fake_data)
+        rendered_content = resolver.render_template(bx_tool_for_emf).strip()
+
+        self.assertEqual(expected_file_content, rendered_content)
