@@ -49,6 +49,10 @@ class BxToolTemplateResolver:
         self.template = Environment(
             loader=FileSystemLoader(template_path)
         ).get_template("bxtool.jinja")
+        self.raw_template = (template_path / "bxtool.jinja").read_text()
+
+    def get_raw_template(self) -> str:
+        return self.raw_template
 
     def render_template(self, bx_tool_for_emf: BxToolForEMF) -> str:
         return self.template.render(**bx_tool_for_emf.model_dump())
