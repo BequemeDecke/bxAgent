@@ -3,7 +3,8 @@ import re
 from abc import ABC, abstractmethod
 from jinja2 import Environment, FileSystemLoader, Template
 from pathlib import Path
-from typing import Literal, TypedDict
+from typing import Literal, TypedDict, Optional
+from langchain.tools import tool
 
 
 class TransformationPlanData(TypedDict):
@@ -67,7 +68,9 @@ class FileTransformationPlanParser(TransformationPlanParser):
             "iteration": int(match.group("iteration")),
         }
 
-    def _parse_model_implementation(self, content: str, model_type: Literal["source", "target"]) -> str:
+    def _parse_model_implementation(
+        self, content: str, model_type: Literal["source", "target"]
+    ) -> str:
         """
         Parses the source or target model implementation from the transformation plan file.
         With following regex:
@@ -92,7 +95,7 @@ class FileTransformationPlanParser(TransformationPlanParser):
             raise ValueError("Failed to parse model implementation.")
 
         return match.group(f"{model_type}_model_implementation")
-    
+
     def _parse_transformation_direction(self, content: str) -> str:
         """
         Parses the transformation direction from the transformation plan file.
@@ -113,7 +116,7 @@ class FileTransformationPlanParser(TransformationPlanParser):
             raise ValueError("Failed to parse transformation direction.")
 
         return match.group("transformation_direction")
-    
+
     def _parse_difficulties(self, content: str) -> str:
         """
         Parses the transformation difficulties from the transformation plan file.
@@ -134,7 +137,7 @@ class FileTransformationPlanParser(TransformationPlanParser):
             raise ValueError("Failed to parse transformation difficulties.")
 
         return match.group("difficulties")
-    
+
     def _parse_implementation_steps(self, content: str) -> str:
         """
         Parses the implementation steps from the transformation plan file.
@@ -166,8 +169,12 @@ class FileTransformationPlanParser(TransformationPlanParser):
             raise ValueError("The transformation plan file is empty.")
 
         header_data = self._parse_header(content)
-        source_model_implementation = self._parse_model_implementation(content, "source")
-        target_model_implementation = self._parse_model_implementation(content, "target")
+        source_model_implementation = self._parse_model_implementation(
+            content, "source"
+        )
+        target_model_implementation = self._parse_model_implementation(
+            content, "target"
+        )
         transformation_direction = self._parse_transformation_direction(content)
         difficulties = self._parse_difficulties(content)
         implementation_steps = self._parse_implementation_steps(content)
@@ -192,11 +199,15 @@ class TransformationPlan:
     parser: TransformationPlanParser
     template: Template
 
-    def __init__(self, parser: TransformationPlanParser, template_path: Path = Path.cwd() / "templates"):
+    def __init__(
+        self,
+        parser: TransformationPlanParser,
+        template_path: Path = Path.cwd() / "templates",
+    ):
         self.parser = parser
-        self.template = Environment(loader=FileSystemLoader(template_path)).get_template(
-            "transformation_plan.jinja"
-        )
+        self.template = Environment(
+            loader=FileSystemLoader(template_path)
+        ).get_template("transformation_plan.jinja")
 
         try:
             self.data = self.parser.parse()
@@ -255,3 +266,65 @@ class TransformationPlan:
     def update_implementation_steps(self, implementation_steps: str):
         self.data["implementation_steps"] = implementation_steps
         self.parser.save(str(self))
+
+
+def create_transformation_plan_tools(tp: TransformationPlan):
+
+    @tool
+    def update_model_implementation(
+        source_model_implementation: Optional[str] = None,
+        target_model_implementation: Optional[str] = None,
+    ):
+        """Update the implementation details of the source and target models in the transformation plan. You can update either one or both implementations.
+
+        Args:
+            source_model_implementation (Optional[str], optional): The implementation details of the source model.
+            target_model_implementation (Optional[str], optional): The implementation details of the target model.
+        """
+        if (
+            source_model_implementation is not None
+            and target_model_implementation is not None
+        ):
+            tp.update_model_implementation(
+                source_model_implementation, target_model_implementation
+            )
+
+        if (
+            source_model_implementation is not None
+            and target_model_implementation is None
+        ):
+            tp.update_model_implementation(
+                source_model_implementation, tp.data["target_model_implementation"]
+            )
+
+        if (
+            source_model_implementation is None
+            and target_model_implementation is not None
+        ):
+            tp.update_model_implementation(
+                tp.data["source_model_implementation"], target_model_implementation
+            )
+
+    @tool
+    def update_difficulties(difficulties: str):
+        """Update the identified difficulties in the transformation plan.
+
+        Args:
+            difficulties (str): The identified difficulties to be updated in the transformation plan.
+        """
+        tp.update_transformation_difficulties(difficulties)
+
+    @tool
+    def update_implementation_steps(implementation_steps: str):
+        """Update the implementation steps in the transformation plan.
+
+        Args:
+            implementation_steps (str): The implementation steps in markdown to be updated in the transformation plan.
+        """
+        tp.update_implementation_steps(implementation_steps)
+
+    return [
+        update_model_implementation,
+        update_difficulties,
+        update_implementation_steps,
+    ]

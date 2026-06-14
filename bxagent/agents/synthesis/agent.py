@@ -4,10 +4,9 @@ from langchain.messages import SystemMessage
 from langgraph.checkpoint.memory import InMemorySaver
 
 from bxagent.models import build_base_model
-from bxagent.tools import transformation_plan_tools
-from bxagent.tools.transformation.plan import (
+from bxagent.tools.transformation import (
     TransformationPlan,
-    FileTransformationPlanParser,
+    create_transformation_plan_tools,
 )
 from .output import SynthesisResponseFormat
 
@@ -18,7 +17,7 @@ Your task is to analyze the source and target models, understand the requirement
 and create a detailed implementation plan in TRANSFORMATION.md.
 
 Workflow:
-1. Read the current TRANSFORMATION.md using read_transformation_plan. If it is empty, start writing it from scratch using the input of the user.
+1. The transformation plan is underneath. If it is empty, start writing it from scratch using the input of the user.
 2. Analyze the models, requirements, and existing content
 3. Identify new difficulties (marked with "NEW:") and think through potential obstacles
 4. Define implementation steps that provide a roadmap without dictating code details
@@ -48,6 +47,7 @@ def build_synthesis_agent(
         model = build_base_model()
 
     system_prompt = system_prompt.format(transformation_plan=str(transformation_plan))
+    transformation_plan_tools = create_transformation_plan_tools(transformation_plan)
 
     return create_agent(
         model=model,
