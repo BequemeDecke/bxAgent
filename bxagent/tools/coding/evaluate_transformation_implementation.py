@@ -1,7 +1,5 @@
 from typing import Literal
 
-from pydantic import BaseModel
-
 from bxagent.config import Config
 from .state import CodingAgentState
 
@@ -16,10 +14,6 @@ EvaluationDecision = Literal[
     "implementation_success",
     "max_iteration_reached",
 ]
-
-
-def create_input_prompt_for_evaluation() -> str:
-    pass
 
 
 def create_evaluate_transformation_implementation():

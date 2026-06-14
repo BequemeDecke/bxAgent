@@ -2,11 +2,12 @@ from unittest import TestCase
 from unittest.mock import patch, Mock
 
 from langgraph.graph import StateGraph
+from langgraph.graph.state import CompiledStateGraph
 
 from bxagent.tools.coding.agent import build_coding_agent_subgraph
 
 
-class TestCodingAgent(TestCase):
+class TestBuildCodingAgent(TestCase):
 
     @patch("bxagent.tools.coding.agent.create_implement_transformation_node")
     @patch("bxagent.tools.coding.agent.create_implement_bx_tool_node")
@@ -34,7 +35,10 @@ class TestCodingAgent(TestCase):
         )
 
         # Function under test
-        graph = build_coding_agent_subgraph(audit_executor=Mock(name="audit_executor"))
+        graph = build_coding_agent_subgraph(
+            audit_executor=Mock(name="audit_executor"),
+            coding_deep_agent=Mock(spec=CompiledStateGraph),
+        )
 
         # Assertions
         self.assertIsInstance(graph, StateGraph)
