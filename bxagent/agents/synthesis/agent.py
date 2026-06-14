@@ -5,7 +5,10 @@ from langgraph.checkpoint.memory import InMemorySaver
 
 from bxagent.models import build_base_model
 from bxagent.tools import transformation_plan_tools
-from bxagent.tools.transformation import _read_transformation_plan
+from bxagent.tools.transformation.plan import (
+    TransformationPlan,
+    FileTransformationPlanParser,
+)
 from .output import SynthesisResponseFormat
 
 SYNTHESIS_SYSTEM_PROMPT = """
@@ -29,26 +32,27 @@ Guidelines:
 - When identifying difficulties, explain why they are challenging
 - Return your plan using the predefined response_schema
 
-Transformation Plan:
+--- BEGIN TRANSFORMATION PLAN ---
 {transformation_plan}
+--- END TRANSFORMATION PLAN ---
 """
 
 
 def build_synthesis_agent(
+    transformation_plan: TransformationPlan,
     system_prompt: str = SYNTHESIS_SYSTEM_PROMPT,
     model: BaseChatModel | None = None,
 ):
     """Builds the SynthesisAgent using the chat model."""
     if model is None:
         model = build_base_model()
-        
-    transformation_plan = _read_transformation_plan()
-    system_prompt = system_prompt.format(transformation_plan=transformation_plan)
+
+    system_prompt = system_prompt.format(transformation_plan=str(transformation_plan))
 
     return create_agent(
         model=model,
         system_prompt=SystemMessage(system_prompt),
         checkpointer=InMemorySaver(),
         response_format=SynthesisResponseFormat,
-        tools=[*transformation_plan_tools]
+        tools=[*transformation_plan_tools],
     )

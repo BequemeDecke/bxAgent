@@ -4,6 +4,18 @@ from langchain.messages import HumanMessage
 from bxagent.agents.synthesis import SynthesisResponseFormat
 from ..state import WorkflowState
 
+PROMPT_TEMPLATE = """
+--- BEGIN TRANSFORMATION PLAN ---
+{transformation_plan}
+--- END TRANSFORMATION PLAN ---
+
+Use the following results to check if the transformation plan is complete and consistent:
+
+--- BEGIN AUDIT RESULTS ---
+{audit_results}
+--- END AUDIT RESULTS ---
+"""
+
 
 def create_call_synthesis_agent_function(synthesis_agent: CompiledStateGraph):
     def call_synthesis_agent(state: WorkflowState) -> WorkflowState:
@@ -13,17 +25,17 @@ def create_call_synthesis_agent_function(synthesis_agent: CompiledStateGraph):
         It needs a specific schema in order to parse the output of the subagent.
         It also gets the current results of the audits, which can be used to inform the synthesis agent about what has been tried already and what the results were.
         """
-        source_model = state["transformation_source_model_description"]
-        target_model = state["transformation_target_model_description"]
+        transformation = state.get("transformation_plan")
 
-        agent_input = (
-            f"Source model description: {source_model}\n"
-            f"Target model description: {target_model}\n"
-            f"Results of latest audit runs: {state.get('latest_audit_runs', [])}\n"
+        input_prompt = PROMPT_TEMPLATE.format(
+            transformation_plan=str(transformation),
+            audit_results="\n".join(
+                [str(run) for run in state.get("latest_audit_runs", [])]
+            ),
         )
 
         result = synthesis_agent.invoke(
-            input={"messages": [HumanMessage(content=agent_input)]},
+            input={"messages": [HumanMessage(content=input_prompt)]},
         )
         structured_response: SynthesisResponseFormat = result["structured_response"]
         return {
