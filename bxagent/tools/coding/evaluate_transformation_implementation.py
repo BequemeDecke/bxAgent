@@ -1,6 +1,5 @@
 from typing import Literal
 
-from langchain.chat_models import BaseChatModel
 from pydantic import BaseModel
 
 from bxagent.config import Config
@@ -17,10 +16,6 @@ EvaluationDecision = Literal[
     "implementation_success",
     "max_iteration_reached",
 ]
-
-
-class EvaluationRoute(BaseModel):
-    decision: EvaluationDecision = None
 
 
 def create_input_prompt_for_evaluation() -> str:
@@ -48,9 +43,8 @@ def create_evaluate_transformation_implementation():
             if key != "integration_compilation"
         ):
             return "implementation_error"
-        
+
         # If there are no errors, we consider the implementation successful
         return "implementation_success"
-
 
     return evaluate_transformation_implementation
