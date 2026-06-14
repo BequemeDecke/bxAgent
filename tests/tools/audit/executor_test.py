@@ -7,7 +7,7 @@ from typing import List
 from pydantic import BaseModel
 
 from bxagent.tools.audit.types import AuditRun, AuditResult, Audit, AuditError
-from bxagent.tools.audit.executor import AuditExecutor
+from bxagent.tools.audit.executor import AuditExecutor, LinkedAudit
 
 
 class MockedAuditCaseImplementation(Audit):
@@ -336,3 +336,79 @@ class TestAuditExecutor__get_latest_results(unittest.TestCase):
         latest_results = self.executor.get_latest_results()
         for actual_run, expected_run in zip(latest_results, expected_results):
             assert_audit_run_equal_except(self.assertEqual, actual_run, expected_run)
+
+
+class TestAuditExecutor__register_linked_audit(unittest.TestCase):
+    def setUp(self):
+        self.results = [AuditResult(content="result1"), AuditResult(content="result2")]
+        self.errors = [
+            AuditError(message="error", details={"exception_type": "Exception"})
+        ]
+        self.executor = AuditExecutor(
+            audits={
+                "audit1": {
+                    "audit": MockedAuditCaseImplementation(),
+                    "audit_schema": MockedAuditSchema(param1="value1"),
+                },
+                "audit2": {
+                    "audit": MockedAuditCaseImplementation(
+                        results=self.results,
+                        errors=self.errors,
+                    ),
+                    "audit_schema": MockedAuditSchema(param1="value2"),
+                },
+            }
+        )
+
+    def test_register_linked_audit__method_defined(self):
+        self.assertTrue(
+            hasattr(AuditExecutor, "register_linked_audit"),
+            "AuditExecutor should have a 'register_linked_audit' method.",
+        )
+
+    def test_register_linked_audit__link_existing_audit(self):
+        self.executor.register_linked_audit("linked_audit", "audit1")
+        self.assertIn(
+            "linked_audit",
+            self.executor.audits,
+            "Linked audit should be registered in the executor.",
+        )
+        self.assertIsInstance(
+            self.executor.audits["linked_audit"]["audit"],
+            LinkedAudit,
+            "Registered linked audit should be an instance of LinkedAudit.",
+        )
+        self.assertEqual(
+            self.executor.iterations["linked_audit"],
+            [],
+            "Linked audit should have its own iteration list initialized to an empty list.",
+        )
+
+    def test_register_linked_audit__non_existent_existing_audit(self):
+        with self.assertRaises(
+            ValueError,
+            msg="Should raise ValueError for non-existent existing audit ID.",
+        ):
+            self.executor.register_linked_audit("linked_audit", "non_existent_audit")
+
+    def test_register_linked_audit__duplicate_new_audit_id(self):
+        with self.assertRaises(
+            ValueError, msg="Should raise ValueError for duplicate new audit ID."
+        ):
+            self.executor.register_linked_audit("audit1", "audit1")
+
+    def test_register_linked_audit__linked_audit_execution(self):
+        self.executor.register_linked_audit("linked_audit", "audit2")
+        run = asyncio.run(
+            self.executor.execute_specific("linked_audit", input={"param1": "value1"})
+        )
+        self.assertEqual(
+            run.results,
+            self.results,
+            "Linked audit should return the same results as the original audit.",
+        )
+        self.assertEqual(
+            run.errors,
+            self.errors,
+            "Linked audit should return the same errors as the original audit.",
+        )

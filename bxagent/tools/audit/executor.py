@@ -1,15 +1,26 @@
 import asyncio
 import datetime
 
-from typing import List, Dict, TypedDict, Any
+from typing import List, Dict, Tuple, TypedDict, Any
 from pydantic import BaseModel
 
-from .types import Audit, AuditRun, AuditError
+from .types import Audit, AuditResult, AuditRun, AuditError
 
 
 class AuditInit(TypedDict):
     audit: Audit
     audit_schema: BaseModel
+
+
+class LinkedAudit(Audit):
+    def __init__(self, audit: Audit):
+        self.audit = audit
+
+    async def setup(self):
+        await self.audit.setup()
+
+    async def run(self, **kwargs) -> Tuple[List[AuditResult], List[AuditError]]:
+        return await self.audit.run(**kwargs)
 
 
 class AuditExecutor:
@@ -19,10 +30,25 @@ class AuditExecutor:
             audit_id: [] for audit_id in audits
         }
 
+    def register_linked_audit(self, new_audit_id: str, existing_audit_id: str):
+        if existing_audit_id not in self.audits:
+            raise ValueError(f"Audit with id {existing_audit_id} not found.")
+
+        if new_audit_id in self.audits:
+            raise ValueError(f"Audit with id {new_audit_id} already exists.")
+
+        linked_audit = LinkedAudit(audit=self.audits[existing_audit_id]["audit"])
+        self.audits[new_audit_id] = {
+            "audit": linked_audit,
+            "audit_schema": self.audits[existing_audit_id]["audit_schema"],
+        }
+        self.iterations[new_audit_id] = []
+
     async def execute_all(self, input: Dict[str, Dict[str, Any]]) -> List[AuditRun]:
         results = []
         tasks = [
-            self.execute_specific(audit_id, input=input[audit_id]) for audit_id in self.audits.keys()
+            self.execute_specific(audit_id, input=input[audit_id])
+            for audit_id in self.audits.keys()
         ]
         results = await asyncio.gather(*tasks)
         return results
@@ -34,7 +60,7 @@ class AuditExecutor:
         audit_init = self.audits[audit_id]
         audit = audit_init["audit"]
         audit_schema = audit_init["audit_schema"]
-         
+
         validated_params = audit_schema.model_validate(input)
 
         started_at = datetime.datetime.now()
