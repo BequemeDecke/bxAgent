@@ -27,9 +27,7 @@ def create_input_prompt_for_evaluation() -> str:
     pass
 
 
-def create_evaluate_transformation_implementation(llm: BaseChatModel):
-    structured_llm = llm.with_structured_output(EvaluationRoute)
-
+def create_evaluate_transformation_implementation():
     def evaluate_transformation_implementation(
         agent_state: CodingAgentState, max_iterations: int = WORKFLOW_MAX_ITERATIONS
     ) -> EvaluationDecision:
@@ -37,10 +35,22 @@ def create_evaluate_transformation_implementation(llm: BaseChatModel):
         if iteration >= max_iterations:
             return "max_iteration_reached"
 
+        # If there is an error in the bxtool_file it's an integration error, otherwise it's an implementation error
+        latest_results = agent_state.get("latest_audit_results", {})
+        integration_results = latest_results.get("integration_compilation")
+        if integration_results is None or len(integration_results.errors) > 0:
+            return "integration_error"
+
+        # If there are any errors in the other audit results, it's an implementation error
         if any(
-            audit_run.errors
-            for audit_run in agent_state.get("latest_audit_results", {}).values()
+            len(results.errors) > 0
+            for key, results in latest_results.items()
+            if key != "integration_compilation"
         ):
             return "implementation_error"
+        
+        # If there are no errors, we consider the implementation successful
+        return "implementation_success"
+
 
     return evaluate_transformation_implementation
