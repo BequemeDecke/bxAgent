@@ -11,10 +11,16 @@ config = Config.get_instance()
 WORKFLOW_MAX_ITERATIONS = config.WORKFLOW_APPROACH.WORKFLOW_MAX_ITERATIONS
 
 
+EvaluationDecision = Literal[
+    "implementation_error",
+    "integration_error",
+    "implementation_success",
+    "max_iteration_reached",
+]
+
+
 class EvaluationRoute(BaseModel):
-    decision: Literal[
-        "implementation_error", "integration_error", "implementation_success"
-    ] = None
+    decision: EvaluationDecision = None
 
 
 def create_input_prompt_for_evaluation() -> str:
@@ -26,7 +32,15 @@ def create_evaluate_transformation_implementation(llm: BaseChatModel):
 
     def evaluate_transformation_implementation(
         agent_state: CodingAgentState, max_iterations: int = WORKFLOW_MAX_ITERATIONS
-    ) -> Literal["implementation_error", "integration_error", "implementation_success"]:
-        results = agent_state.get("latest_audit_results", [])
+    ) -> EvaluationDecision:
+        iteration = agent_state.get("implementation_iteration", 0)
+        if iteration >= max_iterations:
+            return "max_iteration_reached"
+
+        if any(
+            audit_run.errors
+            for audit_run in agent_state.get("latest_audit_results", {}).values()
+        ):
+            return "implementation_error"
 
     return evaluate_transformation_implementation

@@ -1,13 +1,89 @@
 from unittest import TestCase
+from unittest.mock import Mock
+from langchain.chat_models import BaseChatModel
+
+from bxagent.tools.coding.evaluate_transformation_implementation import (
+    create_evaluate_transformation_implementation,
+    EvaluationRoute,
+)
+from bxagent.tools.audit.types import AuditRun, AuditError
+from bxagent.tools.coding.state import CodingAgentState
 
 
 class TestEvaluateTransformationImplementation(TestCase):
+    def setUp(self):
+        self.mocked_llm = Mock(spec=BaseChatModel)
+        self.mocked_llm_structured_output = Mock(spec=BaseChatModel)
+        self.mocked_llm.with_structured_output.return_value = (
+            self.mocked_llm_structured_output
+        )
+
     def test_evaluate_transformation_implementation__max_iteration_reached(self):
-        # This is a placeholder test. You should implement the actual test logic here.
-        self.fail("Test not implemented yet.")
+        """
+        Test that the evaluation correctly identifies when the maximum number of iterations has been reached.
+        """
+        # Prepare function under test
+        self.evaluate_transformation_implementation = (
+            create_evaluate_transformation_implementation(llm=self.mocked_llm)
+        )
+        MAX_ITERATIONS = 5
+        agent_state = CodingAgentState(
+            transformation_md=None,
+            transformation_source_model_description="Source model description",
+            transformation_target_model_description="Target model description",
+            implementation_iteration=MAX_ITERATIONS,
+            bxtool_file=None,
+            latest_audit_results={},
+        )
+
+        # Call the function under test
+        evaluation = self.evaluate_transformation_implementation(
+            agent_state=agent_state, max_iterations=MAX_ITERATIONS
+        )
+
+        # Assertions
+        self.assertEqual(
+            evaluation,
+            "max_iteration_reached",
+            "The evaluation should indicate that the maximum number of iterations has been reached.",
+        )
 
     def test_evaluate_transformation_implementation__implementation_error(self):
-        self.fail("Test not implemented yet.")
+        """
+        Test that the evaluation correctly identifies when there is an implementation error based on the latest audit results.
+        """      
+        # Prepare function under test
+        self.evaluate_transformation_implementation = (
+            create_evaluate_transformation_implementation(llm=self.mocked_llm)
+        )
+        agent_state = CodingAgentState(
+            transformation_md=None,
+            transformation_source_model_description="Source model description",
+            transformation_target_model_description="Target model description",
+            implementation_iteration=1,
+            bxtool_file=None,
+            latest_audit_results={
+                "audit1": AuditRun(
+                    started_at=None,
+                    execution_time_ms=100,
+                    iteration=1,
+                    results=[],
+                    errors=[AuditError(message="Error in implementation")],
+                )
+            }
+        )
+
+        # Call the function under test
+        evaluation = self.evaluate_transformation_implementation(
+            agent_state=agent_state, max_iterations=5
+        )
+
+        # Assertions
+        self.assertEqual(
+            evaluation,
+            "implementation_error",
+            "The evaluation should indicate that there is an implementation error based on the latest audit results.",
+        )
 
     def test_evaluate_transformation_implementation__integration_error(self):
         self.fail("Test not implemented yet.")
