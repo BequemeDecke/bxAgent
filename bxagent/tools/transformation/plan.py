@@ -262,9 +262,9 @@ class TransformationPlan:
             parser = FileTransformationPlanParser.from_dict(plan_dict["parser"])
         else:
             raise ValueError(f"Unknown parser type: {type_of_parser}")
-        
+
         tp = cls(parser=parser, template_path=template_path)
-        tp.data = data # Instead of parsing use the deserialized data directly
+        tp.data = data  # Instead of parsing use the deserialized data directly
         return tp
 
     @classmethod
@@ -310,7 +310,7 @@ class TransformationPlan:
 
     def to_dict(self) -> SerializedTransformationPlan:
         return {
-            "data": self.data,
+            "data": self.data.copy(),
             "parser": self.parser.to_dict(),
             "template": self._template_path,
         }

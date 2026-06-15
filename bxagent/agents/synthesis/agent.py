@@ -2,6 +2,7 @@ from langchain.agents import create_agent
 from langchain.chat_models import BaseChatModel
 from langchain.messages import SystemMessage
 from langgraph.checkpoint.memory import InMemorySaver
+from langgraph.checkpoint.serde.jsonplus import JsonPlusSerializer
 
 from bxagent.models import build_base_model
 from bxagent.tools.transformation import (
@@ -53,7 +54,13 @@ def build_synthesis_agent(
         model=model,
         state_schema=SynthesisAgentState,
         system_prompt=SystemMessage(system_prompt),
-        checkpointer=InMemorySaver(),
+        # checkpointer=InMemorySaver(
+        #     serde=JsonPlusSerializer(
+        #         pickle_fallback=True,
+        #         allowed_json_modules=[TransformationPlan],
+        #         allowed_msgpack_modules=[TransformationPlan],
+        #     )
+        # ),
         response_format=SynthesisResponseFormat,
         tools=[*transformation_plan_tools],
     )
