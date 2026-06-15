@@ -95,7 +95,7 @@ class TestTransformationPlan(TestCase):
             mocked_save=mocked_save_function,
         )
 
-        plan = TransformationPlan(mocked_parser)
+        plan = TransformationPlan.parse(mocked_parser)
         self.assertEqual(plan.data["source_model_package"], "source_package")
         self.assertEqual(plan.data["target_model_package"], "target_package")
         self.assertEqual(plan.data["iteration"], "1")
@@ -136,7 +136,7 @@ class TestTransformationPlan(TestCase):
             fake_data=self.fake_data,
             mocked_save=Mock(spec=Callable),
         )
-        plan = TransformationPlan(mocked_parser)
+        plan = TransformationPlan.parse(mocked_parser)
         self.assertIn("source_package", str(plan))
         self.assertIn("target_package", str(plan))
         self.assertIn("## 1. Model Implementations", str(plan))
@@ -174,7 +174,7 @@ class TestTransformationPlan(TestCase):
             fake_data=self.fake_data,
             mocked_save=mocked_save_function,
         )
-        plan = TransformationPlan(mocked_parser)
+        plan = TransformationPlan.parse(mocked_parser)
 
         updated_iteration = 2
         plan.update_iteration(updated_iteration)
@@ -187,7 +187,7 @@ class TestTransformationPlan(TestCase):
             fake_data=self.fake_data,
             mocked_save=mocked_save_function,
         )
-        plan = TransformationPlan(mocked_parser)
+        plan = TransformationPlan.parse(mocked_parser)
 
         updated_source_implementation = "updated source implementation"
         updated_target_implementation = "updated target implementation"
@@ -210,7 +210,7 @@ class TestTransformationPlan(TestCase):
             fake_data=self.fake_data,
             mocked_save=mocked_save_function,
         )
-        plan = TransformationPlan(mocked_parser)
+        plan = TransformationPlan.parse(mocked_parser)
 
         updated_transformation_direction = "updated transformation direction"
         plan.update_transformation_direction(updated_transformation_direction)
@@ -225,7 +225,7 @@ class TestTransformationPlan(TestCase):
             fake_data=self.fake_data,
             mocked_save=mocked_save_function,
         )
-        plan = TransformationPlan(mocked_parser)
+        plan = TransformationPlan.parse(mocked_parser)
 
         updated_difficulties = "updated difficulties"
         plan.update_transformation_difficulties(updated_difficulties)
@@ -238,7 +238,7 @@ class TestTransformationPlan(TestCase):
             fake_data=self.fake_data,
             mocked_save=mocked_save_function,
         )
-        plan = TransformationPlan(mocked_parser)
+        plan = TransformationPlan.parse(mocked_parser)
 
         updated_steps = "updated steps"
         plan.update_implementation_steps(updated_steps)
@@ -458,7 +458,7 @@ class TestTransformationPlanFileIntegration(TestCase):
         )
 
         self.parser = FileTransformationPlanParser(file_path=self.input_file)
-        self.plan = TransformationPlan(self.parser)
+        self.plan = TransformationPlan.parse(self.parser)
 
     @patch("pathlib.Path.write_text")
     def test_transformation_plan_file_integration__round_trip_of_usage(
@@ -567,7 +567,7 @@ class TestTransformationPlan__serialization(TestCase):
             "template": (Path.cwd() / "templates").resolve(),
         }
 
-        plan = TransformationPlan(mocked_parser)
+        plan = TransformationPlan.parse(mocked_parser)
         self.assertEqual(
             plan.to_dict(),
             expected_dict,

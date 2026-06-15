@@ -265,6 +265,31 @@ class TransformationPlan:
                 "implementation_steps": "",
             }
 
+    @classmethod
+    def from_dict(cls, plan_dict: SerializedTransformationPlan) -> "TransformationPlan":
+        """
+        Creates a TransformationPlan instance from a dictionary representation without parsing the transformation plan again.
+        """
+        
+        data = plan_dict["data"]
+        type_of_parser = plan_dict["parser"]["type"]
+        if type_of_parser == "FileTransformationPlanParser":
+            parser = FileTransformationPlanParser.from_dict(plan_dict["parser"])
+        else:
+            raise ValueError(f"Unknown parser type: {type_of_parser}")
+
+        template_path = plan_dict["template"]
+        return cls(parser=parser, template_path=template_path)
+    
+    @classmethod
+    def parse(cls, parser: TransformationPlanParser, template_path: Path = Path.cwd() / "templates") -> "TransformationPlan":
+        """
+        Creates a TransformationPlan instance by parsing the transformation plan using the provided parser.
+        
+        This method is used to create an initial transformation plan.
+        """
+        return cls(parser=parser, template_path=template_path)
+
     def __str__(self) -> str:
         rendered_content = self.template.render(
             source_model_package=self.data["source_model_package"],
@@ -284,18 +309,6 @@ class TransformationPlan:
             "parser": self.parser.to_dict(),
             "template": self._template_path,
         }
-
-    @classmethod
-    def from_dict(cls, plan_dict: SerializedTransformationPlan) -> "TransformationPlan":
-        data = plan_dict["data"]
-        type_of_parser = plan_dict["parser"]["type"]
-        if type_of_parser == "FileTransformationPlanParser":
-            parser = FileTransformationPlanParser.from_dict(plan_dict["parser"])
-        else:
-            raise ValueError(f"Unknown parser type: {type_of_parser}")
-
-        template_path = plan_dict["template"]
-        return cls(parser=parser, template_path=template_path)
 
     def update_package_information(
         self, source_model_package: str, target_model_package: str
