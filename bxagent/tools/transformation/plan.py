@@ -242,7 +242,7 @@ class TransformationPlan:
     def __init__(
         self,
         parser: TransformationPlanParser,
-        template_path: Path = Path.cwd() / "templates",
+        template_path: Path,
     ):
         self.parser = parser
         self.template = Environment(
@@ -250,27 +250,12 @@ class TransformationPlan:
         ).get_template("transformation_plan.jinja")
         self._template_path = template_path
 
-        try:
-            self.data = self.parser.parse()
-        except Exception as e:
-            print(f"Error occurred while parsing transformation plan: {e}")
-            self.data = {
-                "source_model_package": "",
-                "target_model_package": "",
-                "iteration": 0,
-                "source_model_implementation": "",
-                "target_model_implementation": "",
-                "transformation_direction": "",
-                "difficulties": "",
-                "implementation_steps": "",
-            }
-
     @classmethod
     def from_dict(cls, plan_dict: SerializedTransformationPlan) -> "TransformationPlan":
         """
         Creates a TransformationPlan instance from a dictionary representation without parsing the transformation plan again.
         """
-        
+
         data = plan_dict["data"]
         type_of_parser = plan_dict["parser"]["type"]
         if type_of_parser == "FileTransformationPlanParser":
@@ -280,15 +265,34 @@ class TransformationPlan:
 
         template_path = plan_dict["template"]
         return cls(parser=parser, template_path=template_path)
-    
+
     @classmethod
-    def parse(cls, parser: TransformationPlanParser, template_path: Path = Path.cwd() / "templates") -> "TransformationPlan":
+    def parse(
+        cls,
+        parser: TransformationPlanParser,
+        template_path: Path = Path.cwd() / "templates",
+    ) -> "TransformationPlan":
         """
         Creates a TransformationPlan instance by parsing the transformation plan using the provided parser.
-        
+
         This method is used to create an initial transformation plan.
         """
-        return cls(parser=parser, template_path=template_path)
+        tp = cls(parser=parser, template_path=template_path)
+        try:
+            tp.data = parser.parse()
+        except Exception as e:
+            print(f"Error occurred while parsing transformation plan: {e}")
+            tp.data = {
+                "source_model_package": "",
+                "target_model_package": "",
+                "iteration": 0,
+                "source_model_implementation": "",
+                "target_model_implementation": "",
+                "transformation_direction": "",
+                "difficulties": "",
+                "implementation_steps": "",
+            }
+        return tp
 
     def __str__(self) -> str:
         rendered_content = self.template.render(

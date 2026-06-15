@@ -121,7 +121,7 @@ class TestTransformationPlan(TestCase):
             fail_parsing=True,
         )
 
-        plan = TransformationPlan(mocked_parser)
+        plan = TransformationPlan.parse(mocked_parser)
         self.assertEqual(plan.data["source_model_package"], "")
         self.assertEqual(plan.data["target_model_package"], "")
         self.assertEqual(plan.data["iteration"], 0)
@@ -155,7 +155,7 @@ class TestTransformationPlan(TestCase):
             fake_data=self.fake_data,
             mocked_save=mocked_save_function,
         )
-        plan = TransformationPlan(mocked_parser)
+        plan = TransformationPlan.parse(mocked_parser)
 
         updated_source_package = "updated_source_package"
         updated_target_package = "updated_target_package"
