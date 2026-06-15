@@ -255,16 +255,17 @@ class TransformationPlan:
         """
         Creates a TransformationPlan instance from a dictionary representation without parsing the transformation plan again.
         """
-
+        template_path = plan_dict["template"]
         data = plan_dict["data"]
         type_of_parser = plan_dict["parser"]["type"]
         if type_of_parser == "FileTransformationPlanParser":
             parser = FileTransformationPlanParser.from_dict(plan_dict["parser"])
         else:
             raise ValueError(f"Unknown parser type: {type_of_parser}")
-
-        template_path = plan_dict["template"]
-        return cls(parser=parser, template_path=template_path)
+        
+        tp = cls(parser=parser, template_path=template_path)
+        tp.data = data # Instead of parsing use the deserialized data directly
+        return tp
 
     @classmethod
     def parse(

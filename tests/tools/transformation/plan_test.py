@@ -602,6 +602,6 @@ class TestTransformationPlan__serialization(TestCase):
         )
         self.assertEqual(
             plan.template.filename,
-            (Path.cwd() / "templates" / "transformation_plan.jinja").resolve(),
+            str(Path.cwd() / "templates" / "transformation_plan.jinja"),
             "The template of the transformation plan created from the dictionary does not reference the expected template file.",
         )
