@@ -1,7 +1,6 @@
 from pathlib import Path
 
 from langchain.chat_models import BaseChatModel
-from langchain.messages import HumanMessage
 
 from bxagent.tools.transformation.bxtool import BxToolForEMF, BxToolTemplateResolver
 
@@ -52,13 +51,16 @@ def create_implement_bx_tool_node(llm: BaseChatModel, workspace: Path):
         )
 
         # 2. Invoke the llm to get the bx tool implementation
-        response: BxToolForEMF = structured_llm.invoke(
-            input=HumanMessage(content=input_prompt)
-        )
+        response: BxToolForEMF = structured_llm.invoke(input=input_prompt)
         bx_tool = resolver.render_template(response)
 
         # 3. Write the implementation to the workspace file
-        file_path = workspace / (response.transformation_implementation.class_name + ".java")
+        file_path = workspace / (
+            response.transformation_implementation.class_name + ".java"
+        )
+        if not file_path.parent.exists():
+            file_path.parent.mkdir(parents=True)
+            file_path.touch()
         file_path.write_text(bx_tool)
 
         return {"written_java_files": state.get("written_java_files", []) + [file_path]}

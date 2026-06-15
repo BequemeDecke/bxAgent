@@ -4,6 +4,7 @@ exclude/
 .bx-agent-workspace/
 
 notebooks/*/test_results/
+notebooks/*/templates/
 
 .DS_Store
 
