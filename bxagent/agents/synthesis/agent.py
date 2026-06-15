@@ -6,7 +6,7 @@ from langgraph.checkpoint.memory import InMemorySaver
 from bxagent.models import build_base_model
 from bxagent.tools.transformation import (
     TransformationPlan,
-    create_transformation_plan_tools,
+    transformation_plan_tools,
 )
 from .output import SynthesisResponseFormat
 
@@ -14,7 +14,7 @@ SYNTHESIS_SYSTEM_PROMPT = """
 You are the planning agent for the Ecore model transformation process.
 
 Your task is to analyze the source and target models, understand the requirements, 
-and create a detailed implementation plan in TRANSFORMATION.md.
+and create a detailed implementation plan in TRANSFORMATION.md (= the current transformation plan).
 
 Workflow:
 1. The transformation plan is underneath. If it is empty, start writing it from scratch using the input of the user.
@@ -47,7 +47,6 @@ def build_synthesis_agent(
         model = build_base_model()
 
     system_prompt = system_prompt.format(transformation_plan=str(transformation_plan))
-    transformation_plan_tools = create_transformation_plan_tools(transformation_plan)
 
     return create_agent(
         model=model,
