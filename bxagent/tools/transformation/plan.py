@@ -382,6 +382,22 @@ def update_model_implementation(
 
 
 @tool
+def update_transformation_direction(
+    runtime: ToolRuntime, transformation_direction: str
+):
+    """Update the transformation direction in the transformation plan.
+
+    Args:
+        transformation_direction (str): The transformation direction to be updated in the transformation plan.
+    """
+    tp: TransformationPlan = runtime.state.get("transformation_plan")
+    if tp is None:
+        raise ValueError("Transformation plan not found in the runtime state.")
+
+    tp.update_transformation_direction(transformation_direction)
+
+
+@tool
 def update_difficulties(runtime: ToolRuntime, difficulties: str):
     """Update the identified difficulties in the transformation plan.
 
