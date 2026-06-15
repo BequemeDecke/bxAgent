@@ -3,7 +3,7 @@ import re
 from abc import ABC, abstractmethod
 from jinja2 import Environment, FileSystemLoader, Template
 from pathlib import Path
-from typing import Literal, TypedDict, Optional
+from typing import Any, Dict, Literal, TypedDict, Optional
 from langchain.tools import ToolRuntime, tool
 
 
@@ -16,6 +16,17 @@ class TransformationPlanData(TypedDict):
     transformation_direction: str
     difficulties: str
     implementation_steps: str
+
+
+class SerializedTransformationPlanParser(TypedDict):
+    type: str
+    args: Dict[str, Any]
+
+
+class SerializedTransformationPlan(TypedDict):
+    data: TransformationPlanData
+    parser: SerializedTransformationPlanParser
+    template: Path
 
 
 class TransformationPlanParser(ABC):
@@ -31,6 +42,17 @@ class TransformationPlanParser(ABC):
 
     @abstractmethod
     def save(self, data: str) -> None:
+        pass
+
+    @abstractmethod
+    def to_dict(self) -> SerializedTransformationPlanParser:
+        pass
+
+    @classmethod
+    @abstractmethod
+    def from_dict(
+        cls, data: SerializedTransformationPlanParser
+    ) -> "TransformationPlanParser":
         pass
 
 
@@ -193,11 +215,29 @@ class FileTransformationPlanParser(TransformationPlanParser):
     def save(self, data: str) -> None:
         self.file_path.write_text(data)
 
+    def to_dict(self) -> SerializedTransformationPlanParser:
+        return {
+            "type": self.__class__.__name__,
+            "args": {
+                "file_path": str(self.file_path),
+            },
+        }
+
+    @classmethod
+    def from_dict(
+        cls, data: SerializedTransformationPlanParser
+    ) -> "FileTransformationPlanParser":
+        if data["type"] != cls.__name__:
+            raise ValueError(f"Invalid parser type: {data['type']}")
+        file_path = Path(data["args"]["file_path"])
+        return cls(file_path)
+
 
 class TransformationPlan:
     data: TransformationPlanData
     parser: TransformationPlanParser
     template: Template
+    _template_path: Path  # only for serialization
 
     def __init__(
         self,
@@ -208,6 +248,7 @@ class TransformationPlan:
         self.template = Environment(
             loader=FileSystemLoader(template_path)
         ).get_template("transformation_plan.jinja")
+        self._template_path = template_path
 
         try:
             self.data = self.parser.parse()
@@ -236,6 +277,25 @@ class TransformationPlan:
             implementation_steps=self.data["implementation_steps"],
         )
         return rendered_content
+
+    def to_dict(self) -> SerializedTransformationPlan:
+        return {
+            "data": self.data,
+            "parser": self.parser.to_dict(),
+            "template": self._template_path,
+        }
+
+    @classmethod
+    def from_dict(cls, plan_dict: SerializedTransformationPlan) -> "TransformationPlan":
+        data = plan_dict["data"]
+        type_of_parser = plan_dict["parser"]["type"]
+        if type_of_parser == "FileTransformationPlanParser":
+            parser = FileTransformationPlanParser.from_dict(plan_dict["parser"])
+        else:
+            raise ValueError(f"Unknown parser type: {type_of_parser}")
+
+        template_path = plan_dict["template"]
+        return cls(parser=parser, template_path=template_path)
 
     def update_package_information(
         self, source_model_package: str, target_model_package: str
@@ -329,6 +389,7 @@ def update_implementation_steps(runtime: ToolRuntime, implementation_steps: str)
         raise ValueError("Transformation plan not found in the runtime state.")
 
     tp.update_implementation_steps(implementation_steps)
+
 
 transformation_plan_tools = [
     update_model_implementation,

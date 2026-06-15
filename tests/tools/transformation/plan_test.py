@@ -13,6 +13,8 @@ from pathlib import Path
 from jinja2 import Template, Environment, FileSystemLoader
 
 from bxagent.tools.transformation.plan import (
+    SerializedTransformationPlan,
+    SerializedTransformationPlanParser,
     TransformationPlan,
     TransformationPlanParser,
     TransformationPlanData,
@@ -38,6 +40,25 @@ class MockedTransformationPlanParser(TransformationPlanParser):
 
     def save(self, data: str) -> None:
         self.mocked_save(data)
+
+    def to_dict(self) -> Dict[str, str]:
+        return {
+            "type": self.__class__.__name__,
+            "args": {
+                "fake_data": self.fake_data,
+                "fail_parsing": self.fail_parsing,
+            },
+        }
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, str]):
+        return cls(
+            mocked_save=Mock(
+                spec=Callable
+            ),  # We can use a mock for the save function in tests
+            fake_data=data["args"]["fake_data"],
+            fail_parsing=data["args"]["fail_parsing"],
+        )
 
 
 class TestTransformationPlan(TestCase):
@@ -399,6 +420,7 @@ class TestFileTransformationPlanParser(TestCase):
         implementation_steps = parser._parse_implementation_steps(content)
         self.assertEqual(implementation_steps, steps_text.strip())
 
+
 simpson_model = """
 ```java
 class Simpson {
@@ -414,10 +436,11 @@ class FamilyMember {
 ```
 """
 
+
 class TestTransformationPlanFileIntegration(TestCase):
     def setUp(self):
         self.maxDiff = None  # To see the full diff in case of assertion failures
-        
+
         self.input_file = Path(
             "tests/tools/transformation/files/EXISTED_TRANSFORMATION.md"
         )
@@ -438,9 +461,11 @@ class TestTransformationPlanFileIntegration(TestCase):
         self.plan = TransformationPlan(self.parser)
 
     @patch("pathlib.Path.write_text")
-    def test_transformation_plan_file_integration__round_trip_of_usage(self, mock_write_text):
+    def test_transformation_plan_file_integration__round_trip_of_usage(
+        self, mock_write_text
+    ):
         mock_write_text.return_value = None  # write_text does not return anything
-        
+
         # Update the package information and check if the file is updated accordingly.
         self.plan.update_package_information(
             source_model_package="de.hof-university.models.simpson",
@@ -453,7 +478,6 @@ class TestTransformationPlanFileIntegration(TestCase):
         self.assertTrue(mock_write_text.called)
 
         # Update the model implementations and check if the file is updated accordingly.
-       
 
         self.plan.update_model_implementation(
             source_model_implementation=simpson_model.strip(),
@@ -479,4 +503,105 @@ class TestTransformationPlanFileIntegration(TestCase):
             expected_content.strip(),
             actual_content.strip(),
             "The content of the transformation plan file does not match the expected content after updates.",
+        )
+
+
+class MockedTransformationPlanParserForSerialization(TransformationPlanParser):
+    def __init__(
+        self,
+        fake_data: TransformationPlanData = None,
+        prop_1: str = "value1",
+        prop_2: str = "value2",
+    ):
+        self.fake_data = fake_data
+        self.prop_1 = prop_1
+        self.prop_2 = prop_2
+
+    def parse(self):
+        return self.fake_data
+
+    def save(self, data: str) -> None:
+        return
+
+    def to_dict(self) -> SerializedTransformationPlanParser:
+        return {
+            "type": self.__class__.__name__,
+            "args": {
+                "prop_1": self.prop_1,
+                "prop_2": self.prop_2,
+            },
+        }
+
+    @classmethod
+    def from_dict(
+        cls, data: SerializedTransformationPlanParser
+    ) -> "MockedTransformationPlanParserForSerialization":
+        return cls(prop_1=data["args"]["prop_1"], prop_2=data["args"]["prop_2"])
+
+
+class TestTransformationPlan__serialization(TestCase):
+    def setUp(self):
+        self.maxDiff = None  # To see the full diff in case of assertion failures
+        self.fake_data = {
+            "source_model_package": "source_package",
+            "target_model_package": "target_package",
+            "iteration": "1",
+            "source_model_implementation": "source implementation",
+            "target_model_implementation": "target implementation",
+            "transformation_direction": "source to target",
+            "difficulties": "some difficulties",
+            "implementation_steps": "some steps",
+        }
+
+    def test_transformation_plan_serialization__to_dict(self):
+        mocked_parser = MockedTransformationPlanParserForSerialization(self.fake_data)
+        expected_dict = {
+            "data": self.fake_data,
+            "parser": {
+                "type": MockedTransformationPlanParserForSerialization.__name__,
+                "args": {
+                    "prop_1": mocked_parser.prop_1,
+                    "prop_2": mocked_parser.prop_2,
+                },
+            },
+            "template": (Path.cwd() / "templates").resolve(),
+        }
+
+        plan = TransformationPlan(mocked_parser)
+        self.assertEqual(
+            plan.to_dict(),
+            expected_dict,
+            "The dictionary representation of the transformation plan does not match the expected dictionary.",
+        )
+
+    def test_transformation_plan_serialization__from_dict(self):
+        plan_dict = SerializedTransformationPlan(
+            data=self.fake_data,
+            parser=SerializedTransformationPlanParser(
+                type=FileTransformationPlanParser.__name__,
+                args={"file_path": "test_transformation_plan.md"},
+            ),
+            template=Path.cwd() / "templates",
+        )
+
+        plan = TransformationPlan.from_dict(plan_dict)
+        self.assertEqual(
+            plan.data,
+            self.fake_data,
+            "The data of the transformation plan created from the dictionary does not match the expected data.",
+        )
+        self.assertIsInstance(
+            plan.parser,
+            FileTransformationPlanParser,
+            "The parser of the transformation plan created from the dictionary is not an instance of the expected parser class.",
+        )
+        self.assertIsInstance(
+            plan.template,
+            Template,
+            "The template of the transformation plan created from the dictionary is not an instance of the expected template class.",
+        )
+        self.assertEqual(
+            plan.template.filename,
+            (Path.cwd() / "templates" / "transformation_plan.jinja").resolve(),
+            "The template of the transformation plan created from the dictionary does not reference the expected template file.",
         )
