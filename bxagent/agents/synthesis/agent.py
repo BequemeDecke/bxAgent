@@ -9,6 +9,7 @@ from bxagent.tools.transformation import (
     transformation_plan_tools,
 )
 from .output import SynthesisResponseFormat
+from .state import SynthesisAgentState
 
 SYNTHESIS_SYSTEM_PROMPT = """
 You are the planning agent for the Ecore model transformation process.
@@ -19,10 +20,10 @@ and create a detailed implementation plan in TRANSFORMATION.md (= the current tr
 Workflow:
 1. The transformation plan is underneath. If it is empty, start writing it from scratch using the input of the user.
 2. Analyze the models, requirements, and existing content
-3. Identify new difficulties (marked with "NEW:") and think through potential obstacles
+3. Identify new difficulties and think through potential obstacles
 4. Define implementation steps that provide a roadmap without dictating code details
 5. Document your thinking and reasoning throughout
-6. Update TRANSFORMATION.md using update_transformation_plan
+6. Update the transformation plan using the available tools, which also keep track of the transformation plan history
 7. Self-validate: review for logical consistency and completeness
 
 Guidelines:
@@ -50,6 +51,7 @@ def build_synthesis_agent(
 
     return create_agent(
         model=model,
+        state_schema=SynthesisAgentState,
         system_prompt=SystemMessage(system_prompt),
         checkpointer=InMemorySaver(),
         response_format=SynthesisResponseFormat,
