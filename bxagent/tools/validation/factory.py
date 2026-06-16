@@ -1,14 +1,14 @@
 from typing import Dict, List
 
 from langchain.tools import BaseTool, tool
-from .executor import AuditExecutor, Audit, AuditRun
+from .executor import ValidationExecutor, Audit, AuditRun
 
 def create_audit_tools(audits: Dict[str, Audit]) -> List[BaseTool]:
     """
     Factory function to create an instance of the AuditTool.
     This function can be extended to accept parameters for customization.
     """
-    executor = AuditExecutor(audits)
+    executor = ValidationExecutor(audits)
     
     @tool("audit_tool", return_direct=True)
     async def audit_tool() -> List[AuditRun]:

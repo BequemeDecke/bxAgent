@@ -7,7 +7,7 @@ from typing import List
 from pydantic import BaseModel
 
 from bxagent.tools.validation.types import AuditRun, AuditResult, Audit, AuditError
-from bxagent.tools.validation.executor import AuditExecutor, LinkedAudit
+from bxagent.tools.validation.executor import ValidationExecutor, LinkedAudit
 
 
 class MockedAuditCaseImplementation(Audit):
@@ -50,11 +50,11 @@ def assert_audit_run_equal_except(equal_method, actual: AuditRun, expected: Audi
     equal_method(actual_dict, expected_dict)
 
 
-class TestAuditExecutor__execute_specific(unittest.TestCase):
+class TestValidationExecutor__execute_specific(unittest.TestCase):
     def setUp(self):
         self.results = [AuditResult(content="result1")]
         self.errors = []
-        self.executor = AuditExecutor(
+        self.executor = ValidationExecutor(
             audits={
                 "audit1": {
                     "audit": MockedAuditCaseImplementation(
@@ -72,8 +72,8 @@ class TestAuditExecutor__execute_specific(unittest.TestCase):
 
     def test_execute_specific__return_audit_runs(self):
         self.assertTrue(
-            hasattr(AuditExecutor, "execute_specific"),
-            "AuditExecutor should have an 'execute_specific' method.",
+            hasattr(ValidationExecutor, "execute_specific"),
+            "ValidationExecutor should have an 'execute_specific' method.",
         )
 
         expected_run = AuditRun(
@@ -148,7 +148,7 @@ class TestAuditExecutor__execute_specific(unittest.TestCase):
             asyncio.run(self.executor.execute_specific("audit1", input={}))
 
 
-class TestAuditExecutor__execute_all(unittest.TestCase):
+class TestValidationExecutor__execute_all(unittest.TestCase):
     def setUp(self):
         self.run_1 = AuditRun(
             started_at=datetime.datetime.now(),
@@ -166,7 +166,7 @@ class TestAuditExecutor__execute_all(unittest.TestCase):
                 AuditError(message="error1", details={"exception_type": "Exception"})
             ],
         )
-        self.executor = AuditExecutor(
+        self.executor = ValidationExecutor(
             audits={
                 "audit1": {
                     "audit": MockedAuditCaseImplementation(
@@ -191,8 +191,8 @@ class TestAuditExecutor__execute_all(unittest.TestCase):
 
     def test_execute_all__method_defined(self):
         self.assertTrue(
-            hasattr(AuditExecutor, "execute_all"),
-            "AuditExecutor should have an 'execute_all' method.",
+            hasattr(ValidationExecutor, "execute_all"),
+            "ValidationExecutor should have an 'execute_all' method.",
         )
 
     def test_execute_all__return_audit_runs(self):
@@ -242,7 +242,7 @@ class TestAuditExecutor__execute_all(unittest.TestCase):
             assert_audit_run_equal_except(self.assertEqual, actual_run, expected_run)
 
 
-class TestAuditExecutor__get_latest_results(unittest.TestCase):
+class TestValidationExecutor__get_latest_results(unittest.TestCase):
     def setUp(self):
         self.run_1 = AuditRun(
             started_at=datetime.datetime.now(),
@@ -260,7 +260,7 @@ class TestAuditExecutor__get_latest_results(unittest.TestCase):
                 AuditError(message="error1", details={"exception_type": "Exception"})
             ],
         )
-        self.executor = AuditExecutor(
+        self.executor = ValidationExecutor(
             audits={
                 "audit1": {
                     "audit": MockedAuditCaseImplementation(
@@ -281,8 +281,8 @@ class TestAuditExecutor__get_latest_results(unittest.TestCase):
 
     def test_get_latest_results__method_defined(self):
         self.assertTrue(
-            hasattr(AuditExecutor, "get_latest_results"),
-            "AuditExecutor should have a 'get_latest_results' method.",
+            hasattr(ValidationExecutor, "get_latest_results"),
+            "ValidationExecutor should have a 'get_latest_results' method.",
         )
 
     def test_get_latest_results(self):
@@ -338,13 +338,13 @@ class TestAuditExecutor__get_latest_results(unittest.TestCase):
             assert_audit_run_equal_except(self.assertEqual, actual_run, expected_run)
 
 
-class TestAuditExecutor__register_linked_audit(unittest.TestCase):
+class TestValidationExecutor__register_linked_audit(unittest.TestCase):
     def setUp(self):
         self.results = [AuditResult(content="result1"), AuditResult(content="result2")]
         self.errors = [
             AuditError(message="error", details={"exception_type": "Exception"})
         ]
-        self.executor = AuditExecutor(
+        self.executor = ValidationExecutor(
             audits={
                 "audit1": {
                     "audit": MockedAuditCaseImplementation(),
@@ -362,8 +362,8 @@ class TestAuditExecutor__register_linked_audit(unittest.TestCase):
 
     def test_register_linked_audit__method_defined(self):
         self.assertTrue(
-            hasattr(AuditExecutor, "register_linked_audit"),
-            "AuditExecutor should have a 'register_linked_audit' method.",
+            hasattr(ValidationExecutor, "register_linked_audit"),
+            "ValidationExecutor should have a 'register_linked_audit' method.",
         )
 
     def test_register_linked_audit__link_existing_audit(self):

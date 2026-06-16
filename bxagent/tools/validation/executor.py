@@ -23,7 +23,7 @@ class LinkedAudit(Audit):
         return await self.audit.run(**kwargs)
 
 
-class AuditExecutor:
+class ValidationExecutor:
     def __init__(self, audits: Dict[str, AuditInit]):
         self.audits = audits
         self.iterations: Dict[str, List[AuditRun]] = {

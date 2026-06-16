@@ -1,11 +1,11 @@
 from typing import Any, Dict, Callable, Literal
 
-from bxagent.tools.validation import AuditExecutor
+from bxagent.tools.validation import ValidationExecutor
 from bxagent.tools.validation.types import StateToAuditMapper
 
 
 def create_audit_agent_work_function(
-    audit_executor: AuditExecutor,
+    audit_executor: ValidationExecutor,
     mapper: Dict[str, StateToAuditMapper],
     execution_mode: Literal["all", "specific"] = "all",
 ) -> Callable[[Dict[str, Any]], Dict[str, Any]]:

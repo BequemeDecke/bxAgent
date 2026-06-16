@@ -2,7 +2,7 @@ from typing import Optional
 
 from .factory import create_audit_tools
 from .implementations import FileExistenceAudit, JavaCompilationAudit
-from .executor import AuditExecutor
+from .executor import ValidationExecutor
 from .types import Audit
 
 
@@ -16,4 +16,4 @@ def build_audit_tools(audits: Optional[dict[str, Audit]] = None):
     return create_audit_tools(audits=audits)
 
 
-__all__ = ["FileExistenceAudit", "JavaCompilationAudit", "create_audit_tools", "build_audit_tools", "AuditExecutor", "Audit"]
+__all__ = ["FileExistenceAudit", "JavaCompilationAudit", "create_audit_tools", "build_audit_tools", "ValidationExecutor", "Audit"]

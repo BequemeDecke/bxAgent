@@ -12,7 +12,7 @@ from typing import Dict, Any
 from pydantic import BaseModel
 
 from bxagent.tools.validation.types import Audit, AuditResult, AuditError, StateToAuditMapper
-from bxagent.tools.validation import AuditExecutor
+from bxagent.tools.validation import ValidationExecutor
 from bxagent.agents.workflow.nodes.auditing_node import (
     create_audit_agent_work_function,
 )
@@ -36,7 +36,7 @@ class TestAuditingNode__ExecutionModeAll(TestCase):
 
         audit_id = "test_audit"
 
-        audit_executor = AuditExecutor(
+        audit_executor = ValidationExecutor(
             audits={audit_id: {"audit": mocked_audit, "audit_schema": MockedSchema}}
         )
         audit_agent_work = create_audit_agent_work_function(
@@ -87,7 +87,7 @@ class TestAuditingNode__ExecutionModeAll(TestCase):
 
         audit_id = "test_audit"
 
-        audit_executor = AuditExecutor(
+        audit_executor = ValidationExecutor(
             audits={audit_id: {"audit": mocked_audit, "audit_schema": MockedSchema}}
         )
         audit_agent_work = create_audit_agent_work_function(
@@ -116,7 +116,7 @@ class TestAuditingNode__ExecutionModeSpecific(TestCase):
 
         audit_id = "test_audit"
 
-        audit_executor = AuditExecutor(
+        audit_executor = ValidationExecutor(
             audits={audit_id: {"audit": mocked_audit, "audit_schema": MockedSchema}}
         )
         audit_agent_work = create_audit_agent_work_function(
@@ -167,7 +167,7 @@ class TestAuditingNode__ExecutionModeSpecific(TestCase):
 
         audit_id = "test_audit"
 
-        audit_executor = AuditExecutor(
+        audit_executor = ValidationExecutor(
             audits={audit_id: {"audit": mocked_audit, "audit_schema": MockedSchema}}
         )
         audit_agent_work = create_audit_agent_work_function(

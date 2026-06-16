@@ -9,7 +9,7 @@ from bxagent.tools.validation.implementations import (
     FileExistenceAuditConfig,
     JavaCompilationAuditConfig,
 )
-from bxagent.tools.validation.executor import AuditExecutor
+from bxagent.tools.validation.executor import ValidationExecutor
 
 from .state import WorkflowState
 from .transformation_iteration_control import (
@@ -25,7 +25,7 @@ def build_workflow_agent() -> StateGraph[WorkflowState]:
     call_synthesis_agent = create_call_synthesis_agent_function(
         synthesis_agent=build_synthesis_agent()
     )
-    audit_executor = AuditExecutor(
+    audit_executor = ValidationExecutor(
         audits={
             "file_existence_audit": {
                 "audit": FileExistenceAudit(),

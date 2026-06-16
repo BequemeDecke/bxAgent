@@ -5,7 +5,7 @@ from bxagent.agents.workflow.nodes.auditing_node import create_audit_agent_work_
 from bxagent.config import Config
 from bxagent.mapping import map_coding_to_file
 from bxagent.models import build_base_model
-from bxagent.tools.validation.executor import AuditExecutor
+from bxagent.tools.validation.executor import ValidationExecutor
 from bxagent.tools.transformation.plan import (
     TransformationPlan,
     FileTransformationPlanParser,
@@ -20,7 +20,7 @@ from .state import CodingAgentState
 
 
 def build_coding_agent_subgraph(
-    audit_executor: AuditExecutor, coding_deep_agent: CompiledStateGraph
+    audit_executor: ValidationExecutor, coding_deep_agent: CompiledStateGraph
 ) -> StateGraph:
     config = Config.get_instance()
 
