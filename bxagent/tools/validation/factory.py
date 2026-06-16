@@ -3,41 +3,41 @@ from typing import Dict, List
 from langchain.tools import BaseTool, tool
 from .executor import ValidationExecutor, Validation, ValidationRun
 
-def create_audit_tools(audits: Dict[str, Validation]) -> List[BaseTool]:
+def create_validation_tools(validations: Dict[str, Validation]) -> List[BaseTool]:
     """
     Factory function to create an instance of the ValidationTool.
     This function can be extended to accept parameters for customization.
     """
-    executor = ValidationExecutor(audits)
+    executor = ValidationExecutor(validations)
     
-    @tool("audit_tool", return_direct=True)
-    async def audit_tool() -> List[ValidationRun]:
-        """Executes all audits and returns their latest results.
+    @tool("validation_tool", return_direct=True)
+    async def validation_tool() -> List[ValidationRun]:
+        """Executes all validations and returns their latest results.
 
         Returns:
-            List[ValidationRun]: A list of the latest ValidationRun for each audit.
+            List[ValidationRun]: A list of the latest ValidationRun for each validation.
         """
         return await executor.execute_all()
     
-    @tool("audit_tool_specific", return_direct=True)
-    async def audit_tool_specific(audit_id: str) -> ValidationRun:
-        """Executes a specific audit and returns its latest result.
+    @tool("validation_tool_specific", return_direct=True)
+    async def validation_tool_specific(validation_id: str) -> ValidationRun:
+        """Executes a specific validation and returns its latest result.
 
         Args:
-            audit_id (str): The ID of the audit to execute.
+            validation_id (str): The ID of the validation to execute.
 
         Returns:
-            ValidationRun: The latest ValidationRun for the specified audit.
+            ValidationRun: The latest ValidationRun for the specified validation.
         """
-        return await executor.execute_specific(audit_id)
+        return await executor.execute_specific(validation_id)
     
-    @tool("audit_tool_latest_results", return_direct=True)
-    def audit_tool_latest_results() -> List[ValidationRun]:
-        """Returns the latest results of all audits without executing them.
+    @tool("validation_tool_latest_results", return_direct=True)
+    def validation_tool_latest_results() -> List[ValidationRun]:
+        """Returns the latest results of all validations without executing them.
 
         Returns:
-            List[ValidationRun]: A list of the latest ValidationRun for each audit.
+            List[ValidationRun]: A list of the latest ValidationRun for each validation.
         """
         return executor.get_latest_results()
 
-    return [audit_tool, audit_tool_specific, audit_tool_latest_results]
+    return [validation_tool, validation_tool_specific, validation_tool_latest_results]

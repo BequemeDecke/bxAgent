@@ -38,7 +38,7 @@ class TestSynthesisNode(TestCase):
                 "transformation_source_model_description": "A model that does X",
                 "transformation_target_model_description": "A model that does Y",
                 "iteration": 0,
-                "latest_audit_runs": [],
+                "latest_validation_runs": [],
             }
         )
 

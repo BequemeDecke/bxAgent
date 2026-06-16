@@ -1,7 +1,7 @@
 from langgraph.graph import StateGraph, END
 from langgraph.graph.state import CompiledStateGraph
 
-from bxagent.agents.workflow.nodes.auditing_node import create_audit_agent_work_function
+from bxagent.agents.workflow.nodes.validationing_node import create_validation_agent_work_function
 from bxagent.config import Config
 from bxagent.mapping import map_coding_to_file
 from bxagent.models import build_base_model
@@ -20,14 +20,14 @@ from .state import CodingAgentState
 
 
 def build_coding_agent_subgraph(
-    audit_executor: ValidationExecutor, coding_deep_agent: CompiledStateGraph
+    validation_executor: ValidationExecutor, coding_deep_agent: CompiledStateGraph
 ) -> StateGraph:
     config = Config.get_instance()
 
     workspace_path = config.WORKSPACE.PATH
-    audit_executor.register_linked_audit(
+    validation_executor.register_linked_validation(
         "integration_compilation", "java_compilation"
-    )  # Register a module specific audit based on the java compilation implementation
+    )  # Register a module specific validation based on the java compilation implementation
     base_model = build_base_model()
 
     # Create implementations
@@ -41,8 +41,8 @@ def build_coding_agent_subgraph(
         llm=base_model,
         workspace_path=workspace_path,
     )
-    audit_agentic_work = create_audit_agent_work_function(
-        audit_executor=audit_executor,
+    validation_agentic_work = create_validation_agent_work_function(
+        validation_executor=validation_executor,
         mapper={
             "file_existence": map_coding_to_file,
             "java_compilation": map_coding_to_file,
@@ -57,13 +57,13 @@ def build_coding_agent_subgraph(
     graph = StateGraph(CodingAgentState)
     graph.add_node("implement_transformation", implement_transformation, initial=True)
     graph.add_node("implement_bx_tool", implement_bx_tool)
-    graph.add_node("audit_agentic_work", audit_agentic_work)
+    graph.add_node("validation_agentic_work", validation_agentic_work)
 
     # Add edges between the nodes to define the workflow
     graph.add_edge("implement_transformation", "implement_bx_tool")
-    graph.add_edge("implement_bx_tool", "audit_agentic_work")
+    graph.add_edge("implement_bx_tool", "validation_agentic_work")
     graph.add_conditional_edges(
-        "audit_agentic_work",
+        "validation_agentic_work",
         evaluate_transformation_implementation,
         {
             "implementation_error": "implement_transformation",

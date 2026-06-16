@@ -82,13 +82,13 @@ class TestJavaCompilation(TestCase):
         )
 
         mock_which.return_value = None
-        java_compilation_audit = JavaCompilationValidation()
+        java_compilation_validation = JavaCompilationValidation()
 
         with self.assertRaises(
             RuntimeError,
             msg="JavaCompilationValidation's 'setup' method should raise RuntimeError if javac is not installed on the system.",
         ):
-            asyncio.run(java_compilation_audit.setup())
+            asyncio.run(java_compilation_validation.setup())
 
     def test_run__method_defined(self):
         self.assertTrue(
@@ -109,8 +109,8 @@ class TestJavaCompilation(TestCase):
             stderr=JAVAC_ERROR_OUTPUT,
         )
 
-        java_compilation_audit = JavaCompilationValidation()
-        results, errors = asyncio.run(java_compilation_audit.run(files=[Path("Test.java")]))
+        java_compilation_validation = JavaCompilationValidation()
+        results, errors = asyncio.run(java_compilation_validation.run(files=[Path("Test.java")]))
 
         self.assertEqual(
             len(results),
@@ -143,8 +143,8 @@ class TestJavaCompilation(TestCase):
             stderr="",
         )
         
-        java_compilation_audit = JavaCompilationValidation()
-        results, errors = asyncio.run(java_compilation_audit.run(files=[Path("Test.java")]))
+        java_compilation_validation = JavaCompilationValidation()
+        results, errors = asyncio.run(java_compilation_validation.run(files=[Path("Test.java")]))
         
         self.assertEqual(
             len(results),
@@ -158,13 +158,13 @@ class TestJavaCompilation(TestCase):
         )
         
     def test_run__missing_files_parameter(self):
-        java_compilation_audit = JavaCompilationValidation()
+        java_compilation_validation = JavaCompilationValidation()
         
         with self.assertRaises(
             ValueError,
             msg="JavaCompilationValidation's 'run' method should raise ValueError if 'files' parameter is missing.",
         ):
-            asyncio.run(java_compilation_audit.run())
+            asyncio.run(java_compilation_validation.run())
 
 
 class TestJavaCompilationValidation__parse_javac_output(TestCase):

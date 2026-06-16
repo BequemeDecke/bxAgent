@@ -16,7 +16,7 @@ from .transformation_iteration_control import (
     create_check_transformation_iteration_function,
 )
 from .nodes.synthesis_node import create_call_synthesis_agent_function
-from .nodes.auditing_node import create_audit_agent_work_function
+from .nodes.validationing_node import create_validation_agent_work_function
 
 
 def build_workflow_agent() -> StateGraph[WorkflowState]:
@@ -25,23 +25,23 @@ def build_workflow_agent() -> StateGraph[WorkflowState]:
     call_synthesis_agent = create_call_synthesis_agent_function(
         synthesis_agent=build_synthesis_agent()
     )
-    audit_executor = ValidationExecutor(
-        audits={
-            "file_existence_audit": {
-                "audit": FileExistenceValidation(),
-                "audit_schema": FileExistenceValidationConfig,
+    validation_executor = ValidationExecutor(
+        validations={
+            "file_existence_validation": {
+                "validation": FileExistenceValidation(),
+                "validation_schema": FileExistenceValidationConfig,
             },
-            "java_compilation_audit": {
-                "audit": JavaCompilationValidation(),
-                "audit_schema": JavaCompilationValidationConfig,
+            "java_compilation_validation": {
+                "validation": JavaCompilationValidation(),
+                "validation_schema": JavaCompilationValidationConfig,
             },
         }
     )
-    audit_agent_work = create_audit_agent_work_function(
-        audit_executor=audit_executor,
+    validation_agent_work = create_validation_agent_work_function(
+        validation_executor=validation_executor,
         mapper={
-            "file_existence_audit": map_workflow_to_file,
-            "java_compilation_audit": map_workflow_to_file,
+            "file_existence_validation": map_workflow_to_file,
+            "java_compilation_validation": map_workflow_to_file,
         },
     )
 
@@ -49,10 +49,10 @@ def build_workflow_agent() -> StateGraph[WorkflowState]:
 
     # TODO: Add the rest of the workflow nodes and edges!
     builder.add_node("call_synthesis_agent", call_synthesis_agent)
-    builder.add_node("audit_agent", audit_agent_work)
+    builder.add_node("validation_agent", validation_agent_work)
 
     builder.add_edge(START, "call_synthesis_agent")
-    builder.add_edge("call_synthesis_agent", "audit_agent")
+    builder.add_edge("call_synthesis_agent", "validation_agent")
 
     builder.add_conditional_edges(
         "check_transformation_iteration",

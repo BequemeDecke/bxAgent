@@ -32,7 +32,7 @@ class TestTransformationIterationControl(TestCase):
             "transformation_source_model_description": "A model that needs to be transformed.",
             "transformation_target_model_description": "The desired model after transformation.",
             "iteration": 3,
-            "latest_audit_runs": [],
+            "latest_validation_runs": [],
         }
         result = self.check_transformation_iteration(state, max_iterations)
         self.assertEqual(result, "stop")
@@ -44,7 +44,7 @@ class TestTransformationIterationControl(TestCase):
             "transformation_source_model_description": "A model that needs to be transformed.",
             "transformation_target_model_description": "The desired model after transformation.",
             "iteration": 2,
-            "latest_audit_runs": [
+            "latest_validation_runs": [
                 ValidationRun(
                     started_at=datetime.now() - timedelta(minutes=5),
                     execution_time_ms=200,
@@ -56,7 +56,7 @@ class TestTransformationIterationControl(TestCase):
                     ],
                     errors=[
                         ValidationError(
-                            message="An error occurred during the audit.",
+                            message="An error occurred during the validation.",
                             details={
                                 "error_code": "AUDIT_ERROR",
                                 "severity": "high",
@@ -75,7 +75,7 @@ class TestTransformationIterationControl(TestCase):
             "transformation_source_model_description": "A model that needs to be transformed.",
             "transformation_target_model_description": "The desired model after transformation.",
             "iteration": 2,
-            "latest_audit_runs": [
+            "latest_validation_runs": [
                 ValidationRun(
                     started_at=datetime.now() - timedelta(minutes=5),
                     execution_time_ms=200,

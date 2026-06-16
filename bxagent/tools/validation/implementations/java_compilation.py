@@ -37,7 +37,7 @@ class JavaCompilationValidation(Validation):
         """Attempt to compile the provided Java files using `javac`. If there are compilation errors, parse the output and return them as ValidationErrors.
 
         Returns:
-            Tuple[List[ValidationResult], List[ValidationError]]: A tuple containing a list of successful audit results and a list of audit errors.
+            Tuple[List[ValidationResult], List[ValidationError]]: A tuple containing a list of successful validation results and a list of validation errors.
         """
         config = JavaCompilationValidationConfig(**kwargs)
         files = config.files

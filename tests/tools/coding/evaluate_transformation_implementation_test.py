@@ -24,7 +24,7 @@ class TestEvaluateTransformationImplementation(TestCase):
             transformation_target_model_description="Target model description",
             implementation_iteration=MAX_ITERATIONS,
             bxtool_file=None,
-            latest_audit_results={},
+            latest_validation_results={},
         )
 
         # Call the function under test
@@ -41,7 +41,7 @@ class TestEvaluateTransformationImplementation(TestCase):
 
     def test_evaluate_transformation_implementation__implementation_error(self):
         """
-        Test that the evaluation correctly identifies when there is an implementation error based on the latest audit results.
+        Test that the evaluation correctly identifies when there is an implementation error based on the latest validation results.
         """
         # Prepare function under test
         self.evaluate_transformation_implementation = (
@@ -53,8 +53,8 @@ class TestEvaluateTransformationImplementation(TestCase):
             transformation_target_model_description="Target model description",
             implementation_iteration=1,
             bxtool_file=None,
-            latest_audit_results={
-                "audit1": ValidationRun(
+            latest_validation_results={
+                "validation1": ValidationRun(
                     started_at=None,
                     execution_time_ms=100,
                     iteration=1,
@@ -80,12 +80,12 @@ class TestEvaluateTransformationImplementation(TestCase):
         self.assertEqual(
             evaluation,
             "implementation_error",
-            "The evaluation should indicate that there is an implementation error based on the latest audit results.",
+            "The evaluation should indicate that there is an implementation error based on the latest validation results.",
         )
 
     def test_evaluate_transformation_implementation__integration_error(self):
         """
-        Test that the evaluation correctly identifies when there is an integration error based on the latest audit results.
+        Test that the evaluation correctly identifies when there is an integration error based on the latest validation results.
         """
         # Prepare function under test
         self.evaluate_transformation_implementation = (
@@ -97,7 +97,7 @@ class TestEvaluateTransformationImplementation(TestCase):
             transformation_target_model_description="Target model description",
             implementation_iteration=1,
             bxtool_file=None,
-            latest_audit_results={
+            latest_validation_results={
                 "integration_compilation": ValidationRun(
                     started_at=None,
                     execution_time_ms=100,
@@ -117,12 +117,12 @@ class TestEvaluateTransformationImplementation(TestCase):
         self.assertEqual(
             evaluation,
             "integration_error",
-            "The evaluation should indicate that there is an integration error based on the latest audit results.",
+            "The evaluation should indicate that there is an integration error based on the latest validation results.",
         )
 
     def test_evaluate_transformation_implementation__implementation_success(self):
         """
-        Test that the evaluation correctly identifies when the implementation is successful based on the latest audit results.
+        Test that the evaluation correctly identifies when the implementation is successful based on the latest validation results.
         """
         # Prepare function under test
         self.evaluate_transformation_implementation = (
@@ -135,8 +135,8 @@ class TestEvaluateTransformationImplementation(TestCase):
             transformation_target_model_description="Target model description",
             implementation_iteration=1,
             bxtool_file=None,
-            latest_audit_results={
-                "audit1": ValidationRun(
+            latest_validation_results={
+                "validation1": ValidationRun(
                     started_at=None,
                     execution_time_ms=100,
                     iteration=1,
@@ -162,5 +162,5 @@ class TestEvaluateTransformationImplementation(TestCase):
         self.assertEqual(
             evaluation,
             "implementation_success",
-            "The evaluation should indicate that the implementation is successful based on the latest audit results.",
+            "The evaluation should indicate that the implementation is successful based on the latest validation results.",
         )

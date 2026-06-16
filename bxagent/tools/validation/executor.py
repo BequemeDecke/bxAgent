@@ -8,70 +8,70 @@ from .types import Validation, ValidationResult, ValidationRun, ValidationError
 
 
 class ValidationInit(TypedDict):
-    audit: Validation
-    audit_schema: BaseModel
+    validation: Validation
+    validation_schema: BaseModel
 
 
 class LinkedValidation(Validation):
-    def __init__(self, audit: Validation):
-        self.audit = audit
+    def __init__(self, validation: Validation):
+        self.validation = validation
 
     async def setup(self):
-        await self.audit.setup()
+        await self.validation.setup()
 
     async def run(self, **kwargs) -> Tuple[List[ValidationResult], List[ValidationError]]:
-        return await self.audit.run(**kwargs)
+        return await self.validation.run(**kwargs)
 
 
 class ValidationExecutor:
-    def __init__(self, audits: Dict[str, ValidationInit]):
-        self.audits = audits
+    def __init__(self, validations: Dict[str, ValidationInit]):
+        self.validations = validations
         self.iterations: Dict[str, List[ValidationRun]] = {
-            audit_id: [] for audit_id in audits
+            validation_id: [] for validation_id in validations
         }
 
-    def register_linked_audit(self, new_audit_id: str, existing_audit_id: str):
-        if existing_audit_id not in self.audits:
-            raise ValueError(f"Validation with id {existing_audit_id} not found.")
+    def register_linked_validation(self, new_validation_id: str, existing_validation_id: str):
+        if existing_validation_id not in self.validations:
+            raise ValueError(f"Validation with id {existing_validation_id} not found.")
 
-        if new_audit_id in self.audits:
-            raise ValueError(f"Validation with id {new_audit_id} already exists.")
+        if new_validation_id in self.validations:
+            raise ValueError(f"Validation with id {new_validation_id} already exists.")
 
-        linked_audit = LinkedValidation(audit=self.audits[existing_audit_id]["audit"])
-        self.audits[new_audit_id] = {
-            "audit": linked_audit,
-            "audit_schema": self.audits[existing_audit_id]["audit_schema"],
+        linked_validation = LinkedValidation(validation=self.validations[existing_validation_id]["validation"])
+        self.validations[new_validation_id] = {
+            "validation": linked_validation,
+            "validation_schema": self.validations[existing_validation_id]["validation_schema"],
         }
-        self.iterations[new_audit_id] = []
+        self.iterations[new_validation_id] = []
 
     async def execute_all(self, input: Dict[str, Dict[str, Any]]) -> List[ValidationRun]:
         results = []
         tasks = [
-            self.execute_specific(audit_id, input=input[audit_id])
-            for audit_id in self.audits.keys()
+            self.execute_specific(validation_id, input=input[validation_id])
+            for validation_id in self.validations.keys()
         ]
         results = await asyncio.gather(*tasks)
         return results
 
-    async def execute_specific(self, audit_id: str, input: Dict[str, Any]) -> ValidationRun:
-        if audit_id not in self.audits:
-            raise ValueError(f"Validation with id {audit_id} not found.")
+    async def execute_specific(self, validation_id: str, input: Dict[str, Any]) -> ValidationRun:
+        if validation_id not in self.validations:
+            raise ValueError(f"Validation with id {validation_id} not found.")
 
-        audit_init = self.audits[audit_id]
-        audit = audit_init["audit"]
-        audit_schema = audit_init["audit_schema"]
+        validation_init = self.validations[validation_id]
+        validation = validation_init["validation"]
+        validation_schema = validation_init["validation_schema"]
 
-        validated_params = audit_schema.model_validate(input)
+        validated_params = validation_schema.model_validate(input)
 
         started_at = datetime.datetime.now()
         iteration = (
-            self.iterations[audit_id][-1].iteration + 1
-            if self.iterations[audit_id]
+            self.iterations[validation_id][-1].iteration + 1
+            if self.iterations[validation_id]
             else 1
         )
 
         try:
-            run_tuple = await audit.run(**validated_params.model_dump())
+            run_tuple = await validation.run(**validated_params.model_dump())
         except Exception as e:
             run_tuple = (
                 [],
@@ -92,7 +92,7 @@ class ValidationExecutor:
             results=run_tuple[0],
             errors=run_tuple[1],
         )
-        self.iterations[audit_id].append(run)
+        self.iterations[validation_id].append(run)
         return run
 
     def get_latest_results(self) -> List[ValidationRun]:

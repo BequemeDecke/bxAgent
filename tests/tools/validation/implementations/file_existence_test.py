@@ -14,10 +14,10 @@ class TestFileExistence(TestCase):
             "FileExistenceValidation should have a 'setup' method.",
         )
 
-        file_existence_audit = FileExistenceValidation()
+        file_existence_validation = FileExistenceValidation()
 
         self.assertIsNone(
-            asyncio.run(file_existence_audit.setup()),
+            asyncio.run(file_existence_validation.setup()),
             "FileExistenceValidation's 'setup' method should return None.",
         )
 
@@ -32,8 +32,8 @@ class TestFileExistence(TestCase):
         mock_exists.return_value = True
         files = [Path("file1.txt"), Path("file2.txt")]
 
-        file_existence_audit = FileExistenceValidation()
-        results, errors = asyncio.run(file_existence_audit.run(files=files))
+        file_existence_validation = FileExistenceValidation()
+        results, errors = asyncio.run(file_existence_validation.run(files=files))
 
         self.assertEqual(len(errors), 0, "There should be no errors when files exist.")
 
@@ -49,8 +49,8 @@ class TestFileExistence(TestCase):
         mock_exists.return_value = False
         files = [Path("file1.txt"), Path("file2.txt")]
 
-        file_existence_audit = FileExistenceValidation()
-        results, errors = asyncio.run(file_existence_audit.run(files=files))
+        file_existence_validation = FileExistenceValidation()
+        results, errors = asyncio.run(file_existence_validation.run(files=files))
 
         self.assertEqual(
             len(results), 0, "There should be no results when files do not exist."
@@ -71,8 +71,8 @@ class TestFileExistence(TestCase):
     @patch("pathlib.Path.exists", side_effect=[True, False])
     def test_execute__mixed_file_existence(self, mock_exists):
         files = [Path("file1.txt"), Path("file2.txt")]
-        file_existence_audit = FileExistenceValidation()
-        results, errors = asyncio.run(file_existence_audit.run(files=files))
+        file_existence_validation = FileExistenceValidation()
+        results, errors = asyncio.run(file_existence_validation.run(files=files))
 
         self.assertEqual(
             len(results), 1, "There should be one result when one file exists."
@@ -101,9 +101,9 @@ class TestFileExistence(TestCase):
         )
         
     def test_execute__missing_files_parameter(self):
-        file_existence_audit = FileExistenceValidation()
+        file_existence_validation = FileExistenceValidation()
         with self.assertRaises(
             ValueError, msg="Should raise ValueError when 'files' parameter is missing."
         ):
-            asyncio.run(file_existence_audit.run())
+            asyncio.run(file_existence_validation.run())
             

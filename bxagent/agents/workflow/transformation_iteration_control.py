@@ -32,13 +32,13 @@ def create_check_transformation_iteration_function(llm: BaseChatModel):
         if state["iteration"] >= max_iterations:
             return "stop"
 
-        runs = state["latest_audit_runs"]
+        runs = state["latest_validation_runs"]
         all_results = []
 
         for run in runs:
             if (
                 len(run.errors) > 0
-            ):  # If there are any errors in the audit runs, continue with the transformation process, as it might be able to fix the issues in the next iteration.
+            ):  # If there are any errors in the validation runs, continue with the transformation process, as it might be able to fix the issues in the next iteration.
                 return "continue"
 
             all_results.extend(run.results)
@@ -52,7 +52,7 @@ def create_check_transformation_iteration_function(llm: BaseChatModel):
         response: IterationRoute = router.invoke(
             [
                 SystemMessage(
-                    content="Route the input to 'continue' or 'stop' based on the audit results and the descriptions of the source and target models."
+                    content="Route the input to 'continue' or 'stop' based on the validation results and the descriptions of the source and target models."
                 ),
                 HumanMessage(content=llm_input),
             ]

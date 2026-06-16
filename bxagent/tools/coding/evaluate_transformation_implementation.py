@@ -25,12 +25,12 @@ def create_evaluate_transformation_implementation():
             return "max_iteration_reached"
 
         # If there is an error in the bxtool_file it's an integration error, otherwise it's an implementation error
-        latest_results = agent_state.get("latest_audit_results", {})
+        latest_results = agent_state.get("latest_validation_results", {})
         integration_results = latest_results.get("integration_compilation")
         if integration_results is None or len(integration_results.errors) > 0:
             return "integration_error"
 
-        # If there are any errors in the other audit results, it's an implementation error
+        # If there are any errors in the other validation results, it's an implementation error
         if any(
             len(results.errors) > 0
             for key, results in latest_results.items()

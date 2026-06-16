@@ -12,7 +12,7 @@ PROMPT_TEMPLATE = """
 Use the following results to check if the transformation plan is complete and consistent:
 
 --- BEGIN AUDIT RESULTS ---
-{audit_results}
+{validation_results}
 --- END AUDIT RESULTS ---
 """
 
@@ -23,14 +23,14 @@ def create_call_synthesis_agent_function(synthesis_agent: CompiledStateGraph):
         Calls the synthesis agent with the current workflow state.
 
         It needs a specific schema in order to parse the output of the subagent.
-        It also gets the current results of the audits, which can be used to inform the synthesis agent about what has been tried already and what the results were.
+        It also gets the current results of the validations, which can be used to inform the synthesis agent about what has been tried already and what the results were.
         """
         transformation = state.get("transformation_plan")
 
         input_prompt = PROMPT_TEMPLATE.format(
             transformation_plan=str(transformation),
-            audit_results="\n".join(
-                [str(run) for run in state.get("latest_audit_runs", [])]
+            validation_results="\n".join(
+                [str(run) for run in state.get("latest_validation_runs", [])]
             ),
         )
 
