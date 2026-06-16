@@ -11,8 +11,8 @@ from unittest.mock import Mock
 from typing import Dict, Any
 from pydantic import BaseModel
 
-from bxagent.tools.audit.types import Audit, AuditResult, AuditError, StateToAuditMapper
-from bxagent.tools.audit import AuditExecutor
+from bxagent.tools.validation.types import Audit, AuditResult, AuditError, StateToAuditMapper
+from bxagent.tools.validation import AuditExecutor
 from bxagent.agents.workflow.nodes.auditing_node import (
     create_audit_agent_work_function,
 )

@@ -3,13 +3,13 @@ from langgraph.graph import StateGraph, START, END
 from bxagent.models import build_base_model
 from bxagent.mapping import map_workflow_to_file
 from bxagent.agents.synthesis import build_synthesis_agent
-from bxagent.tools.audit.implementations import (
+from bxagent.tools.validation.implementations import (
     FileExistenceAudit,
     JavaCompilationAudit,
     FileExistenceAuditConfig,
     JavaCompilationAuditConfig,
 )
-from bxagent.tools.audit.executor import AuditExecutor
+from bxagent.tools.validation.executor import AuditExecutor
 
 from .state import WorkflowState
 from .transformation_iteration_control import (

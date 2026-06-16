@@ -5,7 +5,7 @@ from bxagent.agents.workflow.nodes.auditing_node import create_audit_agent_work_
 from bxagent.config import Config
 from bxagent.mapping import map_coding_to_file
 from bxagent.models import build_base_model
-from bxagent.tools.audit.executor import AuditExecutor
+from bxagent.tools.validation.executor import AuditExecutor
 from bxagent.tools.transformation.plan import (
     TransformationPlan,
     FileTransformationPlanParser,

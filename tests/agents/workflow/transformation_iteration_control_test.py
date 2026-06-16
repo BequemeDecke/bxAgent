@@ -13,7 +13,7 @@ from bxagent.agents.workflow.transformation_iteration_control import (
     create_check_transformation_iteration_function,
     IterationRoute,
 )
-from bxagent.tools.audit.types import AuditRun, AuditResult, AuditError
+from bxagent.tools.validation.types import AuditRun, AuditResult, AuditError
 
 
 class TestTransformationIterationControl(TestCase):

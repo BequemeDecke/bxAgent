@@ -6,8 +6,8 @@ from dataclasses import asdict
 from typing import List
 from pydantic import BaseModel
 
-from bxagent.tools.audit.types import AuditRun, AuditResult, Audit, AuditError
-from bxagent.tools.audit.executor import AuditExecutor, LinkedAudit
+from bxagent.tools.validation.types import AuditRun, AuditResult, Audit, AuditError
+from bxagent.tools.validation.executor import AuditExecutor, LinkedAudit
 
 
 class MockedAuditCaseImplementation(Audit):

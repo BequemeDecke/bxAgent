@@ -1,7 +1,7 @@
 from typing import Any, Dict, Callable, Literal
 
-from bxagent.tools.audit import AuditExecutor
-from bxagent.tools.audit.types import StateToAuditMapper
+from bxagent.tools.validation import AuditExecutor
+from bxagent.tools.validation.types import StateToAuditMapper
 
 
 def create_audit_agent_work_function(

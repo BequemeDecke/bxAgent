@@ -1,7 +1,7 @@
 from typing import Dict, TypedDict, List
 from pathlib import Path
 
-from bxagent.tools.audit.types import AuditRun
+from bxagent.tools.validation.types import AuditRun
 from bxagent.tools.transformation.plan import TransformationPlan
 
 
