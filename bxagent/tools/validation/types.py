@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Optional, Tuple, Callable
 
 
 @dataclass
-class AuditResult:
+class ValidationResult:
     content: str
     format: Optional[str] = None
 
@@ -21,7 +21,7 @@ class AuditRun:
     started_at: datetime
     execution_time_ms: int
     iteration: int
-    results: List[AuditResult]
+    results: List[ValidationResult]
     errors: List[AuditError]
 
 
@@ -34,5 +34,5 @@ class Audit(ABC):
         pass
 
     @abstractmethod
-    async def run(self, **kwargs) -> Tuple[List[AuditResult], List[AuditError]]:
+    async def run(self, **kwargs) -> Tuple[List[ValidationResult], List[AuditError]]:
         pass

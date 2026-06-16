@@ -115,7 +115,7 @@ class TestJavaCompilation(TestCase):
         self.assertEqual(
             len(results),
             0,
-            "There should be no AuditResults when javac returns a syntax error.",
+            "There should be no ValidationResults when javac returns a syntax error.",
         )
         self.assertEqual(
             len(errors),
@@ -149,7 +149,7 @@ class TestJavaCompilation(TestCase):
         self.assertEqual(
             len(results),
             1,
-            "There should be one AuditResult when javac returns a success output (since we haven't implemented result parsing yet).",
+            "There should be one ValidationResult when javac returns a success output (since we haven't implemented result parsing yet).",
         )
         self.assertEqual(
             len(errors),

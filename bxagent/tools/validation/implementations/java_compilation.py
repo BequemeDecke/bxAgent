@@ -7,7 +7,7 @@ from typing import List, Tuple
 from pydantic import BaseModel
 from pathlib import Path
 
-from ..types import AuditResult, AuditError, Audit
+from ..types import ValidationResult, AuditError, Audit
 
 
 class JavaCompilationAuditConfig(BaseModel):
@@ -33,16 +33,16 @@ class JavaCompilationAudit(Audit):
             "javac is available on the system. JavaCompilationAudit setup completed successfully."
         )
 
-    async def run(self, **kwargs) -> Tuple[List[AuditResult], List[AuditError]]:
+    async def run(self, **kwargs) -> Tuple[List[ValidationResult], List[AuditError]]:
         """Attempt to compile the provided Java files using `javac`. If there are compilation errors, parse the output and return them as AuditErrors.
 
         Returns:
-            Tuple[List[AuditResult], List[AuditError]]: A tuple containing a list of successful audit results and a list of audit errors.
+            Tuple[List[ValidationResult], List[AuditError]]: A tuple containing a list of successful audit results and a list of audit errors.
         """
         config = JavaCompilationAuditConfig(**kwargs)
         files = config.files
 
-        results: List[AuditResult] = []
+        results: List[ValidationResult] = []
         errors: List[AuditError] = []
 
         for file in files:
@@ -62,7 +62,7 @@ class JavaCompilationAudit(Audit):
                 else:
                     logging.debug(f"Compilation succeeded for {file}.")
                     results.append(
-                        AuditResult(content=f"Compilation succeeded for {file}")
+                        ValidationResult(content=f"Compilation succeeded for {file}")
                     )
             except Exception as e:
                 logging.exception(f"An error occurred while compiling {file}: {e}")

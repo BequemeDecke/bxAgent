@@ -13,7 +13,7 @@ from bxagent.agents.workflow.transformation_iteration_control import (
     create_check_transformation_iteration_function,
     IterationRoute,
 )
-from bxagent.tools.validation.types import AuditRun, AuditResult, AuditError
+from bxagent.tools.validation.types import AuditRun, ValidationResult, AuditError
 
 
 class TestTransformationIterationControl(TestCase):
@@ -50,7 +50,7 @@ class TestTransformationIterationControl(TestCase):
                     execution_time_ms=200,
                     iteration=1,
                     results=[
-                        AuditResult(
+                        ValidationResult(
                             content="Audit result content",
                         )
                     ],
@@ -81,7 +81,7 @@ class TestTransformationIterationControl(TestCase):
                     execution_time_ms=200,
                     iteration=1,
                     results=[
-                        AuditResult(
+                        ValidationResult(
                             content="Audit result content",
                         )
                     ],

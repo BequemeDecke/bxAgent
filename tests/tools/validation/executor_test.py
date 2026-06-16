@@ -6,14 +6,14 @@ from dataclasses import asdict
 from typing import List
 from pydantic import BaseModel
 
-from bxagent.tools.validation.types import AuditRun, AuditResult, Audit, AuditError
+from bxagent.tools.validation.types import AuditRun, ValidationResult, Audit, AuditError
 from bxagent.tools.validation.executor import ValidationExecutor, LinkedAudit
 
 
 class MockedAuditCaseImplementation(Audit):
     def __init__(
         self,
-        results: List[AuditResult] = None,
+        results: List[ValidationResult] = None,
         errors: List[AuditError] = None,
     ):
         self.results = results or []
@@ -52,7 +52,7 @@ def assert_audit_run_equal_except(equal_method, actual: AuditRun, expected: Audi
 
 class TestValidationExecutor__execute_specific(unittest.TestCase):
     def setUp(self):
-        self.results = [AuditResult(content="result1")]
+        self.results = [ValidationResult(content="result1")]
         self.errors = []
         self.executor = ValidationExecutor(
             audits={
@@ -154,7 +154,7 @@ class TestValidationExecutor__execute_all(unittest.TestCase):
             started_at=datetime.datetime.now(),
             execution_time_ms=100,
             iteration=1,
-            results=[AuditResult(content="result1")],
+            results=[ValidationResult(content="result1")],
             errors=[],
         )
         self.run_2 = AuditRun(
@@ -248,7 +248,7 @@ class TestValidationExecutor__get_latest_results(unittest.TestCase):
             started_at=datetime.datetime.now(),
             execution_time_ms=100,
             iteration=1,
-            results=[AuditResult(content="result1")],
+            results=[ValidationResult(content="result1")],
             errors=[],
         )
         self.run_2 = AuditRun(
@@ -340,7 +340,7 @@ class TestValidationExecutor__get_latest_results(unittest.TestCase):
 
 class TestValidationExecutor__register_linked_audit(unittest.TestCase):
     def setUp(self):
-        self.results = [AuditResult(content="result1"), AuditResult(content="result2")]
+        self.results = [ValidationResult(content="result1"), ValidationResult(content="result2")]
         self.errors = [
             AuditError(message="error", details={"exception_type": "Exception"})
         ]
