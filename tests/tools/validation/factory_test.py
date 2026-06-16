@@ -3,7 +3,7 @@ import unittest
 from langchain.tools import BaseTool
 from bxagent.tools.validation.factory import create_audit_tools
 
-class TestAuditToolFactory(unittest.TestCase):
+class TestValidationToolFactory(unittest.TestCase):
     def test_create_audit_tools__defined(self):
         self.assertTrue(
             hasattr(create_audit_tools, "__call__"),

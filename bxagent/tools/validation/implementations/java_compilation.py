@@ -7,16 +7,16 @@ from typing import List, Tuple
 from pydantic import BaseModel
 from pathlib import Path
 
-from ..types import ValidationResult, ValidationError, Audit
+from ..types import ValidationResult, ValidationError, Validation
 
 
-class JavaCompilationAuditConfig(BaseModel):
+class JavaCompilationValidationConfig(BaseModel):
     files: List[Path]
 
 
-class JavaCompilationAudit(Audit):
+class JavaCompilationValidation(Validation):
     """
-    Audit that checks if Java files can be compiled successfully.
+    Validation that checks if Java files can be compiled successfully.
 
     It uses the `javac` command to attempt to compile the provided Java files. If `javac` is not installed on the system, the setup will fail. The run method will return an empty list of results and errors for now, as the actual compilation logic is not implemented yet.
     """
@@ -30,7 +30,7 @@ class JavaCompilationAudit(Audit):
             raise RuntimeError("javac is not installed on the system.")
 
         logging.debug(
-            "javac is available on the system. JavaCompilationAudit setup completed successfully."
+            "javac is available on the system. JavaCompilationValidation setup completed successfully."
         )
 
     async def run(self, **kwargs) -> Tuple[List[ValidationResult], List[ValidationError]]:
@@ -39,7 +39,7 @@ class JavaCompilationAudit(Audit):
         Returns:
             Tuple[List[ValidationResult], List[ValidationError]]: A tuple containing a list of successful audit results and a list of audit errors.
         """
-        config = JavaCompilationAuditConfig(**kwargs)
+        config = JavaCompilationValidationConfig(**kwargs)
         files = config.files
 
         results: List[ValidationResult] = []

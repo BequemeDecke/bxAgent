@@ -25,10 +25,10 @@ class ValidationRun:
     errors: List[ValidationError]
 
 
-StateToAuditMapper = Callable[[Dict[str, Any]], Dict[str, Any]]
+StateToValidationMapper = Callable[[Dict[str, Any]], Dict[str, Any]]
 
 
-class Audit(ABC):
+class Validation(ABC):
     @abstractmethod
     async def setup(self) -> None:
         pass

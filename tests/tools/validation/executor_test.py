@@ -6,11 +6,11 @@ from dataclasses import asdict
 from typing import List
 from pydantic import BaseModel
 
-from bxagent.tools.validation.types import ValidationRun, ValidationResult, Audit, ValidationError
-from bxagent.tools.validation.executor import ValidationExecutor, LinkedAudit
+from bxagent.tools.validation.types import ValidationRun, ValidationResult, Validation, ValidationError
+from bxagent.tools.validation.executor import ValidationExecutor, LinkedValidation
 
 
-class MockedAuditCaseImplementation(Audit):
+class MockedValidationCaseImplementation(Validation):
     def __init__(
         self,
         results: List[ValidationResult] = None,
@@ -26,11 +26,11 @@ class MockedAuditCaseImplementation(Audit):
         return (self.results, self.errors)
 
 
-class MockedAuditSchema(BaseModel):
+class MockedValidationSchema(BaseModel):
     param1: str
 
 
-class FailingAuditCaseImplementation(Audit):
+class FailingValidationCaseImplementation(Validation):
     async def setup(self):
         return
 
@@ -57,15 +57,15 @@ class TestValidationExecutor__execute_specific(unittest.TestCase):
         self.executor = ValidationExecutor(
             audits={
                 "audit1": {
-                    "audit": MockedAuditCaseImplementation(
+                    "audit": MockedValidationCaseImplementation(
                         results=self.results,
                         errors=self.errors,
                     ),
-                    "audit_schema": MockedAuditSchema(param1="value1"),
+                    "audit_schema": MockedValidationSchema(param1="value1"),
                 },
                 "audit2": {
-                    "audit": FailingAuditCaseImplementation(),
-                    "audit_schema": MockedAuditSchema(param1="value2"),
+                    "audit": FailingValidationCaseImplementation(),
+                    "audit_schema": MockedValidationSchema(param1="value2"),
                 },
             }
         )
@@ -169,22 +169,22 @@ class TestValidationExecutor__execute_all(unittest.TestCase):
         self.executor = ValidationExecutor(
             audits={
                 "audit1": {
-                    "audit": MockedAuditCaseImplementation(
+                    "audit": MockedValidationCaseImplementation(
                         results=self.run_1.results,
                         errors=self.run_1.errors,
                     ),
-                    "audit_schema": MockedAuditSchema(param1="value1"),
+                    "audit_schema": MockedValidationSchema(param1="value1"),
                 },
                 "audit2": {
-                    "audit": MockedAuditCaseImplementation(
+                    "audit": MockedValidationCaseImplementation(
                         results=self.run_2.results,
                         errors=self.run_2.errors,
                     ),
-                    "audit_schema": MockedAuditSchema(param1="value2"),
+                    "audit_schema": MockedValidationSchema(param1="value2"),
                 },
                 "audit3": {
-                    "audit": FailingAuditCaseImplementation(),
-                    "audit_schema": MockedAuditSchema(param1="value3"),
+                    "audit": FailingValidationCaseImplementation(),
+                    "audit_schema": MockedValidationSchema(param1="value3"),
                 },
             }
         )
@@ -263,18 +263,18 @@ class TestValidationExecutor__get_latest_results(unittest.TestCase):
         self.executor = ValidationExecutor(
             audits={
                 "audit1": {
-                    "audit": MockedAuditCaseImplementation(
+                    "audit": MockedValidationCaseImplementation(
                         results=self.run_1.results,
                         errors=self.run_1.errors,
                     ),
-                    "audit_schema": MockedAuditSchema(param1="value1"),
+                    "audit_schema": MockedValidationSchema(param1="value1"),
                 },
                 "audit2": {
-                    "audit": MockedAuditCaseImplementation(
+                    "audit": MockedValidationCaseImplementation(
                         results=self.run_2.results,
                         errors=self.run_2.errors,
                     ),
-                    "audit_schema": MockedAuditSchema(param1="value2"),
+                    "audit_schema": MockedValidationSchema(param1="value2"),
                 },
             }
         )
@@ -347,15 +347,15 @@ class TestValidationExecutor__register_linked_audit(unittest.TestCase):
         self.executor = ValidationExecutor(
             audits={
                 "audit1": {
-                    "audit": MockedAuditCaseImplementation(),
-                    "audit_schema": MockedAuditSchema(param1="value1"),
+                    "audit": MockedValidationCaseImplementation(),
+                    "audit_schema": MockedValidationSchema(param1="value1"),
                 },
                 "audit2": {
-                    "audit": MockedAuditCaseImplementation(
+                    "audit": MockedValidationCaseImplementation(
                         results=self.results,
                         errors=self.errors,
                     ),
-                    "audit_schema": MockedAuditSchema(param1="value2"),
+                    "audit_schema": MockedValidationSchema(param1="value2"),
                 },
             }
         )
@@ -375,8 +375,8 @@ class TestValidationExecutor__register_linked_audit(unittest.TestCase):
         )
         self.assertIsInstance(
             self.executor.audits["linked_audit"]["audit"],
-            LinkedAudit,
-            "Registered linked audit should be an instance of LinkedAudit.",
+            LinkedValidation,
+            "Registered linked audit should be an instance of LinkedValidation.",
         )
         self.assertEqual(
             self.executor.iterations["linked_audit"],

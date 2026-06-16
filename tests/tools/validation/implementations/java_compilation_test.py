@@ -7,7 +7,7 @@ from unittest.mock import patch
 from pathlib import Path
 
 from bxagent.tools.validation.implementations.java_compilation import (
-    JavaCompilationAudit,
+    JavaCompilationValidation,
     parse_javac_output,
     ValidationError,
 )
@@ -77,23 +77,23 @@ class TestJavaCompilation(TestCase):
         """
 
         self.assertTrue(
-            hasattr(JavaCompilationAudit, "setup"),
-            "JavaCompilationAudit should have a 'setup' method.",
+            hasattr(JavaCompilationValidation, "setup"),
+            "JavaCompilationValidation should have a 'setup' method.",
         )
 
         mock_which.return_value = None
-        java_compilation_audit = JavaCompilationAudit()
+        java_compilation_audit = JavaCompilationValidation()
 
         with self.assertRaises(
             RuntimeError,
-            msg="JavaCompilationAudit's 'setup' method should raise RuntimeError if javac is not installed on the system.",
+            msg="JavaCompilationValidation's 'setup' method should raise RuntimeError if javac is not installed on the system.",
         ):
             asyncio.run(java_compilation_audit.setup())
 
     def test_run__method_defined(self):
         self.assertTrue(
-            hasattr(JavaCompilationAudit, "run"),
-            "JavaCompilationAudit should have a 'run' method.",
+            hasattr(JavaCompilationValidation, "run"),
+            "JavaCompilationValidation should have a 'run' method.",
         )
 
     @patch("subprocess.run")
@@ -109,7 +109,7 @@ class TestJavaCompilation(TestCase):
             stderr=JAVAC_ERROR_OUTPUT,
         )
 
-        java_compilation_audit = JavaCompilationAudit()
+        java_compilation_audit = JavaCompilationValidation()
         results, errors = asyncio.run(java_compilation_audit.run(files=[Path("Test.java")]))
 
         self.assertEqual(
@@ -143,7 +143,7 @@ class TestJavaCompilation(TestCase):
             stderr="",
         )
         
-        java_compilation_audit = JavaCompilationAudit()
+        java_compilation_audit = JavaCompilationValidation()
         results, errors = asyncio.run(java_compilation_audit.run(files=[Path("Test.java")]))
         
         self.assertEqual(
@@ -158,16 +158,16 @@ class TestJavaCompilation(TestCase):
         )
         
     def test_run__missing_files_parameter(self):
-        java_compilation_audit = JavaCompilationAudit()
+        java_compilation_audit = JavaCompilationValidation()
         
         with self.assertRaises(
             ValueError,
-            msg="JavaCompilationAudit's 'run' method should raise ValueError if 'files' parameter is missing.",
+            msg="JavaCompilationValidation's 'run' method should raise ValueError if 'files' parameter is missing.",
         ):
             asyncio.run(java_compilation_audit.run())
 
 
-class TestJavaCompilationAudit__parse_javac_output(TestCase):
+class TestJavaCompilationValidation__parse_javac_output(TestCase):
 
     def test_parse_javac_output__no_errors(self):
         errors = parse_javac_output(JAVAC_SUCCESS_OUTPUT)

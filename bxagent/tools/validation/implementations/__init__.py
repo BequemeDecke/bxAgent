@@ -1,9 +1,9 @@
-from .file_existence import FileExistenceAudit, FileExistenceAuditConfig
-from .java_compilation import JavaCompilationAudit, JavaCompilationAuditConfig
+from .file_existence import FileExistenceValidation, FileExistenceValidationConfig
+from .java_compilation import JavaCompilationValidation, JavaCompilationValidationConfig
 
 __all__ = [
-    "FileExistenceAudit",
-    "JavaCompilationAudit",
-    "FileExistenceAuditConfig",
-    "JavaCompilationAuditConfig",
+    "FileExistenceValidation",
+    "JavaCompilationValidation",
+    "FileExistenceValidationConfig",
+    "JavaCompilationValidationConfig",
 ]

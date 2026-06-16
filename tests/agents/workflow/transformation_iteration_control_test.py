@@ -51,7 +51,7 @@ class TestTransformationIterationControl(TestCase):
                     iteration=1,
                     results=[
                         ValidationResult(
-                            content="Audit result content",
+                            content="Validation result content",
                         )
                     ],
                     errors=[
@@ -82,7 +82,7 @@ class TestTransformationIterationControl(TestCase):
                     iteration=1,
                     results=[
                         ValidationResult(
-                            content="Audit result content",
+                            content="Validation result content",
                         )
                     ],
                     errors=[],

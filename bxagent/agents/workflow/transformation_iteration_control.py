@@ -46,7 +46,7 @@ def create_check_transformation_iteration_function(llm: BaseChatModel):
         llm_input = (
             f"Source model description: {state['transformation_source_model_description']}\n"
             f"Target model description: {state['transformation_target_model_description']}\n"
-            f"Audit results from the latest iteration: {[result.content for result in all_results]}\n"
+            f"Validation results from the latest iteration: {[result.content for result in all_results]}\n"
         )
 
         response: IterationRoute = router.invoke(

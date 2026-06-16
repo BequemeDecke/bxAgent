@@ -4,10 +4,10 @@ from bxagent.models import build_base_model
 from bxagent.mapping import map_workflow_to_file
 from bxagent.agents.synthesis import build_synthesis_agent
 from bxagent.tools.validation.implementations import (
-    FileExistenceAudit,
-    JavaCompilationAudit,
-    FileExistenceAuditConfig,
-    JavaCompilationAuditConfig,
+    FileExistenceValidation,
+    JavaCompilationValidation,
+    FileExistenceValidationConfig,
+    JavaCompilationValidationConfig,
 )
 from bxagent.tools.validation.executor import ValidationExecutor
 
@@ -28,12 +28,12 @@ def build_workflow_agent() -> StateGraph[WorkflowState]:
     audit_executor = ValidationExecutor(
         audits={
             "file_existence_audit": {
-                "audit": FileExistenceAudit(),
-                "audit_schema": FileExistenceAuditConfig,
+                "audit": FileExistenceValidation(),
+                "audit_schema": FileExistenceValidationConfig,
             },
             "java_compilation_audit": {
-                "audit": JavaCompilationAudit(),
-                "audit_schema": JavaCompilationAuditConfig,
+                "audit": JavaCompilationValidation(),
+                "audit_schema": JavaCompilationValidationConfig,
             },
         }
     )

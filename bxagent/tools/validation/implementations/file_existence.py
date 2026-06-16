@@ -2,19 +2,19 @@ from typing import List, Tuple
 from pathlib import Path
 from pydantic import BaseModel
 
-from ..types import Audit, ValidationResult, ValidationError
+from ..types import Validation, ValidationResult, ValidationError
 
 
-class FileExistenceAuditConfig(BaseModel):
+class FileExistenceValidationConfig(BaseModel):
     files: List[Path]
 
 
-class FileExistenceAudit(Audit):
+class FileExistenceValidation(Validation):
     async def setup(self):
         pass
 
     async def run(self, **kwargs) -> Tuple[List[ValidationResult], List[ValidationError]]:
-        config = FileExistenceAuditConfig(**kwargs)
+        config = FileExistenceValidationConfig(**kwargs)
         files = config.files
         
         results = []

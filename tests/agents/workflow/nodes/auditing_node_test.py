@@ -11,7 +11,7 @@ from unittest.mock import Mock
 from typing import Dict, Any
 from pydantic import BaseModel
 
-from bxagent.tools.validation.types import Audit, ValidationResult, ValidationError, StateToAuditMapper
+from bxagent.tools.validation.types import Validation, ValidationResult, ValidationError, StateToValidationMapper
 from bxagent.tools.validation import ValidationExecutor
 from bxagent.agents.workflow.nodes.auditing_node import (
     create_audit_agent_work_function,
@@ -23,12 +23,12 @@ class MockedSchema(BaseModel):
     some_field: str
 
 
-class TestAuditingNode__ExecutionModeAll(TestCase):
+class TestValidationingNode__ExecutionModeAll(TestCase):
     def test_auditing_node__updates_state_with_latest_results(self):
         def mocked_mapper(state: WorkflowState) -> Dict[str, Any]:
             return {"some_field": "some_value"}
 
-        mocked_audit = Mock(spec=Audit)
+        mocked_audit = Mock(spec=Validation)
         mocked_audit.run.return_value = (
             [ValidationResult(content="Some audit result")],
             [ValidationError(message="Some audit error")],
@@ -79,7 +79,7 @@ class TestAuditingNode__ExecutionModeAll(TestCase):
         )
 
     def test_auditing_node__audit_has_no_mapper(self):
-        mocked_audit = Mock(spec=Audit)
+        mocked_audit = Mock(spec=Validation)
         mocked_audit.run.return_value = (
             [ValidationResult(content="Some audit result")],
             [ValidationError(message="Some audit error")],
@@ -103,12 +103,12 @@ class TestAuditingNode__ExecutionModeAll(TestCase):
             asyncio.run(audit_agent_work(WorkflowState()))
 
 
-class TestAuditingNode__ExecutionModeSpecific(TestCase):
+class TestValidationingNode__ExecutionModeSpecific(TestCase):
     def test_auditing_node__updates_state_with_latest_results_specific(self):
         def mocked_mapper(state: WorkflowState) -> Dict[str, Any]:
             return {"some_field": "some_value"}
 
-        mocked_audit = Mock(spec=Audit)
+        mocked_audit = Mock(spec=Validation)
         mocked_audit.run.return_value = (
             [ValidationResult(content="Some audit result")],
             [ValidationError(message="Some audit error")],
@@ -159,7 +159,7 @@ class TestAuditingNode__ExecutionModeSpecific(TestCase):
         )
 
     def test_auditing_node__audit_has_no_mapper_specific(self):
-        mocked_audit = Mock(spec=Audit)
+        mocked_audit = Mock(spec=Validation)
         mocked_audit.run.return_value = (
             [ValidationResult(content="Some audit result")],
             [ValidationError(message="Some audit error")],

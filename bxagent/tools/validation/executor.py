@@ -4,16 +4,16 @@ import datetime
 from typing import List, Dict, Tuple, TypedDict, Any
 from pydantic import BaseModel
 
-from .types import Audit, ValidationResult, ValidationRun, ValidationError
+from .types import Validation, ValidationResult, ValidationRun, ValidationError
 
 
-class AuditInit(TypedDict):
-    audit: Audit
+class ValidationInit(TypedDict):
+    audit: Validation
     audit_schema: BaseModel
 
 
-class LinkedAudit(Audit):
-    def __init__(self, audit: Audit):
+class LinkedValidation(Validation):
+    def __init__(self, audit: Validation):
         self.audit = audit
 
     async def setup(self):
@@ -24,7 +24,7 @@ class LinkedAudit(Audit):
 
 
 class ValidationExecutor:
-    def __init__(self, audits: Dict[str, AuditInit]):
+    def __init__(self, audits: Dict[str, ValidationInit]):
         self.audits = audits
         self.iterations: Dict[str, List[ValidationRun]] = {
             audit_id: [] for audit_id in audits
@@ -32,12 +32,12 @@ class ValidationExecutor:
 
     def register_linked_audit(self, new_audit_id: str, existing_audit_id: str):
         if existing_audit_id not in self.audits:
-            raise ValueError(f"Audit with id {existing_audit_id} not found.")
+            raise ValueError(f"Validation with id {existing_audit_id} not found.")
 
         if new_audit_id in self.audits:
-            raise ValueError(f"Audit with id {new_audit_id} already exists.")
+            raise ValueError(f"Validation with id {new_audit_id} already exists.")
 
-        linked_audit = LinkedAudit(audit=self.audits[existing_audit_id]["audit"])
+        linked_audit = LinkedValidation(audit=self.audits[existing_audit_id]["audit"])
         self.audits[new_audit_id] = {
             "audit": linked_audit,
             "audit_schema": self.audits[existing_audit_id]["audit_schema"],
@@ -55,7 +55,7 @@ class ValidationExecutor:
 
     async def execute_specific(self, audit_id: str, input: Dict[str, Any]) -> ValidationRun:
         if audit_id not in self.audits:
-            raise ValueError(f"Audit with id {audit_id} not found.")
+            raise ValueError(f"Validation with id {audit_id} not found.")
 
         audit_init = self.audits[audit_id]
         audit = audit_init["audit"]
