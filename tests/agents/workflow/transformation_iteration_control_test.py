@@ -13,7 +13,7 @@ from bxagent.agents.workflow.transformation_iteration_control import (
     create_check_transformation_iteration_function,
     IterationRoute,
 )
-from bxagent.tools.validation.types import AuditRun, ValidationResult, ValidationError
+from bxagent.tools.validation.types import ValidationRun, ValidationResult, ValidationError
 
 
 class TestTransformationIterationControl(TestCase):
@@ -45,7 +45,7 @@ class TestTransformationIterationControl(TestCase):
             "transformation_target_model_description": "The desired model after transformation.",
             "iteration": 2,
             "latest_audit_runs": [
-                AuditRun(
+                ValidationRun(
                     started_at=datetime.now() - timedelta(minutes=5),
                     execution_time_ms=200,
                     iteration=1,
@@ -76,7 +76,7 @@ class TestTransformationIterationControl(TestCase):
             "transformation_target_model_description": "The desired model after transformation.",
             "iteration": 2,
             "latest_audit_runs": [
-                AuditRun(
+                ValidationRun(
                     started_at=datetime.now() - timedelta(minutes=5),
                     execution_time_ms=200,
                     iteration=1,

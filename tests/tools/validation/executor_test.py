@@ -6,7 +6,7 @@ from dataclasses import asdict
 from typing import List
 from pydantic import BaseModel
 
-from bxagent.tools.validation.types import AuditRun, ValidationResult, Audit, ValidationError
+from bxagent.tools.validation.types import ValidationRun, ValidationResult, Audit, ValidationError
 from bxagent.tools.validation.executor import ValidationExecutor, LinkedAudit
 
 
@@ -38,7 +38,7 @@ class FailingAuditCaseImplementation(Audit):
         raise Exception("This audit case is designed to fail.")
 
 
-def assert_audit_run_equal_except(equal_method, actual: AuditRun, expected: AuditRun):
+def assert_audit_run_equal_except(equal_method, actual: ValidationRun, expected: ValidationRun):
     actual_dict = asdict(actual)
     expected_dict = asdict(expected)
 
@@ -76,7 +76,7 @@ class TestValidationExecutor__execute_specific(unittest.TestCase):
             "ValidationExecutor should have an 'execute_specific' method.",
         )
 
-        expected_run = AuditRun(
+        expected_run = ValidationRun(
             started_at=datetime.datetime.now(),
             execution_time_ms=100,
             iteration=1,
@@ -116,7 +116,7 @@ class TestValidationExecutor__execute_specific(unittest.TestCase):
 
     def test_execute_specific__audit_raises_exception(self):
         # Edge case: execution of an audit that raises an exception should be handled properly
-        # It should return an AuditRun with an appropriate ValidationError instead of propagating the exception
+        # It should return an ValidationRun with an appropriate ValidationError instead of propagating the exception
         run = asyncio.run(
             self.executor.execute_specific("audit2", input={"param1": "value2"})
         )
@@ -150,14 +150,14 @@ class TestValidationExecutor__execute_specific(unittest.TestCase):
 
 class TestValidationExecutor__execute_all(unittest.TestCase):
     def setUp(self):
-        self.run_1 = AuditRun(
+        self.run_1 = ValidationRun(
             started_at=datetime.datetime.now(),
             execution_time_ms=100,
             iteration=1,
             results=[ValidationResult(content="result1")],
             errors=[],
         )
-        self.run_2 = AuditRun(
+        self.run_2 = ValidationRun(
             started_at=datetime.datetime.now(),
             execution_time_ms=100,
             iteration=1,
@@ -197,21 +197,21 @@ class TestValidationExecutor__execute_all(unittest.TestCase):
 
     def test_execute_all__return_audit_runs(self):
         expected_runs = [
-            AuditRun(
+            ValidationRun(
                 started_at=datetime.datetime.now(),
                 execution_time_ms=100,
                 iteration=1,
                 results=self.run_1.results,
                 errors=self.run_1.errors,
             ),
-            AuditRun(
+            ValidationRun(
                 started_at=datetime.datetime.now(),
                 execution_time_ms=100,
                 iteration=1,
                 results=self.run_2.results,
                 errors=self.run_2.errors,
             ),
-            AuditRun(
+            ValidationRun(
                 started_at=datetime.datetime.now(),
                 execution_time_ms=100,
                 iteration=1,
@@ -225,7 +225,7 @@ class TestValidationExecutor__execute_all(unittest.TestCase):
             ),
         ]
 
-        actual: List[AuditRun] = asyncio.run(
+        actual: List[ValidationRun] = asyncio.run(
             self.executor.execute_all(
                 input={
                     "audit1": {"param1": "value1"},
@@ -244,14 +244,14 @@ class TestValidationExecutor__execute_all(unittest.TestCase):
 
 class TestValidationExecutor__get_latest_results(unittest.TestCase):
     def setUp(self):
-        self.run_1 = AuditRun(
+        self.run_1 = ValidationRun(
             started_at=datetime.datetime.now(),
             execution_time_ms=100,
             iteration=1,
             results=[ValidationResult(content="result1")],
             errors=[],
         )
-        self.run_2 = AuditRun(
+        self.run_2 = ValidationRun(
             started_at=datetime.datetime.now(),
             execution_time_ms=100,
             iteration=1,

@@ -3,7 +3,7 @@ from unittest import TestCase
 from bxagent.tools.coding.evaluate_transformation_implementation import (
     create_evaluate_transformation_implementation,
 )
-from bxagent.tools.validation.types import AuditRun, ValidationError
+from bxagent.tools.validation.types import ValidationRun, ValidationError
 from bxagent.tools.coding.state import CodingAgentState
 
 
@@ -54,14 +54,14 @@ class TestEvaluateTransformationImplementation(TestCase):
             implementation_iteration=1,
             bxtool_file=None,
             latest_audit_results={
-                "audit1": AuditRun(
+                "audit1": ValidationRun(
                     started_at=None,
                     execution_time_ms=100,
                     iteration=1,
                     results=[],
                     errors=[ValidationError(message="Error in implementation")],
                 ),
-                "integration_compilation": AuditRun(
+                "integration_compilation": ValidationRun(
                     started_at=None,
                     execution_time_ms=100,
                     iteration=1,
@@ -98,7 +98,7 @@ class TestEvaluateTransformationImplementation(TestCase):
             implementation_iteration=1,
             bxtool_file=None,
             latest_audit_results={
-                "integration_compilation": AuditRun(
+                "integration_compilation": ValidationRun(
                     started_at=None,
                     execution_time_ms=100,
                     iteration=1,
@@ -136,14 +136,14 @@ class TestEvaluateTransformationImplementation(TestCase):
             implementation_iteration=1,
             bxtool_file=None,
             latest_audit_results={
-                "audit1": AuditRun(
+                "audit1": ValidationRun(
                     started_at=None,
                     execution_time_ms=100,
                     iteration=1,
                     results=[],
                     errors=[],
                 ),
-                "integration_compilation": AuditRun(
+                "integration_compilation": ValidationRun(
                     started_at=None,
                     execution_time_ms=100,
                     iteration=1,

@@ -4,7 +4,7 @@ import datetime
 from typing import List, Dict, Tuple, TypedDict, Any
 from pydantic import BaseModel
 
-from .types import Audit, ValidationResult, AuditRun, ValidationError
+from .types import Audit, ValidationResult, ValidationRun, ValidationError
 
 
 class AuditInit(TypedDict):
@@ -26,7 +26,7 @@ class LinkedAudit(Audit):
 class ValidationExecutor:
     def __init__(self, audits: Dict[str, AuditInit]):
         self.audits = audits
-        self.iterations: Dict[str, List[AuditRun]] = {
+        self.iterations: Dict[str, List[ValidationRun]] = {
             audit_id: [] for audit_id in audits
         }
 
@@ -44,7 +44,7 @@ class ValidationExecutor:
         }
         self.iterations[new_audit_id] = []
 
-    async def execute_all(self, input: Dict[str, Dict[str, Any]]) -> List[AuditRun]:
+    async def execute_all(self, input: Dict[str, Dict[str, Any]]) -> List[ValidationRun]:
         results = []
         tasks = [
             self.execute_specific(audit_id, input=input[audit_id])
@@ -53,7 +53,7 @@ class ValidationExecutor:
         results = await asyncio.gather(*tasks)
         return results
 
-    async def execute_specific(self, audit_id: str, input: Dict[str, Any]) -> AuditRun:
+    async def execute_specific(self, audit_id: str, input: Dict[str, Any]) -> ValidationRun:
         if audit_id not in self.audits:
             raise ValueError(f"Audit with id {audit_id} not found.")
 
@@ -85,7 +85,7 @@ class ValidationExecutor:
             (datetime.datetime.now() - started_at).total_seconds() * 1000
         )
 
-        run = AuditRun(
+        run = ValidationRun(
             started_at=started_at,
             execution_time_ms=execution_time_ms,
             iteration=iteration,
@@ -95,5 +95,5 @@ class ValidationExecutor:
         self.iterations[audit_id].append(run)
         return run
 
-    def get_latest_results(self) -> List[AuditRun]:
+    def get_latest_results(self) -> List[ValidationRun]:
         return [runs[-1] for runs in self.iterations.values() if runs]

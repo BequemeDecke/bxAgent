@@ -1,7 +1,7 @@
 from typing import Dict, List
 
 from langchain.tools import BaseTool, tool
-from .executor import ValidationExecutor, Audit, AuditRun
+from .executor import ValidationExecutor, Audit, ValidationRun
 
 def create_audit_tools(audits: Dict[str, Audit]) -> List[BaseTool]:
     """
@@ -11,32 +11,32 @@ def create_audit_tools(audits: Dict[str, Audit]) -> List[BaseTool]:
     executor = ValidationExecutor(audits)
     
     @tool("audit_tool", return_direct=True)
-    async def audit_tool() -> List[AuditRun]:
+    async def audit_tool() -> List[ValidationRun]:
         """Executes all audits and returns their latest results.
 
         Returns:
-            List[AuditRun]: A list of the latest AuditRun for each audit.
+            List[ValidationRun]: A list of the latest ValidationRun for each audit.
         """
         return await executor.execute_all()
     
     @tool("audit_tool_specific", return_direct=True)
-    async def audit_tool_specific(audit_id: str) -> AuditRun:
+    async def audit_tool_specific(audit_id: str) -> ValidationRun:
         """Executes a specific audit and returns its latest result.
 
         Args:
             audit_id (str): The ID of the audit to execute.
 
         Returns:
-            AuditRun: The latest AuditRun for the specified audit.
+            ValidationRun: The latest ValidationRun for the specified audit.
         """
         return await executor.execute_specific(audit_id)
     
     @tool("audit_tool_latest_results", return_direct=True)
-    def audit_tool_latest_results() -> List[AuditRun]:
+    def audit_tool_latest_results() -> List[ValidationRun]:
         """Returns the latest results of all audits without executing them.
 
         Returns:
-            List[AuditRun]: A list of the latest AuditRun for each audit.
+            List[ValidationRun]: A list of the latest ValidationRun for each audit.
         """
         return executor.get_latest_results()
 

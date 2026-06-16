@@ -17,7 +17,7 @@ class ValidationError:
 
 
 @dataclass
-class AuditRun:
+class ValidationRun:
     started_at: datetime
     execution_time_ms: int
     iteration: int
