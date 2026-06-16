@@ -1,6 +1,5 @@
 import tempfile
 from unittest import TestCase
-from unittest.mock import patch, Mock
 from pathlib import Path
 
 from bxagent.preparation.explore_models import create_explore_models_node
@@ -14,10 +13,10 @@ class TestExploreModels(TestCase):
         with tempfile.TemporaryDirectory() as temp_dir:
             source_model_path = Path(temp_dir) / "source_model.py"
             target_model_path = Path(temp_dir) / "target_model.py"
-            
+
             source_model_implementation = "print('Hello from source model')"
             target_model_implementation = "print('Hello from target model')"
-            
+
             source_model_path.write_text(source_model_implementation)
             target_model_path.write_text(target_model_implementation)
 
@@ -47,7 +46,7 @@ class TestExploreModels(TestCase):
         with tempfile.TemporaryDirectory() as temp_dir:
             source_model_path = Path(temp_dir) / "source_model.py"
             target_model_path = Path(temp_dir) / "target_model.py"
-            
+
             # Source model path does not exist
             with self.assertRaises(ValueError) as context:
                 self.explore_models(
@@ -56,7 +55,7 @@ class TestExploreModels(TestCase):
                         "target_model_path": target_model_path,
                     }
                 )
-                
+
             source_model_path.touch()  # Create an empty source model file
 
             # Target model path does not exist
@@ -72,7 +71,7 @@ class TestExploreModels(TestCase):
         with tempfile.TemporaryDirectory() as temp_dir:
             source_model_path = Path(temp_dir) / "source_model.py"
             target_model_path = Path(temp_dir) / "target_model.py"
-            
+
             source_model_path.touch()  # Create an empty source model file
             target_model_path.touch()  # Create an empty target model file
 
@@ -83,9 +82,11 @@ class TestExploreModels(TestCase):
                         "target_model_path": target_model_path,
                     }
                 )
-                
-            source_model_path.write_text("Some implementation")  # Write content to source model file
-            
+
+            source_model_path.write_text(
+                "Some implementation"
+            )  # Write content to source model file
+
             with self.assertRaises(ValueError) as context:
                 self.explore_models(
                     {
