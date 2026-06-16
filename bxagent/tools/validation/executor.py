@@ -4,7 +4,7 @@ import datetime
 from typing import List, Dict, Tuple, TypedDict, Any
 from pydantic import BaseModel
 
-from .types import Audit, ValidationResult, AuditRun, AuditError
+from .types import Audit, ValidationResult, AuditRun, ValidationError
 
 
 class AuditInit(TypedDict):
@@ -19,7 +19,7 @@ class LinkedAudit(Audit):
     async def setup(self):
         await self.audit.setup()
 
-    async def run(self, **kwargs) -> Tuple[List[ValidationResult], List[AuditError]]:
+    async def run(self, **kwargs) -> Tuple[List[ValidationResult], List[ValidationError]]:
         return await self.audit.run(**kwargs)
 
 
@@ -76,7 +76,7 @@ class ValidationExecutor:
             run_tuple = (
                 [],
                 [
-                    AuditError(
+                    ValidationError(
                         message=str(e), details={"exception_type": type(e).__name__}
                     )
                 ],

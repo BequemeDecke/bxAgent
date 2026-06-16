@@ -3,7 +3,7 @@ from unittest import TestCase
 from bxagent.tools.coding.evaluate_transformation_implementation import (
     create_evaluate_transformation_implementation,
 )
-from bxagent.tools.validation.types import AuditRun, AuditError
+from bxagent.tools.validation.types import AuditRun, ValidationError
 from bxagent.tools.coding.state import CodingAgentState
 
 
@@ -59,7 +59,7 @@ class TestEvaluateTransformationImplementation(TestCase):
                     execution_time_ms=100,
                     iteration=1,
                     results=[],
-                    errors=[AuditError(message="Error in implementation")],
+                    errors=[ValidationError(message="Error in implementation")],
                 ),
                 "integration_compilation": AuditRun(
                     started_at=None,
@@ -103,7 +103,7 @@ class TestEvaluateTransformationImplementation(TestCase):
                     execution_time_ms=100,
                     iteration=1,
                     results=[],
-                    errors=[AuditError(message="Error in integration")],
+                    errors=[ValidationError(message="Error in integration")],
                 )
             },
         )

@@ -2,7 +2,7 @@ from typing import List, Tuple
 from pathlib import Path
 from pydantic import BaseModel
 
-from ..types import Audit, ValidationResult, AuditError
+from ..types import Audit, ValidationResult, ValidationError
 
 
 class FileExistenceAuditConfig(BaseModel):
@@ -13,7 +13,7 @@ class FileExistenceAudit(Audit):
     async def setup(self):
         pass
 
-    async def run(self, **kwargs) -> Tuple[List[ValidationResult], List[AuditError]]:
+    async def run(self, **kwargs) -> Tuple[List[ValidationResult], List[ValidationError]]:
         config = FileExistenceAuditConfig(**kwargs)
         files = config.files
         
@@ -24,7 +24,7 @@ class FileExistenceAudit(Audit):
                 results.append(ValidationResult(content=f"File exists: {file}"))
             else:
                 errors.append(
-                    AuditError(
+                    ValidationError(
                         message=f"File does not exist: {file}",
                         details={"file": str(file)},
                     )

@@ -11,7 +11,7 @@ class ValidationResult:
 
 
 @dataclass
-class AuditError:
+class ValidationError:
     message: str
     details: Optional[Dict[str, Any]] = None
 
@@ -22,7 +22,7 @@ class AuditRun:
     execution_time_ms: int
     iteration: int
     results: List[ValidationResult]
-    errors: List[AuditError]
+    errors: List[ValidationError]
 
 
 StateToAuditMapper = Callable[[Dict[str, Any]], Dict[str, Any]]
@@ -34,5 +34,5 @@ class Audit(ABC):
         pass
 
     @abstractmethod
-    async def run(self, **kwargs) -> Tuple[List[ValidationResult], List[AuditError]]:
+    async def run(self, **kwargs) -> Tuple[List[ValidationResult], List[ValidationError]]:
         pass

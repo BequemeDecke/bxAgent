@@ -11,7 +11,7 @@ from unittest.mock import Mock
 from typing import Dict, Any
 from pydantic import BaseModel
 
-from bxagent.tools.validation.types import Audit, ValidationResult, AuditError, StateToAuditMapper
+from bxagent.tools.validation.types import Audit, ValidationResult, ValidationError, StateToAuditMapper
 from bxagent.tools.validation import ValidationExecutor
 from bxagent.agents.workflow.nodes.auditing_node import (
     create_audit_agent_work_function,
@@ -31,7 +31,7 @@ class TestAuditingNode__ExecutionModeAll(TestCase):
         mocked_audit = Mock(spec=Audit)
         mocked_audit.run.return_value = (
             [ValidationResult(content="Some audit result")],
-            [AuditError(message="Some audit error")],
+            [ValidationError(message="Some audit error")],
         )
 
         audit_id = "test_audit"
@@ -82,7 +82,7 @@ class TestAuditingNode__ExecutionModeAll(TestCase):
         mocked_audit = Mock(spec=Audit)
         mocked_audit.run.return_value = (
             [ValidationResult(content="Some audit result")],
-            [AuditError(message="Some audit error")],
+            [ValidationError(message="Some audit error")],
         )
 
         audit_id = "test_audit"
@@ -111,7 +111,7 @@ class TestAuditingNode__ExecutionModeSpecific(TestCase):
         mocked_audit = Mock(spec=Audit)
         mocked_audit.run.return_value = (
             [ValidationResult(content="Some audit result")],
-            [AuditError(message="Some audit error")],
+            [ValidationError(message="Some audit error")],
         )
 
         audit_id = "test_audit"
@@ -162,7 +162,7 @@ class TestAuditingNode__ExecutionModeSpecific(TestCase):
         mocked_audit = Mock(spec=Audit)
         mocked_audit.run.return_value = (
             [ValidationResult(content="Some audit result")],
-            [AuditError(message="Some audit error")],
+            [ValidationError(message="Some audit error")],
         )
 
         audit_id = "test_audit"

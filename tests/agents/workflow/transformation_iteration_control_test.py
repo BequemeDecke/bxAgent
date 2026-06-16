@@ -13,7 +13,7 @@ from bxagent.agents.workflow.transformation_iteration_control import (
     create_check_transformation_iteration_function,
     IterationRoute,
 )
-from bxagent.tools.validation.types import AuditRun, ValidationResult, AuditError
+from bxagent.tools.validation.types import AuditRun, ValidationResult, ValidationError
 
 
 class TestTransformationIterationControl(TestCase):
@@ -55,7 +55,7 @@ class TestTransformationIterationControl(TestCase):
                         )
                     ],
                     errors=[
-                        AuditError(
+                        ValidationError(
                             message="An error occurred during the audit.",
                             details={
                                 "error_code": "AUDIT_ERROR",

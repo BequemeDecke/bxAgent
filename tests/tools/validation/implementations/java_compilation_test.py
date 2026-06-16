@@ -9,7 +9,7 @@ from pathlib import Path
 from bxagent.tools.validation.implementations.java_compilation import (
     JavaCompilationAudit,
     parse_javac_output,
-    AuditError,
+    ValidationError,
 )
 
 ERROR_BLOCK_1 = """
@@ -99,7 +99,7 @@ class TestJavaCompilation(TestCase):
     @patch("subprocess.run")
     def test_run__invalid_syntax(self, mock_subprocess_run):
         """
-        Test that the run method returns an AuditError when javac returns a syntax error.
+        Test that the run method returns an ValidationError when javac returns a syntax error.
         """
 
         mock_subprocess_run.return_value = subprocess.CompletedProcess(
@@ -120,7 +120,7 @@ class TestJavaCompilation(TestCase):
         self.assertEqual(
             len(errors),
             3,
-            "There should be three AuditErrors for the provided javac error output.",
+            "There should be three ValidationErrors for the provided javac error output.",
         )
 
         for error in errors:
@@ -154,7 +154,7 @@ class TestJavaCompilation(TestCase):
         self.assertEqual(
             len(errors),
             0,
-            "There should be no AuditErrors when javac returns a success output.",
+            "There should be no ValidationErrors when javac returns a success output.",
         )
         
     def test_run__missing_files_parameter(self):
@@ -175,7 +175,7 @@ class TestJavaCompilationAudit__parse_javac_output(TestCase):
         self.assertEqual(
             len(errors),
             0,
-            "There should be no AuditErrors for the provided javac success output.",
+            "There should be no ValidationErrors for the provided javac success output.",
         )
 
     def test_parse_javac_output__with_errors(self):
@@ -184,11 +184,11 @@ class TestJavaCompilationAudit__parse_javac_output(TestCase):
         self.assertEqual(
             len(errors),
             3,
-            "There should be three AuditErrors for the provided javac error output.",
+            "There should be three ValidationErrors for the provided javac error output.",
         )
 
-        expected_errors: List[AuditError] = [
-            AuditError(
+        expected_errors: List[ValidationError] = [
+            ValidationError(
                 message="Fehler: <ID> erwartet",
                 details={
                     "file": "./.bx-agent-workspace/test/Family.java",
@@ -196,7 +196,7 @@ class TestJavaCompilationAudit__parse_javac_output(TestCase):
                     "block": ERROR_BLOCK_1,
                 },
             ),
-            AuditError(
+            ValidationError(
                 message="Fehler: ';' erwartet",
                 details={
                     "file": "./.bx-agent-workspace/test/Family.java",
@@ -204,7 +204,7 @@ class TestJavaCompilationAudit__parse_javac_output(TestCase):
                     "block": ERROR_BLOCK_2,
                 },
             ),
-            AuditError(
+            ValidationError(
                 message="Fehler: class, interface, enum oder record erwartet",
                 details={
                     "file": "./.bx-agent-workspace/test/Family.java",
@@ -227,7 +227,7 @@ class TestJavaCompilationAudit__parse_javac_output(TestCase):
         self.assertEqual(
             len(errors),
             6,
-            "There should be six AuditErrors for the provided javac symbol error output.",
+            "There should be six ValidationErrors for the provided javac symbol error output.",
         )
 
         expected_error_messages = [

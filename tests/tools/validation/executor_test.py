@@ -6,7 +6,7 @@ from dataclasses import asdict
 from typing import List
 from pydantic import BaseModel
 
-from bxagent.tools.validation.types import AuditRun, ValidationResult, Audit, AuditError
+from bxagent.tools.validation.types import AuditRun, ValidationResult, Audit, ValidationError
 from bxagent.tools.validation.executor import ValidationExecutor, LinkedAudit
 
 
@@ -14,7 +14,7 @@ class MockedAuditCaseImplementation(Audit):
     def __init__(
         self,
         results: List[ValidationResult] = None,
-        errors: List[AuditError] = None,
+        errors: List[ValidationError] = None,
     ):
         self.results = results or []
         self.errors = errors or []
@@ -116,7 +116,7 @@ class TestValidationExecutor__execute_specific(unittest.TestCase):
 
     def test_execute_specific__audit_raises_exception(self):
         # Edge case: execution of an audit that raises an exception should be handled properly
-        # It should return an AuditRun with an appropriate AuditError instead of propagating the exception
+        # It should return an AuditRun with an appropriate ValidationError instead of propagating the exception
         run = asyncio.run(
             self.executor.execute_specific("audit2", input={"param1": "value2"})
         )
@@ -163,7 +163,7 @@ class TestValidationExecutor__execute_all(unittest.TestCase):
             iteration=1,
             results=[],
             errors=[
-                AuditError(message="error1", details={"exception_type": "Exception"})
+                ValidationError(message="error1", details={"exception_type": "Exception"})
             ],
         )
         self.executor = ValidationExecutor(
@@ -217,7 +217,7 @@ class TestValidationExecutor__execute_all(unittest.TestCase):
                 iteration=1,
                 results=[],
                 errors=[
-                    AuditError(
+                    ValidationError(
                         message="This audit case is designed to fail.",
                         details={"exception_type": "Exception"},
                     )
@@ -257,7 +257,7 @@ class TestValidationExecutor__get_latest_results(unittest.TestCase):
             iteration=1,
             results=[],
             errors=[
-                AuditError(message="error1", details={"exception_type": "Exception"})
+                ValidationError(message="error1", details={"exception_type": "Exception"})
             ],
         )
         self.executor = ValidationExecutor(
@@ -342,7 +342,7 @@ class TestValidationExecutor__register_linked_audit(unittest.TestCase):
     def setUp(self):
         self.results = [ValidationResult(content="result1"), ValidationResult(content="result2")]
         self.errors = [
-            AuditError(message="error", details={"exception_type": "Exception"})
+            ValidationError(message="error", details={"exception_type": "Exception"})
         ]
         self.executor = ValidationExecutor(
             audits={

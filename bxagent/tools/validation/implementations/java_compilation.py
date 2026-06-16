@@ -7,7 +7,7 @@ from typing import List, Tuple
 from pydantic import BaseModel
 from pathlib import Path
 
-from ..types import ValidationResult, AuditError, Audit
+from ..types import ValidationResult, ValidationError, Audit
 
 
 class JavaCompilationAuditConfig(BaseModel):
@@ -33,17 +33,17 @@ class JavaCompilationAudit(Audit):
             "javac is available on the system. JavaCompilationAudit setup completed successfully."
         )
 
-    async def run(self, **kwargs) -> Tuple[List[ValidationResult], List[AuditError]]:
-        """Attempt to compile the provided Java files using `javac`. If there are compilation errors, parse the output and return them as AuditErrors.
+    async def run(self, **kwargs) -> Tuple[List[ValidationResult], List[ValidationError]]:
+        """Attempt to compile the provided Java files using `javac`. If there are compilation errors, parse the output and return them as ValidationErrors.
 
         Returns:
-            Tuple[List[ValidationResult], List[AuditError]]: A tuple containing a list of successful audit results and a list of audit errors.
+            Tuple[List[ValidationResult], List[ValidationError]]: A tuple containing a list of successful audit results and a list of audit errors.
         """
         config = JavaCompilationAuditConfig(**kwargs)
         files = config.files
 
         results: List[ValidationResult] = []
-        errors: List[AuditError] = []
+        errors: List[ValidationError] = []
 
         for file in files:
             try:
@@ -67,7 +67,7 @@ class JavaCompilationAudit(Audit):
             except Exception as e:
                 logging.exception(f"An error occurred while compiling {file}: {e}")
                 errors.append(
-                    AuditError(
+                    ValidationError(
                         message=f"An error occurred while compiling {file}: {str(e)}",
                         details={"file": file},
                     )
@@ -76,15 +76,15 @@ class JavaCompilationAudit(Audit):
         return results, errors
 
 
-def parse_javac_output(output: str) -> List[AuditError]:
+def parse_javac_output(output: str) -> List[ValidationError]:
     """
-    Parse the output of the `javac` command to extract compilation errors. It uses regular expressions to identify error messages and their associated file, line number, and code block. The extracted information is then used to create a list of AuditError objects.
+    Parse the output of the `javac` command to extract compilation errors. It uses regular expressions to identify error messages and their associated file, line number, and code block. The extracted information is then used to create a list of ValidationError objects.
 
     Args:
         output (str): The output from the `javac` command.
 
     Returns:
-        List[AuditError]: A list of AuditError objects representing the compilation errors.
+        List[ValidationError]: A list of ValidationError objects representing the compilation errors.
     """
     errors = []
     error_pattern = re.compile(r"^(.*\.java):(\d+): (.*)$", re.MULTILINE)
@@ -92,7 +92,7 @@ def parse_javac_output(output: str) -> List[AuditError]:
 
     for file, line, message in matches:
         errors.append(
-            AuditError(
+            ValidationError(
                 message=message,
                 details={
                     "file": file,
