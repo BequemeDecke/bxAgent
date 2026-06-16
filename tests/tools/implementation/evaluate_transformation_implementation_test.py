@@ -1,10 +1,10 @@
 from unittest import TestCase
 
-from bxagent.tools.coding.evaluate_transformation_implementation import (
+from bxagent.tools.implementation.evaluate_transformation_implementation import (
     create_evaluate_transformation_implementation,
 )
 from bxagent.validation.types import ValidationRun, ValidationError
-from bxagent.tools.coding.state import CodingAgentState
+from bxagent.tools.implementation.state import CodingAgentState
 
 
 class TestEvaluateTransformationImplementation(TestCase):

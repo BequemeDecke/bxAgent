@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from bxagent.tools.coding.state import CodingAgentState
+from bxagent.tools.implementation.state import CodingAgentState
 from bxagent.mapping import map_coding_to_file
 
 class TestCodingToFileMapping(TestCase):

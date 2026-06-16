@@ -17,11 +17,11 @@ from unittest.mock import Mock
 from langgraph.graph.state import CompiledStateGraph
 from langgraph.types import GraphOutput
 
-from bxagent.tools.coding.implement_transformation import (
+from bxagent.tools.implementation.implement_transformation import (
     create_input_prompt,
     create_implement_transformation_node,
 )
-from bxagent.tools.coding.state import CodingAgentState
+from bxagent.tools.implementation.state import CodingAgentState
 from bxagent.tools.transformation.plan import TransformationPlan
 
 
