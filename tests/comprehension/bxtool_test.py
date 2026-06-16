@@ -5,12 +5,12 @@ from unittest.mock import Mock, patch
 
 from jinja2 import Environment, FileSystemLoader
 
-from bxagent.comprehension.bxtool import BxToolForEMF, BxToolTemplateResolver
+from bxagent.implementation.bxtool import BxToolForEMF, BxToolTemplateResolver
 
 
 class TestBxToolTemplateResolver(TestCase):
     @patch("jinja2.Environment.get_template")
-    def setUp(self, mock_get_template) -> None:
+    def setUp(self, mock_get_template: Mock) -> None:
         self.maxDiff = None  # type: ignore
         # It references the correct template, but due to the testing environment, there might be issues with loading the template. We can mock the template loading to ensure that the tests run without issues.
         path = Path("templates/bxtool.jinja")

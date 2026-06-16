@@ -5,6 +5,15 @@ from .evaluate_transformation_implementation import (
 from .implement_bx_tool import create_implement_bx_tool_node
 from .implement_transformation import create_implement_transformation_node
 from .state import CodingAgentState
+from .bxtool import (
+    BxToolForEMF,
+    BxToolTemplateResolver,
+    Class,
+    Decisions,
+    InitiationDialogue,
+    TransformationImplementation,
+    Model,
+)
 
 __all__ = [
     "build_implementation_graph",
@@ -12,4 +21,11 @@ __all__ = [
     "create_evaluate_transformation_implementation",
     "create_implement_bx_tool_node",
     "CodingAgentState",
+    "BxToolForEMF",
+    "BxToolTemplateResolver",
+    "Class",
+    "Decisions",
+    "InitiationDialogue",
+    "TransformationImplementation",
+    "Model",
 ]
