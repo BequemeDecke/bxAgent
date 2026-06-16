@@ -12,7 +12,7 @@ This component uses a few llm calls which will make testing more difficult. Ther
 
 from pathlib import Path
 from unittest import TestCase
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 from langgraph.graph.state import CompiledStateGraph
 from langgraph.types import GraphOutput
@@ -22,7 +22,7 @@ from bxagent.implementation.implement_transformation import (
     create_implement_transformation_node,
 )
 from bxagent.implementation.state import CodingAgentState
-from bxagent.comprehension.plan import TransformationPlan
+from bxagent.comprehension.plan import TransformationPlan, TransformationPlanParser
 
 
 class TestCreateInputPrompt(TestCase):
@@ -41,9 +41,11 @@ class TestCreateInputPrompt(TestCase):
 
 
 class TestImplementTransformation(TestCase):
-    def test_implement_transformation__return_compiled_code(self):
+    @patch("bxagent.comprehension.plan.TransformationPlan.__str__")
+    def test_implement_transformation__return_compiled_code(self, mocked_str):
         mocked_agent = Mock(spec=CompiledStateGraph)
-        mocked_parser = Mock(spec=TransformationPlan)
+        mocked_parser = Mock(spec=TransformationPlanParser)
+        mocked_str.return_value = "This is the transformation plan."
 
         output = GraphOutput(
             value={
@@ -58,7 +60,7 @@ class TestImplementTransformation(TestCase):
 
         func = create_implement_transformation_node(
             coding_agent=mocked_agent,
-            optional_plan_factory=lambda: TransformationPlan(parser=mocked_parser),
+            optional_plan_factory=lambda: TransformationPlan.parse(parser=mocked_parser),
         )
 
         agent_state: CodingAgentState = {
