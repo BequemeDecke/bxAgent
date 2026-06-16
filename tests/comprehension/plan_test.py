@@ -442,10 +442,10 @@ class TestTransformationPlanFileIntegration(TestCase):
         self.maxDiff = None  # To see the full diff in case of assertion failures
 
         self.input_file = Path(
-            "tests/tools/transformation/files/EXISTED_TRANSFORMATION.md"
+            "tests/comprehension/files/EXISTED_TRANSFORMATION.md"
         )
         self.expected_file = Path(
-            "tests/tools/transformation/files/EXPECTED_TRANSFORMATION.md"
+            "tests/comprehension/files/EXPECTED_TRANSFORMATION.md"
         )
 
         self.assertTrue(

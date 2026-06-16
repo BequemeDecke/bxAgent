@@ -111,7 +111,7 @@ class TestBxToolTemplateResolver(TestCase):
 
     def test_bxtool_template_resolver__complete_file(self):
         expected_file_path = Path(
-            "tests/tools/transformation/files/TransformationImplementation.java"
+            "tests/comprehension/files/TransformationImplementation.java"
         )
         self.assertTrue(
             expected_file_path.exists(),
