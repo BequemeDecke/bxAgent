@@ -4,7 +4,7 @@ from unittest import TestCase
 from unittest.mock import patch
 from pathlib import Path
 
-from bxagent.tools.validation.implementations.file_existence import FileExistenceValidation
+from bxagent.validation.implementations.file_existence import FileExistenceValidation
 
 
 class TestFileExistence(TestCase):

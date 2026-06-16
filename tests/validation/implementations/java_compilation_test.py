@@ -6,7 +6,7 @@ from unittest import TestCase
 from unittest.mock import patch
 from pathlib import Path
 
-from bxagent.tools.validation.implementations.java_compilation import (
+from bxagent.validation.implementations.java_compilation import (
     JavaCompilationValidation,
     parse_javac_output,
     ValidationError,

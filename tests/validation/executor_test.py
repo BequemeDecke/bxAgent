@@ -6,8 +6,8 @@ from dataclasses import asdict
 from typing import List
 from pydantic import BaseModel
 
-from bxagent.tools.validation.types import ValidationRun, ValidationResult, Validation, ValidationError
-from bxagent.tools.validation.executor import ValidationExecutor, LinkedValidation
+from bxagent.validation.types import ValidationRun, ValidationResult, Validation, ValidationError
+from bxagent.validation.executor import ValidationExecutor, LinkedValidation
 
 
 class MockedValidationCaseImplementation(Validation):

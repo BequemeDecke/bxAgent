@@ -3,7 +3,7 @@ from unittest import TestCase
 from bxagent.tools.coding.evaluate_transformation_implementation import (
     create_evaluate_transformation_implementation,
 )
-from bxagent.tools.validation.types import ValidationRun, ValidationError
+from bxagent.validation.types import ValidationRun, ValidationError
 from bxagent.tools.coding.state import CodingAgentState
 
 

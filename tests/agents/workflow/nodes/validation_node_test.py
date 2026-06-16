@@ -11,8 +11,8 @@ from unittest.mock import Mock
 from typing import Dict, Any
 from pydantic import BaseModel
 
-from bxagent.tools.validation.types import Validation, ValidationResult, ValidationError, StateToValidationMapper
-from bxagent.tools.validation import ValidationExecutor
+from bxagent.validation.types import Validation, ValidationResult, ValidationError, StateToValidationMapper
+from bxagent.validation import ValidationExecutor
 from bxagent.agents.workflow.nodes.validation_node import (
     create_validation_agent_work_function,
 )

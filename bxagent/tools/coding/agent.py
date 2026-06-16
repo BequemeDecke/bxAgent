@@ -5,7 +5,7 @@ from bxagent.agents.workflow.nodes.validationing_node import create_validation_a
 from bxagent.config import Config
 from bxagent.mapping import map_coding_to_file
 from bxagent.models import build_base_model
-from bxagent.tools.validation.executor import ValidationExecutor
+from bxagent.validation.executor import ValidationExecutor
 from bxagent.tools.transformation.plan import (
     TransformationPlan,
     FileTransformationPlanParser,
