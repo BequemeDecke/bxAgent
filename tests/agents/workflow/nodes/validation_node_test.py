@@ -13,7 +13,7 @@ from pydantic import BaseModel
 
 from bxagent.tools.validation.types import Validation, ValidationResult, ValidationError, StateToValidationMapper
 from bxagent.tools.validation import ValidationExecutor
-from bxagent.agents.workflow.nodes.validationing_node import (
+from bxagent.agents.workflow.nodes.validation_node import (
     create_validation_agent_work_function,
 )
 from bxagent.agents.workflow.state import WorkflowState
@@ -23,8 +23,8 @@ class MockedSchema(BaseModel):
     some_field: str
 
 
-class TestValidationingNode__ExecutionModeAll(TestCase):
-    def test_validationing_node__updates_state_with_latest_results(self):
+class TestValidationNode__ExecutionModeAll(TestCase):
+    def test_validation_node__updates_state_with_latest_results(self):
         def mocked_mapper(state: WorkflowState) -> Dict[str, Any]:
             return {"some_field": "some_value"}
 
@@ -78,7 +78,7 @@ class TestValidationingNode__ExecutionModeAll(TestCase):
             "The validation should have been called with the mapped parameters.",
         )
 
-    def test_validationing_node__validation_has_no_mapper(self):
+    def test_validation_node__validation_has_no_mapper(self):
         mocked_validation = Mock(spec=Validation)
         mocked_validation.run.return_value = (
             [ValidationResult(content="Some validation result")],
@@ -103,8 +103,8 @@ class TestValidationingNode__ExecutionModeAll(TestCase):
             asyncio.run(validation_agent_work(WorkflowState()))
 
 
-class TestValidationingNode__ExecutionModeSpecific(TestCase):
-    def test_validationing_node__updates_state_with_latest_results_specific(self):
+class TestValidationNode__ExecutionModeSpecific(TestCase):
+    def test_validation_node__updates_state_with_latest_results_specific(self):
         def mocked_mapper(state: WorkflowState) -> Dict[str, Any]:
             return {"some_field": "some_value"}
 
@@ -158,7 +158,7 @@ class TestValidationingNode__ExecutionModeSpecific(TestCase):
             "The validation should have been called with the mapped parameters.",
         )
 
-    def test_validationing_node__validation_has_no_mapper_specific(self):
+    def test_validation_node__validation_has_no_mapper_specific(self):
         mocked_validation = Mock(spec=Validation)
         mocked_validation.run.return_value = (
             [ValidationResult(content="Some validation result")],
