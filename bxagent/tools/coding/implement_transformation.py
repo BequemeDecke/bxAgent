@@ -39,11 +39,11 @@ def create_implement_transformation_node(
     def implement_transformation(agent_state: CodingAgentState) -> CodingAgentState:
         # 1. Read the transformation plan from the TRANSFORMATION.md file
         transformation_plan = (
-            agent_state["transformation_md"] or optional_plan_factory()
+            agent_state.get("transformation_md") or optional_plan_factory()
         )
 
         # 2. Build the prompt for the coding agent based on the transformation plan and task specification
-        task_specification = agent_state["task_specification"]
+        task_specification = agent_state.get("task_specification")
         input_prompt = create_input_prompt(task_specification, transformation_plan)
 
         # 3. Invoke the coding deep agent with the created prompt
