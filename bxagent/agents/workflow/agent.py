@@ -16,7 +16,7 @@ from .transformation_iteration_control import (
     create_check_transformation_iteration_function,
 )
 from .nodes.synthesis_node import create_call_synthesis_agent_function
-from .nodes.validationing_node import create_validation_agent_work_function
+from .nodes.validation_node import create_validation_agent_work_function
 
 
 def build_workflow_agent() -> StateGraph[WorkflowState]:
