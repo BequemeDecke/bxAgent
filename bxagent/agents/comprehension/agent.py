@@ -1,18 +1,16 @@
 from langchain.agents import create_agent
 from langchain.chat_models import BaseChatModel
 from langchain.messages import SystemMessage
-from langgraph.checkpoint.memory import InMemorySaver
-from langgraph.checkpoint.serde.jsonplus import JsonPlusSerializer
 
 from bxagent.models import build_base_model
 from bxagent.comprehension import (
     TransformationPlan,
-    transformation_plan_tools,
 )
-from .output import SynthesisResponseFormat
-from .state import SynthesisAgentState
+from bxagent.tools.comprehension import transformation_plan_tools
+from .output import ComprehensionResponseFormat
+from .state import ComprehensionAgentState
 
-SYNTHESIS_SYSTEM_PROMPT = """
+COMPREHENSION_SYSTEM_PROMPT = """
 You are the planning agent for the Ecore model transformation process.
 
 Your task is to analyze the source and target models, understand the requirements, 
@@ -39,12 +37,12 @@ Guidelines:
 """
 
 
-def build_synthesis_agent(
+def build_comprehension_agent(
     transformation_plan: TransformationPlan,
-    system_prompt: str = SYNTHESIS_SYSTEM_PROMPT,
+    system_prompt: str = COMPREHENSION_SYSTEM_PROMPT,
     model: BaseChatModel | None = None,
 ):
-    """Builds the SynthesisAgent using the chat model."""
+    """Builds the ComprehensionAgent using the chat model."""
     if model is None:
         model = build_base_model()
 
@@ -52,7 +50,7 @@ def build_synthesis_agent(
 
     return create_agent(
         model=model,
-        state_schema=SynthesisAgentState,
+        state_schema=ComprehensionAgentState,
         system_prompt=SystemMessage(system_prompt),
         # checkpointer=InMemorySaver(
         #     serde=JsonPlusSerializer(
@@ -61,6 +59,6 @@ def build_synthesis_agent(
         #         allowed_msgpack_modules=[TransformationPlan],
         #     )
         # ),
-        response_format=SynthesisResponseFormat,
+        response_format=ComprehensionResponseFormat,
         tools=[*transformation_plan_tools],
     )

@@ -16,7 +16,7 @@ from bxagent.agents.coding.middleware import (
 logger = logging.getLogger(__name__)
 
 
-class TestSynthesisAgentMiddlewareFunctions(unittest.TestCase):
+class TestComprehensionAgentMiddlewareFunctions(unittest.TestCase):
     """Test the extract_written_files and validate_file_paths functions of the CodingDeepAgentStateMiddleware."""
 
     def setUp(self):
@@ -64,8 +64,8 @@ class TestSynthesisAgentMiddlewareFunctions(unittest.TestCase):
         self.assertEqual(extracted_file_paths, expected_file_paths)
 
 
-class TestSynthesisAgentMiddleware(unittest.TestCase):
-    """Test the SynthesisAgentMiddleware by invoking it with a simple input and checking the output and state."""
+class TestComprehensionAgentMiddleware(unittest.TestCase):
+    """Test the ComprehensionAgentMiddleware by invoking it with a simple input and checking the output and state."""
 
     def setUp(self):
         self.UPDATED_FILE_INDEX = 13

@@ -1,7 +1,7 @@
 from langgraph.graph.state import CompiledStateGraph
 from langchain.messages import HumanMessage
 
-from bxagent.agents.synthesis import SynthesisResponseFormat
+from bxagent.agents.comprehension import ComprehensionResponseFormat
 from ..state import WorkflowState
 
 PROMPT_TEMPLATE = """
@@ -17,13 +17,13 @@ Use the following results to check if the transformation plan is complete and co
 """
 
 
-def create_call_synthesis_agent_function(synthesis_agent: CompiledStateGraph):
-    def call_synthesis_agent(state: WorkflowState) -> WorkflowState:
+def create_call_comprehension_agent_function(comprehension_agent: CompiledStateGraph):
+    def call_comprehension_agent(state: WorkflowState) -> WorkflowState:
         """
-        Calls the synthesis agent with the current workflow state.
+        Calls the comprehension agent with the current workflow state.
 
         It needs a specific schema in order to parse the output of the subagent.
-        It also gets the current results of the validations, which can be used to inform the synthesis agent about what has been tried already and what the results were.
+        It also gets the current results of the validations, which can be used to inform the comprehension agent about what has been tried already and what the results were.
         """
         transformation = state.get("transformation_plan")
 
@@ -34,13 +34,13 @@ def create_call_synthesis_agent_function(synthesis_agent: CompiledStateGraph):
             ),
         )
 
-        result = synthesis_agent.invoke(
+        result = comprehension_agent.invoke(
             input={"messages": [HumanMessage(content=input_prompt)]},
         )
-        structured_response: SynthesisResponseFormat = result["structured_response"]
+        structured_response: ComprehensionResponseFormat = result["structured_response"]
         return {
             "iteration": state.get("iteration", 0) + 1,
             "implementation_instructions": structured_response.implementation_instructions,
         }
 
-    return call_synthesis_agent
+    return call_comprehension_agent

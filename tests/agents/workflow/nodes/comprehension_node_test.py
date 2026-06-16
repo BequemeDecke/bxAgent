@@ -1,5 +1,5 @@
 """
-This test checks if the synthesis node correctly utilizes the synthesis subagent to think about the transformation itself and think about how to implement the transformation.
+This test checks if the comprehension node correctly utilizes the comprehension subagent to think about the transformation itself and think about how to implement the transformation.
 It has to write the plan into the `TRANSFORMATION.md` file.
 """
 
@@ -7,31 +7,31 @@ from typing import TypedDict
 from unittest import TestCase
 from langgraph.graph import StateGraph, START
 
-from bxagent.agents.synthesis.output import SynthesisResponseFormat
-from bxagent.agents.workflow.nodes.synthesis_node import (
-    create_call_synthesis_agent_function,
+from bxagent.agents.comprehension.output import ComprehensionResponseFormat
+from bxagent.agents.workflow.nodes.comprehension_node import (
+    create_call_comprehension_agent_function,
 )
 
 
-class TestSynthesisNode(TestCase):
+class TestComprehensionNode(TestCase):
     def setUp(self):
         class DummyState(TypedDict):
-            structured_response: SynthesisResponseFormat
+            structured_response: ComprehensionResponseFormat
 
         def generate_response(state: DummyState) -> DummyState:
             return {
-                "structured_response": SynthesisResponseFormat(
+                "structured_response": ComprehensionResponseFormat(
                     implementation_instructions="Some instructions on how to implement the transformation."
                 )
             }
 
         graph_builder = StateGraph(DummyState)
-        graph_builder.add_node("synthesis", generate_response)
-        graph_builder.add_edge(START, "synthesis")
+        graph_builder.add_node("comprehension", generate_response)
+        graph_builder.add_edge(START, "comprehension")
         self.graph = graph_builder.compile()
 
-    def test_synthesis_node__invoke_subgraph(self):
-        call_sub = create_call_synthesis_agent_function(self.graph)
+    def test_comprehension_node__invoke_subgraph(self):
+        call_sub = create_call_comprehension_agent_function(self.graph)
 
         result = call_sub(
             {
@@ -45,15 +45,15 @@ class TestSynthesisNode(TestCase):
         self.assertEqual(
             result["iteration"],
             1,
-            "The iteration should be incremented by 1 after calling the synthesis agent.",
+            "The iteration should be incremented by 1 after calling the comprehension agent.",
         )
         self.assertEqual(
             result["implementation_instructions"],
             "Some instructions on how to implement the transformation.",
-            "The implementation instructions should match the output of the synthesis agent.",
+            "The implementation instructions should match the output of the comprehension agent.",
         )
         self.assertEqual(
             result["iteration"],
             1,
-            "The iteration should be incremented by 1 after calling the synthesis agent.",
+            "The iteration should be incremented by 1 after calling the comprehension agent.",
         )
