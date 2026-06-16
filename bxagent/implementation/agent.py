@@ -6,7 +6,7 @@ from bxagent.config import Config
 from bxagent.mapping import map_coding_to_file
 from bxagent.models import build_base_model
 from bxagent.validation.executor import ValidationExecutor
-from bxagent.tools.transformation.plan import (
+from bxagent.comprehension.plan import (
     TransformationPlan,
     FileTransformationPlanParser,
 )

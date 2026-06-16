@@ -2,7 +2,7 @@ from langchain.messages import HumanMessage
 from langgraph.graph.state import CompiledStateGraph
 from typing import Callable
 
-from bxagent.tools.transformation.plan import TransformationPlan
+from bxagent.comprehension.plan import TransformationPlan
 from .state import CodingAgentState
 
 PROMPT_TEMPLATE = """

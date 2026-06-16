@@ -2,7 +2,7 @@ from typing import Dict, TypedDict, List
 from pathlib import Path
 
 from bxagent.validation.types import ValidationRun
-from bxagent.tools.transformation.plan import TransformationPlan
+from bxagent.comprehension.plan import TransformationPlan
 
 
 class CodingAgentState(TypedDict):

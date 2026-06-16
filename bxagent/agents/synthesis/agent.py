@@ -5,7 +5,7 @@ from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.checkpoint.serde.jsonplus import JsonPlusSerializer
 
 from bxagent.models import build_base_model
-from bxagent.tools.transformation import (
+from bxagent.comprehension import (
     TransformationPlan,
     transformation_plan_tools,
 )

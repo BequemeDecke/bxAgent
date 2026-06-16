@@ -16,7 +16,7 @@ from bxagent.implementation.implement_bx_tool import (
     create_input_prompt,
 )
 from bxagent.implementation.state import CodingAgentState
-from bxagent.tools.transformation.bxtool import BxToolForEMF
+from bxagent.comprehension.bxtool import BxToolForEMF
 
 
 class TestImplementBxTool(TestCase):

@@ -1,5 +1,5 @@
 from langchain.agents import AgentState
-from bxagent.tools.transformation import TransformationPlan
+from bxagent.comprehension import TransformationPlan
 
 
 class SynthesisAgentState(AgentState):

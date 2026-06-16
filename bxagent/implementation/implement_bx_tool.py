@@ -2,7 +2,7 @@ from pathlib import Path
 
 from langchain.chat_models import BaseChatModel
 
-from bxagent.tools.transformation.bxtool import BxToolForEMF, BxToolTemplateResolver
+from bxagent.comprehension.bxtool import BxToolForEMF, BxToolTemplateResolver
 
 from .state import CodingAgentState
 

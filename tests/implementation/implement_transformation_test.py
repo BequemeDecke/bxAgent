@@ -22,7 +22,7 @@ from bxagent.implementation.implement_transformation import (
     create_implement_transformation_node,
 )
 from bxagent.implementation.state import CodingAgentState
-from bxagent.tools.transformation.plan import TransformationPlan
+from bxagent.comprehension.plan import TransformationPlan
 
 
 class TestCreateInputPrompt(TestCase):
