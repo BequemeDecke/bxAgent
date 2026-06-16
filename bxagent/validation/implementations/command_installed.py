@@ -6,7 +6,7 @@ from ..types import Validation, ValidationResult, ValidationError
 
 
 class CommandInstalledValidationConfig(BaseModel):
-    tools: List[str]
+    commands: List[str]
 
 
 class CommandInstalledValidation(Validation):
@@ -20,23 +20,23 @@ class CommandInstalledValidation(Validation):
         This validation checks whether the specified commands are installed on the machine.
         """
 
-        tools = kwargs.get("tools", [])
+        commands = kwargs.get("commands", [])
 
         results = []
         errors = []
 
-        for tool in tools:
-            if shutil.which(tool) is None:
+        for command in commands:
+            if shutil.which(command) is None:
                 errors.append(
                     ValidationError(
-                        message=f"Command '{tool}' is not installed on the system.",
-                        details={"tool": tool},
+                        message=f"Command '{command}' is not installed on the system.",
+                        details={"command": command},
                     )
                 )
             else:
                 results.append(
                     ValidationResult(
-                        content=f"Command '{tool}' is installed on the system."
+                        content=f"Command '{command}' is installed on the system."
                     )
                 )
         return results, errors

@@ -24,13 +24,13 @@ class CommandInstalled(TestCase):
 
     @patch("shutil.which")
     def test_run__check_commands(self, mock_which):
-        mock_which.side_effect = lambda tool: (
-            "/usr/bin/python" if tool == "python" else None
+        mock_which.side_effect = lambda command: (
+            "/usr/bin/python" if command == "python" else None
         )
         command_installed_validation = CommandInstalledValidation()
 
         results, errors = asyncio.run(
-            command_installed_validation.run(tools=["python", "nonexistentcommand"])
+            command_installed_validation.run(commands=["python", "nonexistentcommand"])
         )
 
         self.assertEqual(
