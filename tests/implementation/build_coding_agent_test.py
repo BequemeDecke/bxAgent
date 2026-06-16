@@ -4,7 +4,7 @@ from unittest.mock import patch, Mock
 from langgraph.graph import StateGraph
 from langgraph.graph.state import CompiledStateGraph
 
-from bxagent.tools.implementation.agent import build_coding_agent_subgraph
+from bxagent.implementation.agent import build_coding_agent_subgraph
 
 
 class TestBuildCodingAgent(TestCase):

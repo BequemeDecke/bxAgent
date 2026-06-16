@@ -11,11 +11,11 @@ from unittest.mock import Mock, patch
 from langchain.chat_models import BaseChatModel
 from pathlib import Path
 
-from bxagent.tools.implementation.implement_bx_tool import (
+from bxagent.implementation.implement_bx_tool import (
     create_implement_bx_tool_node,
     create_input_prompt,
 )
-from bxagent.tools.implementation.state import CodingAgentState
+from bxagent.implementation.state import CodingAgentState
 from bxagent.tools.transformation.bxtool import BxToolForEMF
 
 

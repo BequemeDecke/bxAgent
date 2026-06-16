@@ -1,4 +1,4 @@
-from bxagent.tools.implementation.state import CodingAgentState
+from bxagent.implementation.state import CodingAgentState
 from typing import Dict, Any
 
 
