@@ -19,7 +19,7 @@ from .implement_transformation import create_implement_transformation_node
 from .state import CodingAgentState
 
 
-def build_coding_agent_subgraph(
+def build_implementation_graph(
     validation_executor: ValidationExecutor, coding_deep_agent: CompiledStateGraph
 ) -> StateGraph:
     config = Config.get_instance()

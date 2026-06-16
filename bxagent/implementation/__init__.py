@@ -1,4 +1,4 @@
-from .agent import build_coding_agent_subgraph
+from .agent import build_implementation_graph
 from .evaluate_transformation_implementation import (
     create_evaluate_transformation_implementation,
 )
@@ -7,7 +7,7 @@ from .implement_transformation import create_implement_transformation_node
 from .state import CodingAgentState
 
 __all__ = [
-    "build_coding_agent_subgraph",
+    "build_implementation_graph",
     "create_implement_transformation_node",
     "create_evaluate_transformation_implementation",
     "create_implement_bx_tool_node",
