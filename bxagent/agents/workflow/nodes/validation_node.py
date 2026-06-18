@@ -16,7 +16,7 @@ def create_validation_agent_work_function(
 
         async def validation_agent_work(state: Dict[str, Any]) -> Dict[str, Any]:
             """
-            Calls the validationing core which will execute all validation implementations and update the state with the latest results.
+            Calls the validation core which will execute all validation implementations and update the state with the latest results.
             """
             # Map the workflow state to validation parameters
             input_parameters = {}
@@ -35,7 +35,7 @@ def create_validation_agent_work_function(
 
         async def validation_agent_work(state: Dict[str, Any]) -> Dict[str, Any]:
             """
-            Calls the validationing core which will execute specific validation implementations based on the state and update the state with the latest results.
+            Calls the validation core which will execute specific validation implementations based on the state and update the state with the latest results.
             """
             # Map the workflow state to validation parameters
             input_parameters = {}

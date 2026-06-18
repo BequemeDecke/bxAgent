@@ -1,7 +1,7 @@
 """
-This test checks if the validationing node correctly executes the validationing core and returns the expected results.
+This test checks if the validation node correctly executes the validation core and returns the expected results.
 
-It is more of an integration test that checks the interaction between the validationing node and the validationing core, rather than a unit test of the validationing node itself.
+It is more of an integration test that checks the interaction between the validation node and the validation core, rather than a unit test of the validation node itself.
 """
 
 import asyncio
