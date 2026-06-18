@@ -13,7 +13,6 @@ from pathlib import Path
 
 from bxagent.implementation.implement_bx_tool import (
     create_implement_bx_tool_node,
-    create_input_prompt,
 )
 from bxagent.implementation.state import CodingAgentState
 from bxagent.implementation.bxtool import BxToolForEMF
@@ -96,9 +95,9 @@ class TestImplementBxTool(TestCase):
 
     @patch("pathlib.Path.write_text")
     @patch(
-        "bxagent.tools.transformation.bxtool.BxToolTemplateResolver.get_raw_template"
+        "bxagent.implementation.bxtool.BxToolTemplateResolver.get_raw_template"
     )
-    @patch("bxagent.tools.transformation.bxtool.BxToolTemplateResolver.render_template")
+    @patch("bxagent.implementation.bxtool.BxToolTemplateResolver.render_template")
     def test_implement_bx_tool__write_bxtool_implementation(
         self,
         mock_render_template: Mock,
