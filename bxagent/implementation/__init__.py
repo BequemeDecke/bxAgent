@@ -12,7 +12,7 @@ from .bxtool import (
     Decisions,
     InitiationDialogue,
     TransformationImplementation,
-    Model,
+    TransformationModel,
 )
 
 __all__ = [
@@ -27,5 +27,5 @@ __all__ = [
     "Decisions",
     "InitiationDialogue",
     "TransformationImplementation",
-    "Model",
+    "TransformationModel",
 ]

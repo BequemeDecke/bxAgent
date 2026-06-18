@@ -1,15 +1,13 @@
 from langgraph.graph import StateGraph, START, END
 
 from bxagent.models import build_base_model
-from bxagent.mapping import map_workflow_to_file
-from bxagent.agents.comprehension import build_comprehension_agent
-from bxagent.validation.implementations import (
-    FileExistenceValidation,
-    JavaCompilationValidation,
-    FileExistenceValidationConfig,
-    JavaCompilationValidationConfig,
+from bxagent.mapping import (
+    map_workflow_to_file,
+    map_workflow_to_workspace,
+    map_workflow_to_commands,
 )
-from bxagent.validation.executor import ValidationExecutor
+from bxagent.agents.comprehension import build_comprehension_agent
+from bxagent.validation import ValidationExecutor, implementations
 
 from .state import WorkflowState
 from .transformation_iteration_control import (
@@ -27,21 +25,31 @@ def build_workflow_agent() -> StateGraph[WorkflowState]:
     )
     validation_executor = ValidationExecutor(
         validations={
-            "file_existence_validation": {
-                "validation": FileExistenceValidation(),
-                "validation_schema": FileExistenceValidationConfig,
+            "workspace_operability": {
+                "validation": implementations.WorkspaceOperabilityValidation(),
+                "validation_schema": implementations.WorkspaceOperabilityValidationConfig,
             },
-            "java_compilation_validation": {
-                "validation": JavaCompilationValidation(),
-                "validation_schema": JavaCompilationValidationConfig,
+            "commands_installed": {
+                "validation": implementations.CommandInstalledValidation(),
+                "validation_schema": implementations.CommandInstalledValidationConfig,
+            },
+            "file_existence": {
+                "validation": implementations.FileExistenceValidation(),
+                "validation_schema": implementations.FileExistenceValidationConfig,
+            },
+            "java_compilation": {
+                "validation": implementations.JavaCompilationValidation(),
+                "validation_schema": implementations.JavaCompilationValidationConfig,
             },
         }
     )
     validation_agent_work = create_validation_agent_work_function(
         validation_executor=validation_executor,
         mapper={
-            "file_existence_validation": map_workflow_to_file,
-            "java_compilation_validation": map_workflow_to_file,
+            "file_existence": map_workflow_to_file,
+            "java_compilation": map_workflow_to_file,
+            "commands_installed": map_workflow_to_commands,
+            "workspace_operability": map_workflow_to_workspace,
         },
     )
 

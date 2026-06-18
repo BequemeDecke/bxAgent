@@ -47,7 +47,7 @@ class TransformationImplementation(Class):
     )
 
 
-class Model(BaseModel):
+class TransformationModel(BaseModel):
     name: str = Field(description="The name of the model (e.g. Family, Person).")
     factory: Class = Field(description="The factory class details for the model.")
     register: Class = Field(description="The registration class details for the model.")
@@ -61,8 +61,8 @@ class BxToolForEMF(BaseModel):
     transformation_implementation: TransformationImplementation = Field(
         description="The transformation implementation details."
     )
-    source_model: Model = Field(description="The source model details.")
-    target_model: Model = Field(description="The target model details.")
+    source_model: TransformationModel = Field(description="The source model details.")
+    target_model: TransformationModel = Field(description="The target model details.")
     additional_imports: list[str] = Field(
         description="Additional imports needed for the transformation implementation in form of a list of strings (e.g. [java.util.ArrayList, java.util.HashMap])."
     )
