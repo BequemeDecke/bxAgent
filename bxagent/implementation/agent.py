@@ -1,7 +1,7 @@
 from langgraph.graph import StateGraph, END
 from langgraph.graph.state import CompiledStateGraph
 
-from bxagent.agents.workflow.nodes.validation_node import create_validation_agent_work_function
+from bxagent.agents.workflow.nodes.validation_node import create_validation_node
 from bxagent.config import Config
 from bxagent.mapping import map_coding_to_file
 from bxagent.models import build_base_model
@@ -41,7 +41,7 @@ def build_implementation_graph(
         llm=base_model,
         workspace_path=workspace_path,
     )
-    validation_agentic_work = create_validation_agent_work_function(
+    validation_agentic_work = create_validation_node(
         validation_executor=validation_executor,
         mapper={
             "file_existence": map_coding_to_file,

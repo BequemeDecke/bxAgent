@@ -6,9 +6,9 @@ from bxagent.preparation.state import PreparationState
 from ..state import WorkflowState
 
 
-def create_call_preparation_agent_node(agent: CompiledStateGraph):
+def create_preparation_node(agent: CompiledStateGraph):
 
-    async def call_preparation_agent(state: WorkflowState) -> WorkflowState:
+    async def preparation_node(state: WorkflowState) -> WorkflowState:
         workspace_path = state.get("workspace_path")
         if workspace_path is None:
             raise ValueError("Workspace path is required for the preparation agent.")
@@ -41,4 +41,4 @@ def create_call_preparation_agent_node(agent: CompiledStateGraph):
             "transformation_plan": prep_output_state.get("transformation_plan"),
         }
 
-    return call_preparation_agent
+    return preparation_node

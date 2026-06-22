@@ -16,8 +16,8 @@ Use the following results to check if the transformation plan is complete and co
 """
 
 
-def create_call_comprehension_agent_function(comprehension_agent: CompiledStateGraph):
-    def call_comprehension_agent(state: WorkflowState) -> WorkflowState:
+def create_comprehension_node(comprehension_agent: CompiledStateGraph):
+    def comprehension_node(state: WorkflowState) -> WorkflowState:
         """
         Calls the comprehension agent with the current workflow state.
 
@@ -41,4 +41,4 @@ def create_call_comprehension_agent_function(comprehension_agent: CompiledStateG
             "iteration": state.get("iteration", 0) + 1,
         }
 
-    return call_comprehension_agent
+    return comprehension_node

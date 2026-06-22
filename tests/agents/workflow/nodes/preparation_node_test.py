@@ -11,7 +11,7 @@ from langgraph.types import GraphOutput
 from unittest.mock import Mock, patch
 
 from bxagent.agents.workflow.nodes.preparation_node import (
-    create_call_preparation_agent_node,
+    create_preparation_node,
 )
 from bxagent.agents.workflow.state import WorkflowState
 from bxagent.preparation import build_preparation_agent
@@ -35,7 +35,7 @@ class TestPreparationNode(TestCase):
             )
         ).compile()
 
-        self.call_preparation_node = create_call_preparation_agent_node(
+        self.call_preparation_node = create_preparation_node(
             self.preparation_agent
         )
 

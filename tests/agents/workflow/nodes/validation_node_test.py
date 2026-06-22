@@ -14,7 +14,7 @@ from pydantic import BaseModel
 from bxagent.validation.types import Validation, ValidationResult, ValidationError, StateToValidationMapper
 from bxagent.validation import ValidationExecutor
 from bxagent.agents.workflow.nodes.validation_node import (
-    create_validation_agent_work_function,
+    create_validation_node,
 )
 from bxagent.agents.workflow.state import WorkflowState
 
@@ -39,7 +39,7 @@ class TestValidationNode__ExecutionModeAll(TestCase):
         validation_executor = ValidationExecutor(
             validations={validation_id: {"validation": mocked_validation, "validation_schema": MockedSchema}}
         )
-        validation_agent_work = create_validation_agent_work_function(
+        validation_agent_work = create_validation_node(
             validation_executor=validation_executor,
             mapper={validation_id: mocked_mapper},
             execution_mode="all",
@@ -90,7 +90,7 @@ class TestValidationNode__ExecutionModeAll(TestCase):
         validation_executor = ValidationExecutor(
             validations={validation_id: {"validation": mocked_validation, "validation_schema": MockedSchema}}
         )
-        validation_agent_work = create_validation_agent_work_function(
+        validation_agent_work = create_validation_node(
             validation_executor=validation_executor,
             mapper={},  # No mapper provided
             execution_mode="all",
@@ -119,7 +119,7 @@ class TestValidationNode__ExecutionModeSpecific(TestCase):
         validation_executor = ValidationExecutor(
             validations={validation_id: {"validation": mocked_validation, "validation_schema": MockedSchema}}
         )
-        validation_agent_work = create_validation_agent_work_function(
+        validation_agent_work = create_validation_node(
             validation_executor=validation_executor,
             mapper={validation_id: mocked_mapper},
             execution_mode="specific",
@@ -170,7 +170,7 @@ class TestValidationNode__ExecutionModeSpecific(TestCase):
         validation_executor = ValidationExecutor(
             validations={validation_id: {"validation": mocked_validation, "validation_schema": MockedSchema}}
         )
-        validation_agent_work = create_validation_agent_work_function(
+        validation_agent_work = create_validation_node(
             validation_executor=validation_executor,
             mapper={},  # No mapper provided
             execution_mode="specific",

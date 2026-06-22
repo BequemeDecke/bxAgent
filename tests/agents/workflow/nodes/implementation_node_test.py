@@ -8,7 +8,7 @@ from unittest import TestCase
 from unittest.mock import MagicMock
 
 from bxagent.agents.workflow.nodes.implementation_node import (
-    create_call_implementation_agent_node,
+    create_implementation_node,
 )
 from bxagent.comprehension.plan import FileTransformationPlanParser, TransformationPlan
 from bxagent.implementation.state import ImplementationState
@@ -32,7 +32,7 @@ class TestImplementationNode(TestCase):
         self.coding_agent = MagicMock(spec=CompiledStateGraph)
         self.coding_agent.ainvoke = MagicMock(side_effect=fake_ainvoke)
 
-        self.call_implementation = create_call_implementation_agent_node(
+        self.call_implementation = create_implementation_node(
             self.coding_agent
         )
 

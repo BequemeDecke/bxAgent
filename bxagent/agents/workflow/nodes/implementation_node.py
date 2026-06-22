@@ -8,7 +8,7 @@ from ..state import WorkflowState
 PROMPT_TEMPLATE = "I"
 
 
-def create_call_implementation_agent_node(agent: CompiledStateGraph):
+def create_implementation_node(agent: CompiledStateGraph):
     """Creates a function that calls the implementation agent with the necessary state and returns the updated state after the implementation agent has done its work.
 
     TODO: Use the task_specification for the user to provide instructions on how to implement the transformation
@@ -17,7 +17,7 @@ def create_call_implementation_agent_node(agent: CompiledStateGraph):
         agent (CompiledStateGraph): _description_
     """
 
-    async def call_implementation_agent(state: WorkflowState) -> WorkflowState:
+    async def implementation_node(state: WorkflowState) -> WorkflowState:
         transformation_md = state.get("transformation_plan")
         if transformation_md is None:
             raise ValueError(
@@ -47,4 +47,4 @@ def create_call_implementation_agent_node(agent: CompiledStateGraph):
 
         return {"written_files": list(new_written_files)}
 
-    return call_implementation_agent
+    return implementation_node

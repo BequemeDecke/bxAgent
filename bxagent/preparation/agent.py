@@ -3,7 +3,7 @@ from bxagent.validation import (
     ValidationExecutor,
 )
 from bxagent.agents.workflow.nodes.validation_node import (
-    create_validation_agent_work_function,
+    create_validation_node,
 )
 
 from .explore_models import create_explore_models_node
@@ -12,7 +12,7 @@ from .prepare_workspace import create_prepare_workspace_node
 
 
 def build_preparation_agent(validation_executor: ValidationExecutor) -> StateGraph:
-    validate_preparation_node = create_validation_agent_work_function(
+    validate_preparation_node = create_validation_node(
         validation_executor=validation_executor,
         mapper={
             "workspace_operability": lambda state: {

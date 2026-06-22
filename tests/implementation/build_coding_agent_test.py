@@ -11,7 +11,7 @@ class TestBuildCodingAgent(TestCase):
 
     @patch("bxagent.tools.coding.agent.create_implement_transformation_node")
     @patch("bxagent.tools.coding.agent.create_implement_bx_tool_node")
-    @patch("bxagent.tools.coding.agent.create_validation_agent_work_function")
+    @patch("bxagent.tools.coding.agent.create_validation_node")
     @patch("bxagent.tools.coding.agent.create_evaluate_transformation_implementation")
     def test_build_coding_agent_subgraph(
         self,

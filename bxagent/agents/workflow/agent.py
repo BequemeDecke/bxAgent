@@ -12,10 +12,10 @@ from bxagent.models import build_base_model
 from bxagent.preparation import build_preparation_agent
 from bxagent.validation import ValidationExecutor, implementations
 
-from .nodes.comprehension_node import create_call_comprehension_agent_function
-from .nodes.implementation_node import create_call_implementation_agent_node
-from .nodes.preparation_node import create_call_preparation_agent_node
-from .nodes.validation_node import create_validation_agent_work_function
+from .nodes.comprehension_node import create_comprehension_node
+from .nodes.implementation_node import create_implementation_node
+from .nodes.preparation_node import create_preparation_node
+from .nodes.validation_node import create_validation_node
 from .state import WorkflowState
 from .transformation_iteration_control import (
     create_check_transformation_iteration_function,
@@ -25,7 +25,7 @@ from .transformation_iteration_control import (
 def build_workflow_agent() -> StateGraph[WorkflowState]:
     llm = build_base_model()
     check_transformation_iteration = create_check_transformation_iteration_function(llm)
-    call_comprehension_agent = create_call_comprehension_agent_function(
+    call_comprehension_agent = create_comprehension_node(
         comprehension_agent=build_comprehension_agent()
     )
     validation_executor = ValidationExecutor(
@@ -48,7 +48,7 @@ def build_workflow_agent() -> StateGraph[WorkflowState]:
             },
         }
     )
-    validation_agent_work = create_validation_agent_work_function(
+    validation_agent_work = create_validation_node(
         validation_executor=validation_executor,
         mapper={
             "file_existence": map_workflow_to_file,
@@ -60,12 +60,12 @@ def build_workflow_agent() -> StateGraph[WorkflowState]:
     preparation_agent = build_preparation_agent(
         validation_executor=validation_executor
     ).compile()
-    call_preparation_node = create_call_preparation_agent_node(preparation_agent)
+    call_preparation_node = create_preparation_node(preparation_agent)
     coding_deep_agent = build_coding_deep_agent()
     implementation_agent = build_implementation_graph(
         validation_executor=validation_executor, coding_deep_agent=coding_deep_agent
     ).compile()
-    call_implementation_node = create_call_implementation_agent_node(
+    call_implementation_node = create_implementation_node(
         implementation_agent
     )
 

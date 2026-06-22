@@ -8,7 +8,7 @@ from unittest import TestCase
 from langgraph.graph import StateGraph, START
 
 from bxagent.agents.workflow.nodes.comprehension_node import (
-    create_call_comprehension_agent_function,
+    create_comprehension_node,
 )
 
 
@@ -26,7 +26,7 @@ class TestComprehensionNode(TestCase):
         self.graph = graph_builder.compile()
 
     def test_comprehension_node__invoke_subgraph(self):
-        call_sub = create_call_comprehension_agent_function(self.graph)
+        call_sub = create_comprehension_node(self.graph)
 
         result = call_sub(
             {
