@@ -31,16 +31,19 @@ def create_call_implementation_agent_node(agent: CompiledStateGraph):
             )
 
         prep_invoke_state = ImplementationState(
-            transformation_md,
+            transformation_md=transformation_md,
             task_specification="",
             bxtool_file=bxtool_file_path,
         )
         response: GraphOutput = await agent.ainvoke(prep_invoke_state, version="v2")
         prep_output_state: ImplementationState = response.value
 
-        new_written_files = set(state.get("written_files", [])) + set(
+        new_written_files = set(
+            state.get("written_files", [])
+        )  # Get existing written files from state
+        new_written_files.update(
             prep_output_state.get("written_java_files", [])
-        )
+        )  # Add new written
 
         return {"written_files": list(new_written_files)}
 
