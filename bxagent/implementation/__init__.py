@@ -4,7 +4,7 @@ from .evaluate_transformation_implementation import (
 )
 from .implement_bx_tool import create_implement_bx_tool_node
 from .implement_transformation import create_implement_transformation_node
-from .state import CodingAgentState
+from .state import ImplementationState
 from .bxtool import (
     BxToolForEMF,
     BxToolTemplateResolver,
@@ -20,7 +20,7 @@ __all__ = [
     "create_implement_transformation_node",
     "create_evaluate_transformation_implementation",
     "create_implement_bx_tool_node",
-    "CodingAgentState",
+    "ImplementationState",
     "BxToolForEMF",
     "BxToolTemplateResolver",
     "Class",

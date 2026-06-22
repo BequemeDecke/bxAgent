@@ -1,7 +1,7 @@
 from typing import Literal
 
 from bxagent.config import Config
-from .state import CodingAgentState
+from .state import ImplementationState
 
 config = Config.get_instance()
 
@@ -18,7 +18,7 @@ EvaluationDecision = Literal[
 
 def create_evaluate_transformation_implementation():
     def evaluate_transformation_implementation(
-        agent_state: CodingAgentState, max_iterations: int = WORKFLOW_MAX_ITERATIONS
+        agent_state: ImplementationState, max_iterations: int = WORKFLOW_MAX_ITERATIONS
     ) -> EvaluationDecision:
         iteration = agent_state.get("implementation_iteration", 0)
         if iteration >= max_iterations:

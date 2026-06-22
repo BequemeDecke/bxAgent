@@ -4,7 +4,7 @@ from bxagent.implementation.evaluate_transformation_implementation import (
     create_evaluate_transformation_implementation,
 )
 from bxagent.validation.types import ValidationRun, ValidationError
-from bxagent.implementation.state import CodingAgentState
+from bxagent.implementation.state import ImplementationState
 
 
 class TestEvaluateTransformationImplementation(TestCase):
@@ -18,7 +18,7 @@ class TestEvaluateTransformationImplementation(TestCase):
             create_evaluate_transformation_implementation()
         )
         MAX_ITERATIONS = 5
-        agent_state = CodingAgentState(
+        agent_state = ImplementationState(
             transformation_md=None,
             transformation_source_model_description="Source model description",
             transformation_target_model_description="Target model description",
@@ -47,7 +47,7 @@ class TestEvaluateTransformationImplementation(TestCase):
         self.evaluate_transformation_implementation = (
             create_evaluate_transformation_implementation()
         )
-        agent_state = CodingAgentState(
+        agent_state = ImplementationState(
             transformation_md=None,
             transformation_source_model_description="Source model description",
             transformation_target_model_description="Target model description",
@@ -91,7 +91,7 @@ class TestEvaluateTransformationImplementation(TestCase):
         self.evaluate_transformation_implementation = (
             create_evaluate_transformation_implementation()
         )
-        agent_state = CodingAgentState(
+        agent_state = ImplementationState(
             transformation_md=None,
             transformation_source_model_description="Source model description",
             transformation_target_model_description="Target model description",
@@ -129,7 +129,7 @@ class TestEvaluateTransformationImplementation(TestCase):
             create_evaluate_transformation_implementation()
         )
 
-        agent_state = CodingAgentState(
+        agent_state = ImplementationState(
             transformation_md=None,
             transformation_source_model_description="Source model description",
             transformation_target_model_description="Target model description",

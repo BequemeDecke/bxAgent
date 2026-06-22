@@ -21,7 +21,7 @@ from bxagent.implementation.implement_transformation import (
     create_input_prompt,
     create_implement_transformation_node,
 )
-from bxagent.implementation.state import CodingAgentState
+from bxagent.implementation.state import ImplementationState
 from bxagent.comprehension.plan import TransformationPlan, TransformationPlanParser
 
 
@@ -63,7 +63,7 @@ class TestImplementTransformation(TestCase):
             optional_plan_factory=lambda: TransformationPlan.parse(parser=mocked_parser),
         )
 
-        agent_state: CodingAgentState = {
+        agent_state: ImplementationState = {
             "task_specification": "Implement the transformation from model Anton to model Berta.",
             "transformation_md": None,
             "written_java_files": [],

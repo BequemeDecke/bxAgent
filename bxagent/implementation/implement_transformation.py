@@ -3,7 +3,7 @@ from langgraph.graph.state import CompiledStateGraph
 from typing import Callable
 
 from bxagent.comprehension.plan import TransformationPlan
-from .state import CodingAgentState
+from .state import ImplementationState
 
 PROMPT_TEMPLATE = """
 Implement the specific task required for the transformation based on the transformation plan provided below.
@@ -36,7 +36,7 @@ def create_implement_transformation_node(
     coding_agent: CompiledStateGraph,
     optional_plan_factory: Callable[[], TransformationPlan],
 ):
-    def implement_transformation(agent_state: CodingAgentState) -> CodingAgentState:
+    def implement_transformation(agent_state: ImplementationState) -> ImplementationState:
         # 1. Read the transformation plan from the TRANSFORMATION.md file
         transformation_plan = (
             agent_state.get("transformation_md") or optional_plan_factory()

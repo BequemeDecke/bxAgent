@@ -5,7 +5,7 @@ from bxagent.validation.types import ValidationRun
 from bxagent.comprehension.plan import TransformationPlan
 
 
-class CodingAgentState(TypedDict):
+class ImplementationState(TypedDict):
     transformation_md: TransformationPlan
     task_specification: str  # This field will be used by a higher component
     written_java_files: List[Path]  # All of these files have to be compiled together

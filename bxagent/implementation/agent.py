@@ -16,7 +16,7 @@ from .evaluate_transformation_implementation import (
 )
 from .implement_bx_tool import create_implement_bx_tool_node
 from .implement_transformation import create_implement_transformation_node
-from .state import CodingAgentState
+from .state import ImplementationState
 
 
 def build_implementation_graph(
@@ -54,7 +54,7 @@ def build_implementation_graph(
     )
 
     # Build the state graph
-    graph = StateGraph(CodingAgentState)
+    graph = StateGraph(ImplementationState)
     graph.add_node("implement_transformation", implement_transformation, initial=True)
     graph.add_node("implement_bx_tool", implement_bx_tool)
     graph.add_node("validation_agentic_work", validation_agentic_work)

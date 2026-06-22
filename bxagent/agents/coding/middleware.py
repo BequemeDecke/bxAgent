@@ -8,27 +8,19 @@ https://docs.langchain.com/oss/python/langchain/middleware/custom#node-style-hoo
 """
 
 import logging
+from pathlib import Path
 
-from langchain.messages import AnyMessage, ToolMessage
 from langchain.agents.middleware import (
-    AgentState as BaseAgentState,
     AgentMiddleware,
 )
-from os import PathLike
-from pathlib import Path
+from langchain.messages import AnyMessage, ToolMessage
 
 from bxagent.config import Config
 
+from .state import CodingDeepAgentState
+
 UPDATED_FILE_INDEX = Config.get_instance().VARIABLES.UPDATED_FILE_INDEX
 WORKSPACE_PATH = Config.get_instance().WORKSPACE.PATH
-
-
-class CodingDeepAgentState(BaseAgentState):
-    """
-    State class for the Coding agent. This class can be extended to include any additional state information that the Coding agent may need to maintain during its operation.
-    """
-
-    written_files: list[PathLike] = []
 
 
 def extract_written_files(

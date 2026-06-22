@@ -4,7 +4,7 @@ from langchain.chat_models import BaseChatModel
 
 from bxagent.implementation.bxtool import BxToolForEMF, BxToolTemplateResolver
 
-from .state import CodingAgentState
+from .state import ImplementationState
 
 PROMPT_TEMPLATE = """
 You are a coding assistant for implementing a bx tool for EMF model transformations. 
@@ -39,7 +39,7 @@ def create_implement_bx_tool_node(llm: BaseChatModel, workspace: Path):
     structured_llm = llm.with_structured_output(BxToolForEMF)
     resolver = BxToolTemplateResolver()
 
-    def implement_bx_tool(state: CodingAgentState) -> CodingAgentState:
+    def implement_bx_tool(state: ImplementationState) -> ImplementationState:
         # 1. Collect information and construct the prompt
         task_specification = state["task_specification"]
         transformation_implementation = state["transformation_implementation"]

@@ -2,7 +2,7 @@ from unittest import TestCase
 from pathlib import Path
 
 from bxagent.implementation.state import (
-    CodingAgentState,
+    ImplementationState,
 )  # Fix cyclic import from __init__ files
 from bxagent.agents.workflow.state import WorkflowState
 from bxagent.mapping import map_workflow_to_workspace

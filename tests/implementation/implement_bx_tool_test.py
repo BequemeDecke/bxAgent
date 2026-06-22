@@ -14,7 +14,7 @@ from pathlib import Path
 from bxagent.implementation.implement_bx_tool import (
     create_implement_bx_tool_node,
 )
-from bxagent.implementation.state import CodingAgentState
+from bxagent.implementation.state import ImplementationState
 from bxagent.implementation.bxtool import BxToolForEMF
 
 
@@ -108,7 +108,7 @@ class TestImplementBxTool(TestCase):
         mock_get_raw_template.return_value = "Raw template content"
         mock_render_template.return_value = "Rendered bx tool content"
 
-        state = CodingAgentState(
+        state = ImplementationState(
             transformation_md=None,
             task_specification="Implement the bx tool",
             written_java_files=[],
