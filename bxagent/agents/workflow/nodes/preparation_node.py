@@ -37,6 +37,21 @@ def create_preparation_node(agent: CompiledStateGraph):
         response: GraphOutput = await agent.ainvoke(prep_invoke_state, version="v2")
         prep_output_state: PreparationState = response.value
 
+        transformation_plan = prep_output_state.get("transformation_plan")
+        if transformation_plan is None:
+            raise ValueError(
+                "The preparation agent did not return a transformation plan, but it is required for the workflow to continue."
+            )
+
+        transformation_plan.update_model_implementation(
+            source_model_implementation=prep_output_state.get(
+                "source_model_implementation", ""
+            ),
+            target_model_implementation=prep_output_state.get(
+                "target_model_implementation", ""
+            ),
+        )
+
         return {
             "transformation_plan": prep_output_state.get("transformation_plan"),
         }
