@@ -13,7 +13,7 @@ from bxagent.preparation.state import PreparationState
 from bxagent.validation import ValidationExecutor, implementations
 
 
-class TestPreparationAgent(TestCase):
+class PreparationTestAgent(TestCase):
     def setUp(self):
         self.validation_executor = ValidationExecutor(
             validations={

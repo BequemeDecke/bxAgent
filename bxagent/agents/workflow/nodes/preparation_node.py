@@ -28,10 +28,10 @@ def create_call_preparation_agent_node(agent: CompiledStateGraph):
             )
 
         prep_invoke_state = PreparationState(
-            workspace_path,
-            source_model_path,
-            target_model_path,
-            package_path,
+            workspace_path=workspace_path,
+            source_model_path=source_model_path,
+            target_model_path=target_model_path,
+            package_path=package_path,
             required_commands=state.get("required_commands", []),
         )
         response: GraphOutput = await agent.ainvoke(prep_invoke_state, version="v2")
