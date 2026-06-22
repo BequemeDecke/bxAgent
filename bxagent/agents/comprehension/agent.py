@@ -7,7 +7,6 @@ from bxagent.comprehension import (
     TransformationPlan,
 )
 from bxagent.tools.comprehension import transformation_plan_tools
-from .output import ComprehensionResponseFormat
 from .state import ComprehensionAgentState
 
 COMPREHENSION_SYSTEM_PROMPT = """
@@ -59,6 +58,5 @@ def build_comprehension_agent(
         #         allowed_msgpack_modules=[TransformationPlan],
         #     )
         # ),
-        response_format=ComprehensionResponseFormat,
         tools=[*transformation_plan_tools],
     )

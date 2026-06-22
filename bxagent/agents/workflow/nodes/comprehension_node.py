@@ -1,7 +1,6 @@
 from langgraph.graph.state import CompiledStateGraph
 from langchain.messages import HumanMessage
 
-from bxagent.agents.comprehension import ComprehensionResponseFormat
 from ..state import WorkflowState
 
 PROMPT_TEMPLATE = """
@@ -34,13 +33,12 @@ def create_call_comprehension_agent_function(comprehension_agent: CompiledStateG
             ),
         )
 
-        result = comprehension_agent.invoke(
+        comprehension_agent.invoke(
             input={"messages": [HumanMessage(content=input_prompt)]},
         )
-        structured_response: ComprehensionResponseFormat = result["structured_response"]
+
         return {
             "iteration": state.get("iteration", 0) + 1,
-            "implementation_instructions": structured_response.implementation_instructions,
         }
 
     return call_comprehension_agent

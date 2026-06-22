@@ -7,7 +7,6 @@ from typing import TypedDict
 from unittest import TestCase
 from langgraph.graph import StateGraph, START
 
-from bxagent.agents.comprehension.output import ComprehensionResponseFormat
 from bxagent.agents.workflow.nodes.comprehension_node import (
     create_call_comprehension_agent_function,
 )
@@ -16,14 +15,10 @@ from bxagent.agents.workflow.nodes.comprehension_node import (
 class TestComprehensionNode(TestCase):
     def setUp(self):
         class DummyState(TypedDict):
-            structured_response: ComprehensionResponseFormat
+            pass
 
         def generate_response(state: DummyState) -> DummyState:
-            return {
-                "structured_response": ComprehensionResponseFormat(
-                    implementation_instructions="Some instructions on how to implement the transformation."
-                )
-            }
+            return {}
 
         graph_builder = StateGraph(DummyState)
         graph_builder.add_node("comprehension", generate_response)
@@ -37,23 +32,13 @@ class TestComprehensionNode(TestCase):
             {
                 "transformation_source_model_description": "A model that does X",
                 "transformation_target_model_description": "A model that does Y",
-                "iteration": 0,
+                "iteration": 1,
                 "latest_validation_runs": [],
             }
         )
 
         self.assertEqual(
             result["iteration"],
-            1,
-            "The iteration should be incremented by 1 after calling the comprehension agent.",
-        )
-        self.assertEqual(
-            result["implementation_instructions"],
-            "Some instructions on how to implement the transformation.",
-            "The implementation instructions should match the output of the comprehension agent.",
-        )
-        self.assertEqual(
-            result["iteration"],
-            1,
+            2,
             "The iteration should be incremented by 1 after calling the comprehension agent.",
         )
