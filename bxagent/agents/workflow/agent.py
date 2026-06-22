@@ -1,7 +1,8 @@
 from langgraph.graph import END, START, StateGraph
 
+from bxagent.agents.coding.agent import build_coding_deep_agent
 from bxagent.agents.comprehension import build_comprehension_agent
-from bxagent.agents.workflow.nodes.preparation_node import create_call_preparation_agent_node
+from bxagent.implementation import build_implementation_graph
 from bxagent.mapping import (
     map_workflow_to_commands,
     map_workflow_to_file,
@@ -10,9 +11,10 @@ from bxagent.mapping import (
 from bxagent.models import build_base_model
 from bxagent.preparation import build_preparation_agent
 from bxagent.validation import ValidationExecutor, implementations
-from bxagent.implementation import build_
 
 from .nodes.comprehension_node import create_call_comprehension_agent_function
+from .nodes.implementation_node import create_call_implementation_agent_node
+from .nodes.preparation_node import create_call_preparation_agent_node
 from .nodes.validation_node import create_validation_agent_work_function
 from .state import WorkflowState
 from .transformation_iteration_control import (
@@ -55,25 +57,37 @@ def build_workflow_agent() -> StateGraph[WorkflowState]:
             "workspace_operability": map_workflow_to_workspace,
         },
     )
-    preparation_agent = build_preparation_agent(validation_executor=validation_executor).compile()
+    preparation_agent = build_preparation_agent(
+        validation_executor=validation_executor
+    ).compile()
     call_preparation_node = create_call_preparation_agent_node(preparation_agent)
+    coding_deep_agent = build_coding_deep_agent()
+    implementation_agent = build_implementation_graph(
+        validation_executor=validation_executor, coding_deep_agent=coding_deep_agent
+    ).compile()
+    call_implementation_node = create_call_implementation_agent_node(
+        implementation_agent
+    )
 
     builder = StateGraph(WorkflowState)
 
     # TODO: Add the rest of the workflow nodes and edges!
     builder.add_node("preparation", call_preparation_node)
     builder.add_node("comprehension", call_comprehension_agent)
+    builder.add_node("implementation", call_implementation_node)
     builder.add_node("validation", validation_agent_work)
 
     builder.add_edge(START, "preparation")
     builder.add_edge("preparation", "comprehension")
+    builder.add_edge("comprehension", "implementation")
+    builder.add_edge("implementation", "validation")
 
     builder.add_conditional_edges(
         "check_transformation_iteration",
         check_transformation_iteration,
         {
             "stop": END,
-            "continue": "call_comprehension_agent",
+            "continue": "comprehension",
             "error": END,
         },
     )

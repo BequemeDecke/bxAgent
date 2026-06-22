@@ -5,45 +5,43 @@ from bxagent.implementation.state import ImplementationState
 
 from ..state import WorkflowState
 
+PROMPT_TEMPLATE = "I"
+
 
 def create_call_implementation_agent_node(agent: CompiledStateGraph):
+    """Creates a function that calls the implementation agent with the necessary state and returns the updated state after the implementation agent has done its work.
+
+    TODO: Use the task_specification for the user to provide instructions on how to implement the transformation
+
+    Args:
+        agent (CompiledStateGraph): _description_
+    """
 
     async def call_implementation_agent(state: WorkflowState) -> WorkflowState:
-        workspace_path = state.get("workspace_path")
-        if workspace_path is None:
-            raise ValueError("Workspace path is required for the preparation agent.")
-
-        source_model_path = state.get("source_model_path")
-        if source_model_path is None:
-            raise ValueError("Source model path is required for the preparation agent.")
-
-        target_model_path = state.get("target_model_path")
-        if target_model_path is None:
-            raise ValueError("Target model path is required for the preparation agent.")
-
-        package_path = state.get("transformation_package_path")
-        if package_path is None:
+        transformation_md = state.get("transformation_plan")
+        if transformation_md is None:
             raise ValueError(
-                "Transformation package path is required for the preparation agent."
+                "Transformation metadata is required for the implementation agent."
             )
 
-        prep_invoke_state = PreparationState(
-            workspace_path,
-            source_model_path,
-            target_model_path,
-            package_path,
-            required_commands=state.get("required_commands", []),
+        bxtool_file_path = state.get("bxtool_file_path")
+        if bxtool_file_path is None:
+            raise ValueError(
+                "BXTTool file path is required for the implementation agent."
+            )
+
+        prep_invoke_state = ImplementationState(
+            transformation_md,
+            task_specification="",
+            bxtool_file=bxtool_file_path,
         )
         response: GraphOutput = await agent.ainvoke(prep_invoke_state, version="v2")
-        prep_output_state: PreparationState = response.value
+        prep_output_state: ImplementationState = response.value
 
-        return {
-            "source_model_implementation": prep_output_state.get(
-                "source_model_implementation"
-            ),
-            "target_model_implementation": prep_output_state.get(
-                "target_model_implementation"
-            ),
-        }
+        new_written_files = set(state.get("written_files", [])) + set(
+            prep_output_state.get("written_java_files", [])
+        )
 
-    return call_preparation_agent
+        return {"written_files": list(new_written_files)}
+
+    return call_implementation_agent
