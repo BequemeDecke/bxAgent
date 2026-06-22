@@ -25,6 +25,10 @@ def create_comprehension_node(comprehension_agent: CompiledStateGraph):
         It also gets the current results of the validations, which can be used to inform the comprehension agent about what has been tried already and what the results were.
         """
         transformation = state.get("transformation_plan")
+        if transformation is None:
+            raise ValueError(
+                "The comprehension node requires a transformation plan in the state."
+            )
 
         input_prompt = PROMPT_TEMPLATE.format(
             transformation_plan=str(transformation),
@@ -34,11 +38,15 @@ def create_comprehension_node(comprehension_agent: CompiledStateGraph):
         )
 
         comprehension_agent.invoke(
-            input={"messages": [HumanMessage(content=input_prompt)]},
+            input={
+                "messages": [HumanMessage(content=input_prompt)],
+                "transformation_plan": transformation,
+            },
         )
 
-        return {
-            "iteration": state.get("iteration", 0) + 1,
-        }
+        iteration = transformation.data.get("iteration", 0)
+        transformation.update_iteration(iteration + 1)
+
+        return {"transformation_plan": transformation}
 
     return comprehension_node
