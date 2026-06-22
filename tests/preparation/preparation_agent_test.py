@@ -70,7 +70,7 @@ class PreparationTestAgent(TestCase):
             )
             output_state: PreparationState = output.value
             logging.debug(f"Output state: {output_state}")
-            
+
             validation_runs = output_state.get("latest_validation_runs", {})
             errors = []
             for validation_name, validation_run in validation_runs.items():
@@ -85,4 +85,15 @@ class PreparationTestAgent(TestCase):
             self.assertTrue(
                 output_state["workspace_path"].exists(),
                 "The workspace path should exist.",
+            )
+
+            transformation_plan = output_state.get("transformation_plan")
+            self.assertIsNotNone(
+                transformation_plan,
+                "The transformation plan should be generated and included in the output state.",
+            )
+            self.assertEqual(
+                transformation_plan.data.get("iteration"),
+                0,
+                "The transformation plan should have the correct iteration number.",
             )

@@ -1,6 +1,7 @@
-from typing import Dict, TypedDict
 from pathlib import Path
+from typing import Dict, TypedDict, Optional
 
+from bxagent.comprehension.plan import TransformationPlan
 from bxagent.validation.types import ValidationRun
 
 
@@ -13,3 +14,4 @@ class PreparationState(TypedDict):
     target_model_path: Path
     source_model_implementation: str = ""
     target_model_implementation: str = ""
+    transformation_plan: Optional[TransformationPlan] = None

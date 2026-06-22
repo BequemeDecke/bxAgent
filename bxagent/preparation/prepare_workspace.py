@@ -4,7 +4,7 @@ from .state import PreparationState
 
 
 def create_prepare_workspace_node():
-    def prepare_workspace_node(state: PreparationState):
+    def prepare_workspace_node(state: PreparationState) -> PreparationState:
         workspace = state.get("workspace_path")
         if workspace is None:
             raise ValueError("Workspace path is not set in the state.")
@@ -35,6 +35,8 @@ def create_prepare_workspace_node():
             if not package_path.exists():
                 package_path.mkdir(parents=True)
 
-        return {}
+        return {
+            "transformation_plan": tp,
+        }
 
     return prepare_workspace_node

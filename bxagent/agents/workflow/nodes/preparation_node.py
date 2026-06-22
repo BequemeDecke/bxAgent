@@ -38,12 +38,7 @@ def create_call_preparation_agent_node(agent: CompiledStateGraph):
         prep_output_state: PreparationState = response.value
 
         return {
-            "source_model_implementation": prep_output_state.get(
-                "source_model_implementation"
-            ),
-            "target_model_implementation": prep_output_state.get(
-                "target_model_implementation"
-            ),
+            "transformation_plan": prep_output_state.get("transformation_plan"),
         }
 
     return call_preparation_agent
