@@ -1,4 +1,4 @@
-from langgraph.graph import StateGraph, END
+from langgraph.graph import START, StateGraph, END
 from langgraph.graph.state import CompiledStateGraph
 
 from bxagent.agents.workflow.nodes.validation_node import create_validation_node
@@ -39,7 +39,7 @@ def build_implementation_graph(
     )
     implement_bx_tool = create_implement_bx_tool_node(
         llm=base_model,
-        workspace_path=workspace_path,
+        workspace=workspace_path,
     )
     validation_agentic_work = create_validation_node(
         validation_executor=validation_executor,
@@ -60,6 +60,7 @@ def build_implementation_graph(
     graph.add_node("validation_agentic_work", validation_agentic_work)
 
     # Add edges between the nodes to define the workflow
+    graph.add_edge(START, "implement_transformation")
     graph.add_edge("implement_transformation", "implement_bx_tool")
     graph.add_edge("implement_bx_tool", "validation_agentic_work")
     graph.add_conditional_edges(

@@ -16,7 +16,7 @@ Your task is to analyze the source and target models, understand the requirement
 and create a detailed implementation plan in TRANSFORMATION.md (= the current transformation plan).
 
 Workflow:
-1. The transformation plan is underneath. If it is empty, start writing it from scratch using the input of the user.
+1. The transformation plan is given by the user input. If it is empty, start writing it from scratch using the input of the user.
 2. Analyze the models, requirements, and existing content
 3. Identify new difficulties and think through potential obstacles
 4. Define implementation steps that provide a roadmap without dictating code details
@@ -29,23 +29,16 @@ Guidelines:
   but not prescriptive about implementation details
 - When identifying difficulties, explain why they are challenging
 - Return your plan using the predefined response_schema
-
---- BEGIN TRANSFORMATION PLAN ---
-{transformation_plan}
---- END TRANSFORMATION PLAN ---
 """
 
 
 def build_comprehension_agent(
-    transformation_plan: TransformationPlan,
     system_prompt: str = COMPREHENSION_SYSTEM_PROMPT,
     model: BaseChatModel | None = None,
 ):
     """Builds the ComprehensionAgent using the chat model."""
     if model is None:
         model = build_base_model()
-
-    system_prompt = system_prompt.format(transformation_plan=str(transformation_plan))
 
     return create_agent(
         model=model,
