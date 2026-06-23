@@ -35,8 +35,14 @@ def create_prepare_workspace_node():
             if not package_path.exists():
                 package_path.mkdir(parents=True)
 
+        # Create the transformation Java file (bxtool)
+        bxtool_path = package_path / "BxAgentJavaBxTool.java"
+        if not bxtool_path.exists():
+            bxtool_path.touch()
+
         return {
             "transformation_plan": tp,
+            "bxtool_path": bxtool_path,
         }
 
     return prepare_workspace_node

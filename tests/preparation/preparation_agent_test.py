@@ -13,6 +13,28 @@ from bxagent.preparation.state import PreparationState
 from bxagent.validation import ValidationExecutor, implementations
 
 
+def create_test_model_package(temp_dir: Path, package_name: str):
+    package_path = temp_dir / package_name
+    package_path.mkdir()
+
+    source_file = package_path / f"{package_name}.java"
+    source_register_file = package_path / f"{package_name}Register.java"
+    source_package_file = package_path / f"{package_name}Package.java"
+    source_factory_file = package_path / f"{package_name}Factory.java"
+
+    source_file.write_text(f"public interface {package_name} {{ }}")
+    source_register_file.write_text(f"public interface {package_name}Register {{ }}")
+    source_package_file.write_text(f"public interface {package_name}Package {{ }}")
+    source_factory_file.write_text(f"public interface {package_name}Factory {{ }}")
+    return (
+        package_path,
+        source_file,
+        source_register_file,
+        source_package_file,
+        source_factory_file,
+    )
+
+
 class PreparationTestAgent(TestCase):
     def setUp(self):
         self.validation_executor = ValidationExecutor(
@@ -47,11 +69,13 @@ class PreparationTestAgent(TestCase):
         with tempfile.TemporaryDirectory() as temp_dir:
             workspace_path = Path(temp_dir)
             package_path = "de.example.bxagent"
-            source_model_path = workspace_path / "source_model.txt"
-            target_model_path = workspace_path / "target_model.txt"
 
-            source_model_path.write_text("source model implementation")
-            target_model_path.write_text("target model implementation")
+            (source_model_path, *_) = create_test_model_package(
+                workspace_path, package_path
+            )
+            (target_model_path, *_) = create_test_model_package(
+                workspace_path, f"{package_path}Target"
+            )
 
             agent = build_preparation_agent(
                 validation_executor=self.validation_executor
@@ -96,4 +120,14 @@ class PreparationTestAgent(TestCase):
                 transformation_plan.data.get("iteration"),
                 0,
                 "The transformation plan should have the correct iteration number.",
+            )
+
+            bxtool_path = output_state.get("bxtool_path")
+            self.assertIsNotNone(
+                bxtool_path,
+                "The bxtool path should be set in the output state.",
+            )
+            self.assertTrue(
+                bxtool_path.exists(),
+                "The bxtool path should point to an existing file.",
             )

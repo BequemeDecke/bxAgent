@@ -32,8 +32,21 @@ class TestPrepareWorkspace(TestCase):
                 package_path="de.example.bxagent",
             )
 
-            self.prepare_workspace_node(input_state)
+            output_state: PreparationState = self.prepare_workspace_node(input_state)
 
+            # Check direct output
+            self.assertIsInstance(
+                output_state.get("transformation_plan"),
+                TransformationPlan,
+                "The output state should contain a transformation plan.",
+            )
+            self.assertIsInstance(
+                output_state.get("bxtool_path"),
+                Path,
+                "The output state should contain the bxtool path.",
+            )
+
+            # Check indirect output
             self.assertTrue(
                 (Path(temp_dir) / "src").exists(),
                 "The 'src' folder should be created in the workspace.",
@@ -45,6 +58,10 @@ class TestPrepareWorkspace(TestCase):
             self.assertTrue(
                 (Path(temp_dir) / "src" / "de" / "example" / "bxagent").exists(),
                 "The package path should be created in the 'src' folder",
+            )
+            self.assertTrue(
+                (Path(temp_dir) / "src" / "de" / "example" / "bxagent" / "BxAgentJavaBxTool.java").exists(),
+                "The transformation Java file should be created in the package path.",
             )
 
     def test_prepare_workspace__workspace_already_exists(self):
@@ -72,6 +89,10 @@ class TestPrepareWorkspace(TestCase):
             self.assertTrue(
                 (Path(temp_dir) / "src" / "de" / "example" / "bxagent").exists(),
                 "The package path should be created in the 'src' folder",
+            )
+            self.assertTrue(
+                (Path(temp_dir) / "src" / "de" / "example" / "bxagent" / "BxAgentJavaBxTool.java").exists(),
+                "The transformation Java file should be created in the package path.",
             )
 
     def test_prepare_workspace__transformation_plan_exists(self):

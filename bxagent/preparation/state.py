@@ -15,3 +15,4 @@ class PreparationState(TypedDict):
     source_model_implementation: str = ""
     target_model_implementation: str = ""
     transformation_plan: Optional[TransformationPlan] = None
+    bxtool_path: Optional[Path] = None
