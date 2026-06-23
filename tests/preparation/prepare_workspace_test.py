@@ -60,7 +60,14 @@ class TestPrepareWorkspace(TestCase):
                 "The package path should be created in the 'src' folder",
             )
             self.assertTrue(
-                (Path(temp_dir) / "src" / "de" / "example" / "bxagent" / "BxAgentJavaBxTool.java").exists(),
+                (
+                    Path(temp_dir)
+                    / "src"
+                    / "de"
+                    / "example"
+                    / "bxagent"
+                    / "BxAgentJavaBxTool.java"
+                ).exists(),
                 "The transformation Java file should be created in the package path.",
             )
 
@@ -91,14 +98,19 @@ class TestPrepareWorkspace(TestCase):
                 "The package path should be created in the 'src' folder",
             )
             self.assertTrue(
-                (Path(temp_dir) / "src" / "de" / "example" / "bxagent" / "BxAgentJavaBxTool.java").exists(),
+                (
+                    Path(temp_dir)
+                    / "src"
+                    / "de"
+                    / "example"
+                    / "bxagent"
+                    / "BxAgentJavaBxTool.java"
+                ).exists(),
                 "The transformation Java file should be created in the package path.",
             )
 
     def test_prepare_workspace__transformation_plan_exists(self):
         with tempfile.TemporaryDirectory() as temp_dir:
-            transformation_plan_data = self.fake_data
-
             tp_path = Path(temp_dir) / "TRANSFORMATION.md"
             tp_path.touch()
             tp = TransformationPlan.from_dict(

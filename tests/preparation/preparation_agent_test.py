@@ -1,15 +1,15 @@
 import asyncio
-import tempfile
 import logging
-
+import tempfile
+from pathlib import Path
 from unittest import TestCase
-from unittest.mock import patch, Mock
+from unittest.mock import Mock, patch
+
 from langgraph.graph.state import CompiledStateGraph
 from langgraph.types import GraphOutput
-from pathlib import Path
 
 from bxagent.preparation.agent import build_preparation_agent
-from bxagent.preparation.state import PreparationState
+from bxagent.preparation.state import ModelImplementation, PreparationState
 from bxagent.validation import ValidationExecutor, implementations
 
 
@@ -85,8 +85,16 @@ class PreparationTestAgent(TestCase):
                 workspace_path=workspace_path,
                 package_path=package_path,
                 required_commands=["git", "docker"],
-                source_model_path=source_model_path,
-                target_model_path=target_model_path,
+                source_model=ModelImplementation(
+                    name="Source",
+                    path=source_model_path,
+                    implementation=None,
+                ),
+                target_model=ModelImplementation(
+                    name="Target",
+                    path=target_model_path,
+                    implementation=None,
+                ),
             )
 
             output: GraphOutput = asyncio.run(

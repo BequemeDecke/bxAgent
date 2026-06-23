@@ -5,14 +5,18 @@ from bxagent.comprehension.plan import TransformationPlan
 from bxagent.validation.types import ValidationRun
 
 
+class ModelImplementation(TypedDict):
+    name: str  # The name of the model (e.g. Family, Person); Register and Factory classes are derived from this name (e.g. FamilyRegister, FamilyFactory)
+    path: Path  # The path to the model package
+    implementation: Optional[str]  # Aggregate of all Java files in the model package including their file names; This has to be set by the explore_models node after reading the model package
+
+
 class PreparationState(TypedDict):
-    required_commands: list[str]
+    required_commands: list[str] # List of required commands to be available in the system PATH in order to run the agent properly
     workspace_path: Path
     package_path: str
     latest_validation_runs: Dict[str, ValidationRun] = []
-    source_model_path: Path
-    target_model_path: Path
-    source_model_implementation: str = ""
-    target_model_implementation: str = ""
     transformation_plan: Optional[TransformationPlan] = None
     bxtool_path: Optional[Path] = None
+    source_model: ModelImplementation
+    target_model: ModelImplementation

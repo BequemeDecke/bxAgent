@@ -1,7 +1,7 @@
 from langgraph.graph.state import CompiledStateGraph
 from langgraph.types import GraphOutput
 
-from bxagent.preparation.state import PreparationState
+from bxagent.preparation.state import ModelImplementation, PreparationState
 
 from ..state import WorkflowState
 
@@ -29,8 +29,16 @@ def create_preparation_node(agent: CompiledStateGraph):
 
         prep_invoke_state = PreparationState(
             workspace_path=workspace_path,
-            source_model_path=source_model_path,
-            target_model_path=target_model_path,
+            source_model=ModelImplementation(
+                name=source_model_path.stem,  # TODO
+                path=source_model_path,
+                implementation=None,  # This will be set by the explore_models node after reading the model package
+            ),
+            target_model=ModelImplementation(
+                name=target_model_path.stem,
+                path=target_model_path,
+                implementation=None,  # This will be set by the explore_models node after reading the model package
+            ),
             package_path=package_path,
             required_commands=state.get("required_commands", []),
         )
@@ -44,12 +52,13 @@ def create_preparation_node(agent: CompiledStateGraph):
             )
 
         transformation_plan.update_model_implementation(
-            source_model_implementation=prep_output_state.get(
-                "source_model_implementation", ""
-            ),
-            target_model_implementation=prep_output_state.get(
-                "target_model_implementation", ""
-            ),
+            source_model_implementation=prep_output_state["source_model"]["implementation"],
+            target_model_implementation=prep_output_state["target_model"]["implementation"],
+        )
+
+        transformation_plan.update_package_information(
+            source_model_package=prep_output_state["source_model"]["path"].stem,
+            target_model_package=prep_output_state["target_model"]["path"].stem,
         )
 
         return {

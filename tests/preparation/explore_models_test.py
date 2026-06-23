@@ -6,6 +6,7 @@ from bxagent.preparation.explore_models import (
     create_explore_models_node,
     read_generated_emf_implementations,
 )
+from bxagent.preparation.state import PreparationState, ModelImplementation
 
 
 def create_test_model_package(temp_dir: Path, package_name: str):
@@ -55,52 +56,58 @@ class TestExploreModels(TestCase):
             ) = create_test_model_package(Path(temp_dir), "Target")
 
             result = self.explore_models(
-                {
-                    "source_model_path": source_model_path,
-                    "target_model_path": target_model_path,
-                }
+                PreparationState(
+                    source_model=ModelImplementation(
+                        name="Source",
+                        path=source_model_path,
+                    ),
+                    target_model=ModelImplementation(
+                        name="Target",
+                        path=target_model_path,
+                    ),
+                )
             )
 
             # Check if the source model implementation is read correctly
             self.assertIn(
                 source_file.read_text(),
-                result["source_model_implementation"],
+                result["source_model"]["implementation"],
                 "Source model implementation should match the content of the source model file.",
             )
             self.assertIn(
                 source_register_file.read_text(),
-                result["source_model_implementation"],
+                result["source_model"]["implementation"],
                 "Source model implementation should match the content of the source register file.",
             )
             self.assertIn(
                 source_package_file.read_text(),
-                result["source_model_implementation"],
+                result["source_model"]["implementation"],
                 "Source model implementation should match the content of the source package file.",
             )
             self.assertIn(
                 source_factory_file.read_text(),
-                result["source_model_implementation"],
+                result["source_model"]["implementation"],
                 "Source model implementation should match the content of the source factory file.",
             )
             # Check if the target model implementation is read correctly
             self.assertIn(
                 target_file.read_text(),
-                result["target_model_implementation"],
+                result["target_model"]["implementation"],
                 "Target model implementation should match the content of the target model file.",
             )
             self.assertIn(
                 target_register_file.read_text(),
-                result["target_model_implementation"],
+                result["target_model"]["implementation"],
                 "Target model implementation should match the content of the target register file.",
             )
             self.assertIn(
                 target_package_file.read_text(),
-                result["target_model_implementation"],
+                result["target_model"]["implementation"],
                 "Target model implementation should match the content of the target package file.",
             )
             self.assertIn(
                 target_factory_file.read_text(),
-                result["target_model_implementation"],
+                result["target_model"]["implementation"],
                 "Target model implementation should match the content of the target factory file.",
             )
 

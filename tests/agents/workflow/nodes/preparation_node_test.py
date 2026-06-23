@@ -111,3 +111,13 @@ class TestPreparationNode(TestCase):
                 tp_data["target_model_implementation"],
                 "The transformation plan should contain the target model implementation.",
             )
+            self.assertEqual(
+                tp_data["source_model_package"],
+                "Source",
+                "The transformation plan should contain the correct source model package.",
+            )
+            self.assertEqual(
+                tp_data["target_model_package"],
+                "Target",
+                "The transformation plan should contain the correct target model package.",
+            )
