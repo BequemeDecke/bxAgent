@@ -5,16 +5,14 @@ This test checks if the preparation node correctly prepares the workspace.
 import asyncio
 import logging
 import tempfile
-from unittest import TestCase
 from pathlib import Path
-from langgraph.types import GraphOutput
+from unittest import TestCase
 from unittest.mock import Mock, patch
 
 from bxagent.agents.workflow.nodes.preparation_node import (
     create_preparation_node,
 )
 from bxagent.agents.workflow.state import WorkflowState
-from bxagent.comprehension.plan import FileTransformationPlanParser, TransformationPlan
 from bxagent.preparation import build_preparation_agent
 from bxagent.validation import ValidationExecutor, implementations
 
@@ -71,7 +69,10 @@ class TestPreparationNode(TestCase):
             package_path = "de.example.bxagent"
             transformation_plan_path = workspace_path / "TRANSFORMATION.md"
 
-            (source_model_path, source_file, *_), (target_model_path, target_file, *_) = (
+            (
+                (source_model_path, source_file, *_),
+                (target_model_path, target_file, *_),
+            ) = (
                 create_test_model_package(workspace_path, "Source"),
                 create_test_model_package(workspace_path, "Target"),
             )
