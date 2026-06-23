@@ -23,7 +23,7 @@ class TestEvaluateTransformationImplementation(TestCase):
             transformation_source_model_description="Source model description",
             transformation_target_model_description="Target model description",
             implementation_iteration=MAX_ITERATIONS,
-            bxtool_file=None,
+            bxtool_path=None,
             latest_validation_results={},
         )
 
@@ -52,7 +52,7 @@ class TestEvaluateTransformationImplementation(TestCase):
             transformation_source_model_description="Source model description",
             transformation_target_model_description="Target model description",
             implementation_iteration=1,
-            bxtool_file=None,
+            bxtool_path=None,
             latest_validation_results={
                 "validation1": ValidationRun(
                     started_at=None,
@@ -96,7 +96,7 @@ class TestEvaluateTransformationImplementation(TestCase):
             transformation_source_model_description="Source model description",
             transformation_target_model_description="Target model description",
             implementation_iteration=1,
-            bxtool_file=None,
+            bxtool_path=None,
             latest_validation_results={
                 "integration_compilation": ValidationRun(
                     started_at=None,
@@ -134,7 +134,7 @@ class TestEvaluateTransformationImplementation(TestCase):
             transformation_source_model_description="Source model description",
             transformation_target_model_description="Target model description",
             implementation_iteration=1,
-            bxtool_file=None,
+            bxtool_path=None,
             latest_validation_results={
                 "validation1": ValidationRun(
                     started_at=None,

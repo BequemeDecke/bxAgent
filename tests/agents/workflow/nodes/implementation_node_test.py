@@ -21,7 +21,7 @@ class TestImplementationNode(TestCase):
             value=ImplementationState(
                 transformation_md=None,
                 task_specification="",
-                bxtool_file=None,
+                bxtool_path=None,
                 written_java_files=[Path("file1.java"), Path("file2.java")],
             )
         )
@@ -46,7 +46,7 @@ class TestImplementationNode(TestCase):
                 transformation_plan=TransformationPlan.parse(
                     FileTransformationPlanParser(tp_file)
                 ),
-                bxtool_file_path=workspace / "JavaTransformation.java",
+                bxtool_path=workspace / "JavaTransformation.java",
                 written_files=[workspace / "existing_file.java"],
             )
 

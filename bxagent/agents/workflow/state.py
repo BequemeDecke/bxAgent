@@ -14,6 +14,7 @@ class WorkflowState(TypedDict):
     required_commands: list[str]
     workspace_path: Path
     transformation_package_path: str
+    bxtool_path: Optional[Path]
 
     source_model_path: Optional[Path]
     target_model_path: Optional[Path]

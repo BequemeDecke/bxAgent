@@ -24,8 +24,8 @@ def create_implementation_node(agent: CompiledStateGraph):
                 "Transformation metadata is required for the implementation agent."
             )
 
-        bxtool_file_path = state.get("bxtool_file_path")
-        if bxtool_file_path is None:
+        bxtool_path = state.get("bxtool_path")
+        if bxtool_path is None:
             raise ValueError(
                 "BXTTool file path is required for the implementation agent."
             )
@@ -33,7 +33,7 @@ def create_implementation_node(agent: CompiledStateGraph):
         prep_invoke_state = ImplementationState(
             transformation_md=transformation_md,
             task_specification="",
-            bxtool_file=bxtool_file_path,
+            bxtool_path=bxtool_path,
         )
         response: GraphOutput = await agent.ainvoke(prep_invoke_state, version="v2")
         prep_output_state: ImplementationState = response.value
