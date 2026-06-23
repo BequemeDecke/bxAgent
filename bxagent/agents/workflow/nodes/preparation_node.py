@@ -63,6 +63,7 @@ def create_preparation_node(agent: CompiledStateGraph):
 
         return {
             "transformation_plan": prep_output_state.get("transformation_plan"),
+            "bxtool_path": prep_output_state.get("bxtool_path")
         }
 
     return preparation_node

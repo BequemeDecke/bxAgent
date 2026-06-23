@@ -121,3 +121,12 @@ class TestPreparationNode(TestCase):
                 "Target",
                 "The transformation plan should contain the correct target model package.",
             )
+
+            self.assertIsNotNone(
+                output.get("bxtool_path"),
+                "The output state should contain the path to the BxAgentJavaBxTool.java file.",
+            )
+            self.assertTrue(
+                output.get("bxtool_path").exists(),
+                "The preparation node should create a BxAgentJavaBxTool.java file in the package path.",
+            )
