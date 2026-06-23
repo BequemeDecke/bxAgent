@@ -6,6 +6,8 @@ exclude/
 notebooks/*/test_results/
 notebooks/*/templates/
 
+.bxagent-tests/test-executions/
+
 .DS_Store
 
 # ---- LangChain ----
