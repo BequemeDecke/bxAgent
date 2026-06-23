@@ -1,9 +1,9 @@
 import logging
 import os
+from pathlib import Path
 
 from dotenv import load_dotenv
-from pathlib import Path
-from pydantic import BaseModel, SecretStr, Field
+from pydantic import BaseModel, Field, SecretStr
 
 
 class BxAgentConfig(BaseModel):
@@ -19,10 +19,6 @@ class LangFuseConfig(BaseModel):
     SECRET_KEY: SecretStr = Field()
     PUBLIC_KEY: SecretStr = Field()
     BASE_URL: str = Field()
-
-
-class WorkspaceConfig(BaseModel):
-    PATH: Path = Field(default=Path.cwd() / ".bx-agent-workspace")
 
 
 class VariablesConfig(BaseModel):
@@ -46,7 +42,6 @@ class Config(BaseModel):
 
     BX_AGENT: BxAgentConfig
     LANGFUSE: LangFuseConfig
-    WORKSPACE: WorkspaceConfig
     VARIABLES: VariablesConfig
     WORKFLOW_APPROACH: WorkflowApproachConfig
 
@@ -77,10 +72,6 @@ def load_config(env_path: Path) -> BaseModel:
         BASE_URL=os.getenv("LANGFUSE_BASE_URL"),
     )
 
-    workspace_config = WorkspaceConfig(
-        PATH=Path(os.getenv("WORKSPACE_PATH", env_path.parent / ".bx-agent-workspace"))
-    )
-
     variables_config = VariablesConfig(
         UPDATED_FILE_INDEX=int(os.getenv("UPDATED_FILE_INDEX", 13))
     )
@@ -93,14 +84,12 @@ def load_config(env_path: Path) -> BaseModel:
     logging.debug("--- Loaded Configurations ---")
     logging.debug(f"Loaded BxAgentConfig: {agent_config}")
     logging.debug(f"Loaded LangFuseConfig: {langfuse_config}")
-    logging.debug(f"Loaded WorkspaceConfig: {workspace_config}")
     logging.debug(f"Loaded VariablesConfig: {variables_config}")
     logging.debug(f"Loaded WorkflowApproachConfig: {workflow_approach_config}")
     logging.debug("-----------------------------")
     return Config(
         BX_AGENT=agent_config,
         LANGFUSE=langfuse_config,
-        WORKSPACE=workspace_config,
         VARIABLES=variables_config,
         WORKFLOW_APPROACH=workflow_approach_config,
     )

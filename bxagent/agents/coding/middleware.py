@@ -20,13 +20,12 @@ from bxagent.config import Config
 from .state import CodingDeepAgentState
 
 UPDATED_FILE_INDEX = Config.get_instance().VARIABLES.UPDATED_FILE_INDEX
-WORKSPACE_PATH = Config.get_instance().WORKSPACE.PATH
 
 
 def extract_written_files(
     messages: list[AnyMessage],
+    workspace_path: Path,
     updated_file_index: int = UPDATED_FILE_INDEX,
-    workspace_path: Path = WORKSPACE_PATH,
 ) -> list[Path]:
     """
     Extract the paths of files that have been written by the Coding agent from a list of messages.
@@ -56,8 +55,8 @@ class CodingDeepAgentStateMiddleware(AgentMiddleware[CodingDeepAgentState]):
 
     def __init__(
         self,
+        workspace_path: Path,
         updated_file_index: int = UPDATED_FILE_INDEX,
-        workspace_path: Path = WORKSPACE_PATH,
         file_extension_filter: str | None = None,
     ):
         self.updated_file_index = updated_file_index
@@ -73,7 +72,7 @@ class CodingDeepAgentStateMiddleware(AgentMiddleware[CodingDeepAgentState]):
         """
         messages = state.get("messages", [])
         written_files = extract_written_files(
-            messages, self.updated_file_index, self.workspace_path
+            messages, self.workspace_path, self.updated_file_index
         )
 
         if self.file_extension_filter is not None:

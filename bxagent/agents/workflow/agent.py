@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from langgraph.graph import END, START, StateGraph
 
 from bxagent.agents.coding.agent import build_coding_deep_agent
@@ -22,7 +24,7 @@ from .transformation_iteration_control import (
 )
 
 
-def build_workflow_agent() -> StateGraph[WorkflowState]:
+def build_workflow_agent(workspace_path: Path) -> StateGraph[WorkflowState]:
     llm = build_base_model()
     check_transformation_iteration = create_check_transformation_iteration_function(llm)
     call_comprehension_agent = create_comprehension_node(
@@ -61,13 +63,13 @@ def build_workflow_agent() -> StateGraph[WorkflowState]:
         validation_executor=validation_executor
     ).compile()
     call_preparation_node = create_preparation_node(preparation_agent)
-    coding_deep_agent = build_coding_deep_agent()
+    coding_deep_agent = build_coding_deep_agent(workspace_path=workspace_path)
     implementation_agent = build_implementation_graph(
-        validation_executor=validation_executor, coding_deep_agent=coding_deep_agent
+        validation_executor=validation_executor,
+        coding_deep_agent=coding_deep_agent,
+        workspace_path=workspace_path,
     ).compile()
-    call_implementation_node = create_implementation_node(
-        implementation_agent
-    )
+    call_implementation_node = create_implementation_node(implementation_agent)
 
     builder = StateGraph(WorkflowState)
 

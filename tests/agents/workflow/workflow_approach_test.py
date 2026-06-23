@@ -5,15 +5,14 @@ The test case ensures that the workflow is executed correctly and that the plann
 """
 
 import asyncio
-import uuid
 import logging
+import uuid
 from pathlib import Path
 from unittest import TestCase
 
 from bxagent.agents.workflow.agent import build_workflow_agent
 from bxagent.agents.workflow.state import WorkflowState
 from bxagent.comprehension.plan import FileTransformationPlanParser, TransformationPlan
-
 
 TEST_ENVIRONMENT = Path(".bxagent-tests")
 
@@ -22,9 +21,6 @@ class TestWorkflowApproach(TestCase):
     """Test case for the workflow architecture approach."""
 
     def setUp(self):
-        # Build the workflow agent
-        self.agent = build_workflow_agent().compile()
-
         # Create a unique workspace for the test
         self.workspace_path = TEST_ENVIRONMENT / "test-executions" / str(uuid.uuid4())
         self.workspace_path.mkdir(parents=True, exist_ok=True)
@@ -49,6 +45,9 @@ class TestWorkflowApproach(TestCase):
 
         # Set a default transformation package path
         self.transformation_package_path = "com.example.transformation"
+
+        # Build the workflow agent
+        self.agent = build_workflow_agent(self.workspace_path).compile()
 
     def test_workflow_execution(self):
         """Test the execution of the workflow."""

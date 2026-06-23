@@ -43,7 +43,9 @@ class TestComprehensionAgentMiddlewareFunctions(unittest.TestCase):
             self.WORKSPACE_PATH / "/path/to/file2.txt",
         ]
         extracted_file_paths = extract_written_files(
-            messages, self.UPDATED_FILE_INDEX, self.WORKSPACE_PATH
+            messages=messages,
+            updated_file_index=self.UPDATED_FILE_INDEX,
+            workspace_path=self.WORKSPACE_PATH,
         )
         self.assertEqual(extracted_file_paths, expected_file_paths)
 
@@ -59,7 +61,9 @@ class TestComprehensionAgentMiddlewareFunctions(unittest.TestCase):
         ]
         expected_file_paths = []
         extracted_file_paths = extract_written_files(
-            messages, self.UPDATED_FILE_INDEX, self.WORKSPACE_PATH
+            messages=messages,
+            updated_file_index=self.UPDATED_FILE_INDEX,
+            workspace_path=self.WORKSPACE_PATH,
         )
         self.assertEqual(extracted_file_paths, expected_file_paths)
 
@@ -86,8 +90,8 @@ class TestComprehensionAgentMiddleware(unittest.TestCase):
             system_prompt="You are a helpful assistant that writes files.",
             middleware=[
                 CodingDeepAgentStateMiddleware(
-                    updated_file_index=self.UPDATED_FILE_INDEX,
                     workspace_path=self.WORKSPACE_PATH,
+                    updated_file_index=self.UPDATED_FILE_INDEX,
                 )
             ],
         )
@@ -120,7 +124,7 @@ class TestComprehensionAgentMiddleware(unittest.TestCase):
         actual_file_paths = response.value["written_files"]
 
         self.assertEqual(actual_file_paths, expected_file_paths)
-        
+
     def test_middleware_processing__only_java_files(self):
         self.model = GenericFakeChatModel(
             messages=iter(
@@ -136,8 +140,8 @@ class TestComprehensionAgentMiddleware(unittest.TestCase):
             system_prompt="You are a helpful assistant that writes files.",
             middleware=[
                 CodingDeepAgentStateMiddleware(
-                    updated_file_index=self.UPDATED_FILE_INDEX,
                     workspace_path=self.WORKSPACE_PATH,
+                    updated_file_index=self.UPDATED_FILE_INDEX,
                     file_extension_filter=".java",
                 )
             ],
