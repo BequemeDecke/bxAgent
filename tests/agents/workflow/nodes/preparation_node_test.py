@@ -19,6 +19,28 @@ from bxagent.preparation import build_preparation_agent
 from bxagent.validation import ValidationExecutor, implementations
 
 
+def create_test_model_package(temp_dir: Path, package_name: str):
+    package_path = temp_dir / package_name
+    package_path.mkdir()
+
+    source_file = package_path / f"{package_name}.java"
+    source_register_file = package_path / f"{package_name}Register.java"
+    source_package_file = package_path / f"{package_name}Package.java"
+    source_factory_file = package_path / f"{package_name}Factory.java"
+
+    source_file.write_text(f"public interface {package_name} {{ }}")
+    source_register_file.write_text(f"public interface {package_name}Register {{ }}")
+    source_package_file.write_text(f"public interface {package_name}Package {{ }}")
+    source_factory_file.write_text(f"public interface {package_name}Factory {{ }}")
+    return (
+        package_path,
+        source_file,
+        source_register_file,
+        source_package_file,
+        source_factory_file,
+    )
+
+
 class TestPreparationNode(TestCase):
     def setUp(self):
         self.preparation_agent = build_preparation_agent(
@@ -47,12 +69,12 @@ class TestPreparationNode(TestCase):
         with tempfile.TemporaryDirectory() as temp_dir:
             workspace_path = Path(temp_dir)
             package_path = "de.example.bxagent"
-            source_model_path = workspace_path / "source_model.txt"
-            target_model_path = workspace_path / "target_model.txt"
             transformation_plan_path = workspace_path / "TRANSFORMATION.md"
 
-            source_model_path.write_text("source model implementation")
-            target_model_path.write_text("target model implementation")
+            (source_model_path, source_file, *_), (target_model_path, target_file, *_) = (
+                create_test_model_package(workspace_path, "Source"),
+                create_test_model_package(workspace_path, "Target"),
+            )
 
             initial_state = WorkflowState(
                 transformation_plan=None,
@@ -78,13 +100,13 @@ class TestPreparationNode(TestCase):
             )
             tp_data = output["transformation_plan"].data
 
-            self.assertEqual(
+            self.assertIn(
+                source_file.read_text(),
                 tp_data["source_model_implementation"],
-                "source model implementation",
                 "The transformation plan should contain the source model implementation.",
             )
-            self.assertEqual(
+            self.assertIn(
+                target_file.read_text(),
                 tp_data["target_model_implementation"],
-                "target model implementation",
                 "The transformation plan should contain the target model implementation.",
             )
