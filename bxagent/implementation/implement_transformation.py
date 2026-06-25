@@ -51,13 +51,13 @@ def create_implement_transformation_node(
         response = coding_agent.invoke(
             input={
                 "messages": [HumanMessage(content=input_prompt)],
-                "written_java_files": written_java_files,
+                "written_files": written_java_files,
             },
             version="v2",
         )
 
         # 4. Retrieve the state of the agent to get the written_java_files
-        written_java_files = response.value["data"]["written_java_files"]
+        written_java_files = response.value["written_files"]
 
         return {
             "transformation_md": transformation_plan,

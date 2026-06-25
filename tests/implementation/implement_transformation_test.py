@@ -49,18 +49,16 @@ class TestImplementTransformation(TestCase):
 
         output = GraphOutput(
             value={
-                "data": {
-                    "written_java_files": [
-                        Path("/path/to/GeneratedTransformation.java")
-                    ]
-                }
+                "written_files": [Path("/path/to/GeneratedTransformation.java")]
             }
         )
         mocked_agent.invoke.return_value = output
 
         func = create_implement_transformation_node(
             coding_agent=mocked_agent,
-            optional_plan_factory=lambda: TransformationPlan.parse(parser=mocked_parser),
+            optional_plan_factory=lambda: TransformationPlan.parse(
+                parser=mocked_parser
+            ),
         )
 
         agent_state: ImplementationState = {
