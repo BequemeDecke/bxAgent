@@ -5,14 +5,15 @@ The test case ensures that the workflow is executed correctly and that the plann
 """
 
 import asyncio
+import datetime
 import logging
-import uuid
 from pathlib import Path
 from unittest import TestCase
 
 from bxagent.agents.workflow.agent import build_workflow_agent
 from bxagent.agents.workflow.state import WorkflowState
 from bxagent.comprehension.plan import FileTransformationPlanParser, TransformationPlan
+from bxagent.monitoring import build_langfuse_client
 
 TEST_ENVIRONMENT = Path(".bxagent-tests")
 
@@ -22,7 +23,11 @@ class TestWorkflowApproach(TestCase):
 
     def setUp(self):
         # Create a unique workspace for the test
-        self.workspace_path = TEST_ENVIRONMENT / "test-executions" / str(uuid.uuid4())
+        self.workspace_path = (
+            TEST_ENVIRONMENT
+            / "test-executions"
+            / datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+        )
         self.workspace_path.mkdir(parents=True, exist_ok=True)
         logging.info(f"Created test workspace at {self.workspace_path}")
 
@@ -36,15 +41,18 @@ class TestWorkflowApproach(TestCase):
             )
         if len(list(self.source_model_path.glob("*.java"))) != 4:
             self.fail(
-                f"Expected 4 source model files in {self.source_model_path}, but found {len(list(self.source_model_path.glob('*.txt')))}."
+                f"Expected 4 source model files in {self.source_model_path}, but found {len(list(self.source_model_path.glob('*.java')))}."
             )
         if len(list(self.target_model_path.glob("*.java"))) != 3:
             self.fail(
-                f"Expected 3 target model files in {self.target_model_path}, but found {len(list(self.target_model_path.glob('*.txt')))}."
+                f"Expected 3 target model files in {self.target_model_path}, but found {len(list(self.target_model_path.glob('*.java')))}."
             )
 
         # Set a default transformation package path
         self.transformation_package_path = "com.example.transformation"
+
+        # Set up Langfuse client for monitoring
+        self.langfuse_client, self.langfuse_handler = build_langfuse_client()
 
         # Build the workflow agent
         self.agent = build_workflow_agent(self.workspace_path).compile()
@@ -59,7 +67,14 @@ class TestWorkflowApproach(TestCase):
             target_model_path=self.target_model_path,
         )
 
-        result = asyncio.run(self.agent.ainvoke(input_state, version="v2"))
+        result = asyncio.run(
+            self.agent.ainvoke(
+                input_state, version="v2", config={"callbacks": [self.langfuse_handler]}
+            )
+        )
+
+        # Flush the Langfuse handler to ensure all logs are sent
+        self.langfuse_client.flush()
 
         # Check that the workflow execution was successful and that a transformation plan was generated
         self.check_preparation_phase()

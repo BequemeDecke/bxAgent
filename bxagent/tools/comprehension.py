@@ -3,7 +3,6 @@ from typing import Optional
 
 from bxagent.comprehension import TransformationPlan
 
-
 @tool
 def update_model_implementation(
     runtime: ToolRuntime,
@@ -84,7 +83,7 @@ def update_implementation_steps(runtime: ToolRuntime, implementation_steps: str)
 
 
 transformation_plan_tools = [
-    update_model_implementation,
+    # update_model_implementation,
     update_transformation_direction,
     update_difficulties,
     update_implementation_steps,
