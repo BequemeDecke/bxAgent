@@ -31,7 +31,7 @@ class TestValidationNode__ExecutionModeAll(TestCase):
         mocked_validation = Mock(spec=Validation)
         mocked_validation.run.return_value = (
             [ValidationResult(content="Some validation result")],
-            [ValidationError(message="Some validation error")],
+            [ValidationError(message="Some validation error", type="ValidationError")],
         )
 
         validation_id = "test_validation"
@@ -90,7 +90,7 @@ class TestValidationNode__ExecutionModeAll(TestCase):
         mocked_validation = Mock(spec=Validation)
         mocked_validation.run.return_value = (
             [ValidationResult(content="Some validation result")],
-            [ValidationError(message="Some validation error")],
+            [ValidationError(message="Some validation error", type="ValidationError")],
         )
 
         validation_id = "test_validation"
@@ -124,7 +124,7 @@ class TestValidationNode__ExecutionModeSpecific(TestCase):
         mocked_validation = Mock(spec=Validation)
         mocked_validation.run.return_value = (
             [ValidationResult(content="Some validation result")],
-            [ValidationError(message="Some validation error")],
+            [ValidationError(message="Some validation error", type="ValidationError")],
         )
 
         validation_id = "test_validation"
@@ -183,7 +183,7 @@ class TestValidationNode__ExecutionModeSpecific(TestCase):
         mocked_validation = Mock(spec=Validation)
         mocked_validation.run.return_value = (
             [ValidationResult(content="Some validation result")],
-            [ValidationError(message="Some validation error")],
+            [ValidationError(message="Some validation error", type="ValidationError")],
         )
 
         validation_id = "test_validation"

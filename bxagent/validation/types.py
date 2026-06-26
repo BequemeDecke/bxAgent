@@ -13,6 +13,7 @@ class ValidationResult:
 @dataclass
 class ValidationError:
     message: str
+    type: str
     details: Optional[Dict[str, Any]] = None
 
 

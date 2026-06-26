@@ -69,6 +69,7 @@ class JavaCompilationValidation(Validation):
                 errors.append(
                     ValidationError(
                         message=f"An error occurred while compiling {file}: {str(e)}",
+                        type=type(e).__name__,
                         details={"file": file},
                     )
                 )
@@ -94,6 +95,7 @@ def parse_javac_output(output: str) -> List[ValidationError]:
         errors.append(
             ValidationError(
                 message=message,
+                type="JavaCompilationError",
                 details={
                     "file": file,
                     "line": int(line),

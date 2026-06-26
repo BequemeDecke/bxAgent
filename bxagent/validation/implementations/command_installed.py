@@ -30,6 +30,7 @@ class CommandInstalledValidation(Validation):
                 errors.append(
                     ValidationError(
                         message=f"Command '{command}' is not installed on the system.",
+                        type="CommandNotInstalled",
                         details={"command": command},
                     )
                 )

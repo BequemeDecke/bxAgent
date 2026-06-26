@@ -59,7 +59,7 @@ class TestEvaluateTransformationImplementation(TestCase):
                     execution_time_ms=100,
                     iteration=1,
                     results=[],
-                    errors=[ValidationError(message="Error in implementation")],
+                    errors=[ValidationError(message="Error in implementation", type="ValidationError")],
                 ),
                 "integration_compilation": ValidationRun(
                     started_at=None,
@@ -103,7 +103,7 @@ class TestEvaluateTransformationImplementation(TestCase):
                     execution_time_ms=100,
                     iteration=1,
                     results=[],
-                    errors=[ValidationError(message="Error in integration")],
+                    errors=[ValidationError(message="Error in integration", type="ValidationError")],
                 )
             },
         )

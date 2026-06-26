@@ -191,6 +191,7 @@ class TestJavaCompilationValidation__parse_javac_output(TestCase):
         expected_errors: List[ValidationError] = [
             ValidationError(
                 message="Fehler: <ID> erwartet",
+                type="ValidationError",
                 details={
                     "file": "./.bx-agent-workspace/test/Family.java",
                     "line": 2,
@@ -199,6 +200,7 @@ class TestJavaCompilationValidation__parse_javac_output(TestCase):
             ),
             ValidationError(
                 message="Fehler: ';' erwartet",
+                type="ValidationError",
                 details={
                     "file": "./.bx-agent-workspace/test/Family.java",
                     "line": 6,
@@ -207,6 +209,7 @@ class TestJavaCompilationValidation__parse_javac_output(TestCase):
             ),
             ValidationError(
                 message="Fehler: class, interface, enum oder record erwartet",
+                type="ValidationError",
                 details={
                     "file": "./.bx-agent-workspace/test/Family.java",
                     "line": 10,

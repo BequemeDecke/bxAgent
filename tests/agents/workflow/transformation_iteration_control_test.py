@@ -58,6 +58,7 @@ class TestTransformationIterationControl(TestCase):
                     errors=[
                         ValidationError(
                             message="An error occurred during the validation.",
+                            type="ValidationError",
                             details={
                                 "error_code": "AUDIT_ERROR",
                                 "severity": "high",

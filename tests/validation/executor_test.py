@@ -171,7 +171,9 @@ class TestValidationExecutor__execute_all(unittest.TestCase):
             results=[],
             errors=[
                 ValidationError(
-                    message="error1", details={"exception_type": "Exception"}
+                    message="error1",
+                    type="ValidationError",
+                    details={"exception_type": "Exception"},
                 )
             ],
         )
@@ -228,6 +230,7 @@ class TestValidationExecutor__execute_all(unittest.TestCase):
                 errors=[
                     ValidationError(
                         message="This validation case is designed to fail.",
+                        type="Exception",
                         details={"exception_type": "Exception"},
                     )
                 ],
@@ -269,7 +272,9 @@ class TestValidationExecutor__get_latest_results(unittest.TestCase):
             results=[],
             errors=[
                 ValidationError(
-                    message="error1", details={"exception_type": "Exception"}
+                    message="error1",
+                    type="ValidationError",
+                    details={"exception_type": "Exception"},
                 )
             ],
         )
@@ -360,7 +365,11 @@ class TestValidationExecutor__register_linked_validation(unittest.TestCase):
             ValidationResult(content="result2"),
         ]
         self.errors = [
-            ValidationError(message="error", details={"exception_type": "Exception"})
+            ValidationError(
+                message="error",
+                type="ValidationError",
+                details={"exception_type": "Exception"},
+            )
         ]
         self.executor = ValidationExecutor(
             validations={

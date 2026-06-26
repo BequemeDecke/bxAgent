@@ -26,6 +26,7 @@ class FileExistenceValidation(Validation):
                 errors.append(
                     ValidationError(
                         message=f"File does not exist: {file}",
+                        type="FileNotFound",
                         details={"file": str(file)},
                     )
                 )

@@ -19,7 +19,9 @@ class LinkedValidation(Validation):
     async def setup(self):
         await self.validation.setup()
 
-    async def run(self, **kwargs) -> Tuple[List[ValidationResult], List[ValidationError]]:
+    async def run(
+        self, **kwargs
+    ) -> Tuple[List[ValidationResult], List[ValidationError]]:
         return await self.validation.run(**kwargs)
 
 
@@ -30,21 +32,29 @@ class ValidationExecutor:
             validation_id: [] for validation_id in validations
         }
 
-    def register_linked_validation(self, new_validation_id: str, existing_validation_id: str):
+    def register_linked_validation(
+        self, new_validation_id: str, existing_validation_id: str
+    ):
         if existing_validation_id not in self.validations:
             raise ValueError(f"Validation with id {existing_validation_id} not found.")
 
         if new_validation_id in self.validations:
             raise ValueError(f"Validation with id {new_validation_id} already exists.")
 
-        linked_validation = LinkedValidation(validation=self.validations[existing_validation_id]["validation"])
+        linked_validation = LinkedValidation(
+            validation=self.validations[existing_validation_id]["validation"]
+        )
         self.validations[new_validation_id] = {
             "validation": linked_validation,
-            "validation_schema": self.validations[existing_validation_id]["validation_schema"],
+            "validation_schema": self.validations[existing_validation_id][
+                "validation_schema"
+            ],
         }
         self.iterations[new_validation_id] = []
 
-    async def execute_all(self, input: Dict[str, Dict[str, Any]]) -> List[ValidationRun]:
+    async def execute_all(
+        self, input: Dict[str, Dict[str, Any]]
+    ) -> List[ValidationRun]:
         results = []
         tasks = [
             self.execute_specific(validation_id, input=input[validation_id])
@@ -53,7 +63,9 @@ class ValidationExecutor:
         results = await asyncio.gather(*tasks)
         return results
 
-    async def execute_specific(self, validation_id: str, input: Dict[str, Any]) -> ValidationRun:
+    async def execute_specific(
+        self, validation_id: str, input: Dict[str, Any]
+    ) -> ValidationRun:
         if validation_id not in self.validations:
             raise ValueError(f"Validation with id {validation_id} not found.")
 
@@ -77,7 +89,9 @@ class ValidationExecutor:
                 [],
                 [
                     ValidationError(
-                        message=str(e), details={"exception_type": type(e).__name__}
+                        message=str(e),
+                        type=type(e).__name__,
+                        details={"exception_type": type(e).__name__},
                     )
                 ],
             )
