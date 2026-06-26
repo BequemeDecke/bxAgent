@@ -33,7 +33,9 @@ class JavaCompilationValidation(Validation):
             "javac is available on the system. JavaCompilationValidation setup completed successfully."
         )
 
-    async def run(self, **kwargs) -> Tuple[List[ValidationResult], List[ValidationError]]:
+    async def run(
+        self, **kwargs
+    ) -> Tuple[List[ValidationResult], List[ValidationError]]:
         """Attempt to compile the provided Java files using `javac`. If there are compilation errors, parse the output and return them as ValidationErrors.
 
         Returns:
@@ -58,11 +60,14 @@ class JavaCompilationValidation(Validation):
                     logging.error(
                         f"Compilation failed for {file} with error: {subprocess_result.stderr}"
                     )
-                    errors.extend(parse_javac_output(subprocess_result.stderr))
+                    results.extend(parse_javac_output(subprocess_result.stderr))
                 else:
                     logging.debug(f"Compilation succeeded for {file}.")
                     results.append(
-                        ValidationResult(content=f"Compilation succeeded for {file}")
+                        ValidationResult(
+                            content=f"Compilation succeeded for {file}",
+                            metadata={"file": file, "success": True},
+                        )
                     )
             except Exception as e:
                 logging.exception(f"An error occurred while compiling {file}: {e}")
@@ -77,7 +82,7 @@ class JavaCompilationValidation(Validation):
         return results, errors
 
 
-def parse_javac_output(output: str) -> List[ValidationError]:
+def parse_javac_output(output: str) -> List[ValidationResult]:
     """
     Parse the output of the `javac` command to extract compilation errors. It uses regular expressions to identify error messages and their associated file, line number, and code block. The extracted information is then used to create a list of ValidationError objects.
 
@@ -85,7 +90,7 @@ def parse_javac_output(output: str) -> List[ValidationError]:
         output (str): The output from the `javac` command.
 
     Returns:
-        List[ValidationError]: A list of ValidationError objects representing the compilation errors.
+        List[ValidationResult]: A list of ValidationResult objects representing the compilation errors.
     """
     errors = []
     error_pattern = re.compile(r"^(.*\.java):(\d+): (.*)$", re.MULTILINE)
@@ -93,12 +98,13 @@ def parse_javac_output(output: str) -> List[ValidationError]:
 
     for file, line, message in matches:
         errors.append(
-            ValidationError(
-                message=message,
-                type="JavaCompilationError",
-                details={
+            ValidationResult(
+                content=message,
+                metadata={
                     "file": file,
                     "line": int(line),
+                    "success": False,
+                    "include_in_report": True,
                 },
             )
         )

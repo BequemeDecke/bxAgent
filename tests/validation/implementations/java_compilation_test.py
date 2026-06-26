@@ -10,6 +10,7 @@ from bxagent.validation.implementations.java_compilation import (
     ValidationError,
     parse_javac_output,
 )
+from bxagent.validation.types import ValidationResult
 
 ERROR_BLOCK_1 = """
     ublic static void main(String[] args) {
@@ -114,24 +115,24 @@ class TestJavaCompilation(TestCase):
 
         self.assertEqual(
             len(results),
-            0,
-            "There should be no ValidationResults when javac returns a syntax error.",
+            3,
+            "There should be three failed ValidationResults when javac returns a syntax error.",
         )
         self.assertEqual(
             len(errors),
-            3,
-            "There should be three ValidationErrors for the provided javac error output.",
+            0,
+            "There should be no ValidationErrors for the provided javac error output.",
         )
 
-        for error in errors:
+        for result in results:
             self.assertIn(
-                error.message,
+                result.content,
                 [
                     "Fehler: <ID> erwartet",
                     "Fehler: ';' erwartet",
                     "Fehler: class, interface, enum oder record erwartet",
                 ],
-                f"Expected error message not found in actual error message '{error.message}'.",
+                f"Expected error message not found in actual error message '{result.content}'.",
             )
 
     @patch("subprocess.run")
@@ -168,6 +169,26 @@ class TestJavaCompilation(TestCase):
         ):
             asyncio.run(java_compilation_validation.run())
 
+    @patch("subprocess.run")
+    def test_run__exception_occurs_during_javac(self, mock_subprocess_run):
+        mock_subprocess_run.side_effect = Exception("Test exception")
+
+        java_compilation_validation = JavaCompilationValidation()
+        results, errors = asyncio.run(
+            java_compilation_validation.run(files=[Path("Test.java")])
+        )
+
+        self.assertEqual(
+            len(results),
+            0,
+            "There should be no ValidationResult objects when an exception occurs during javac execution.",
+        )
+        self.assertEqual(
+            len(errors),
+            1,
+            "There should be one ValidationError when an exception occurs during javac execution.",
+        )
+
 
 class TestJavaCompilationValidation__parse_javac_output(TestCase):
     def test_parse_javac_output__no_errors(self):
@@ -185,32 +206,29 @@ class TestJavaCompilationValidation__parse_javac_output(TestCase):
         self.assertEqual(
             len(errors),
             3,
-            "There should be three ValidationErrors for the provided javac error output.",
+            "There should be three ValidationResult objects for the provided javac error output.",
         )
 
-        expected_errors: List[ValidationError] = [
-            ValidationError(
-                message="Fehler: <ID> erwartet",
-                type="ValidationError",
-                details={
+        expected_errors: List[ValidationResult] = [
+            ValidationResult(
+                content="Fehler: <ID> erwartet",
+                metadata={
                     "file": "./.bx-agent-workspace/test/Family.java",
                     "line": 2,
                     "block": ERROR_BLOCK_1,
                 },
             ),
-            ValidationError(
-                message="Fehler: ';' erwartet",
-                type="ValidationError",
-                details={
+            ValidationResult(
+                content="Fehler: ';' erwartet",
+                metadata={
                     "file": "./.bx-agent-workspace/test/Family.java",
                     "line": 6,
                     "block": ERROR_BLOCK_2,
                 },
             ),
-            ValidationError(
-                message="Fehler: class, interface, enum oder record erwartet",
-                type="ValidationError",
-                details={
+            ValidationResult(
+                content="Fehler: class, interface, enum oder record erwartet",
+                metadata={
                     "file": "./.bx-agent-workspace/test/Family.java",
                     "line": 10,
                     "block": ERROR_BLOCK_3,
@@ -220,9 +238,9 @@ class TestJavaCompilationValidation__parse_javac_output(TestCase):
 
         for error, expected_error in zip(errors, expected_errors):
             self.assertEqual(
-                expected_error.message,
-                error.message,
-                f"Expected error message '{expected_error.message}' not found in actual error message '{error.message}'.",
+                expected_error.content,
+                error.content,
+                f"Expected error message '{expected_error.content}' not found in actual error message '{error.content}'.",
             )
 
     def test_parse_javac_output__symbol_errors(self):
@@ -231,7 +249,7 @@ class TestJavaCompilationValidation__parse_javac_output(TestCase):
         self.assertEqual(
             len(errors),
             6,
-            "There should be six ValidationErrors for the provided javac symbol error output.",
+            "There should be six ValidationResult objects for the provided javac symbol error output.",
         )
 
         expected_error_messages = [
@@ -240,7 +258,7 @@ class TestJavaCompilationValidation__parse_javac_output(TestCase):
 
         for error in errors:
             self.assertIn(
-                error.message,
+                error.content,
                 expected_error_messages,
-                f"Expected error message not found in actual error message '{error.message}'.",
+                f"Expected error message not found in actual error message '{error.content}'.",
             )
