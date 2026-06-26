@@ -66,7 +66,7 @@ class JavaCompilationValidation(Validation):
                     results.append(
                         ValidationResult(
                             content=f"Compilation succeeded for {file}",
-                            metadata={"file": file, "success": True},
+                            metadata={"file": file, "success": True, "include_in_report": False},
                         )
                     )
             except Exception as e:
