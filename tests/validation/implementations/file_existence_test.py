@@ -53,18 +53,20 @@ class TestFileExistence(TestCase):
         results, errors = asyncio.run(file_existence_validation.run(files=files))
 
         self.assertEqual(
-            len(results), 0, "There should be no results when files do not exist."
+            len(results),
+            len(files),
+            "There should be two failing results when files do not exist.",
         )
 
-        for expected_file, error in zip(files, errors):
+        for expected_file, result in zip(files, results):
             self.assertEqual(
-                error.message,
+                result.content,
                 f"File does not exist: {expected_file}",
-                f"Expected message for non-existing file {expected_file} does not match.",
+                f"Expected content for non-existing file {expected_file} does not match.",
             )
-            self.assertDictEqual(
-                error.details,
-                {"file": str(expected_file)},
+            self.assertEqual(
+                result.metadata.get("file"),
+                str(expected_file),
                 f"Expected details for non-existing file {expected_file} do not match.",
             )
 
@@ -75,10 +77,10 @@ class TestFileExistence(TestCase):
         results, errors = asyncio.run(file_existence_validation.run(files=files))
 
         self.assertEqual(
-            len(results), 1, "There should be one result when one file exists."
+            len(results), 2, "There should be two results when files have mixed existence."
         )
         self.assertEqual(
-            len(errors), 1, "There should be one error when one file does not exist."
+            len(errors), 0, "There should be no errors when files have mixed existence."
         )
         self.assertEqual(
             mock_exists.call_count, 2, "exists should be called once per file."
@@ -90,20 +92,19 @@ class TestFileExistence(TestCase):
             "Expected content for existing file does not match.",
         )
         self.assertEqual(
-            errors[0].message,
+            results[1].content,
             f"File does not exist: {files[1]}",
-            "Expected message for non-existing file does not match.",
+            "Expected content for non-existing file does not match.",
         )
-        self.assertDictEqual(
-            errors[0].details,
-            {"file": str(files[1])},
+        self.assertEqual(
+            results[1].metadata.get("file"),
+            str(files[1]),
             "Expected details for non-existing file do not match.",
         )
-        
+
     def test_execute__missing_files_parameter(self):
         file_existence_validation = FileExistenceValidation()
         with self.assertRaises(
             ValueError, msg="Should raise ValueError when 'files' parameter is missing."
         ):
             asyncio.run(file_existence_validation.run())
-            
