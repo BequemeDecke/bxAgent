@@ -13,7 +13,7 @@ from bxagent.agents.workflow.nodes.preparation_node import (
     create_preparation_node,
 )
 from bxagent.agents.workflow.state import WorkflowState
-from bxagent.preparation import build_preparation_agent
+from bxagent.preparation import build_preparation_graph
 from bxagent.validation import ValidationExecutor, implementations
 
 
@@ -41,7 +41,7 @@ def create_test_model_package(temp_dir: Path, package_name: str):
 
 class TestPreparationNode(TestCase):
     def setUp(self):
-        self.preparation_agent = build_preparation_agent(
+        self.preparation_agent = build_preparation_graph(
             validation_executor=ValidationExecutor(
                 validations={
                     "workspace_operability": {

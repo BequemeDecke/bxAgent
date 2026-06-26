@@ -11,7 +11,7 @@ from .state import PreparationState
 from .prepare_workspace import create_prepare_workspace_node
 
 
-def build_preparation_agent(validation_executor: ValidationExecutor) -> StateGraph:
+def build_preparation_graph(validation_executor: ValidationExecutor) -> StateGraph:
     validate_preparation_node = create_validation_node(
         validation_executor=validation_executor,
         mapper={

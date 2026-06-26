@@ -1,5 +1,5 @@
-from .agent import build_preparation_agent
+from .agent import build_preparation_graph
 
 __all__ = [
-    build_preparation_agent
+    build_preparation_graph
 ]

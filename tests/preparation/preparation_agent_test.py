@@ -8,7 +8,7 @@ from unittest.mock import Mock, patch
 from langgraph.graph.state import CompiledStateGraph
 from langgraph.types import GraphOutput
 
-from bxagent.preparation.agent import build_preparation_agent
+from bxagent.preparation.agent import build_preparation_graph
 from bxagent.preparation.state import ModelImplementation, PreparationState
 from bxagent.validation import ValidationExecutor, implementations
 
@@ -51,7 +51,7 @@ class PreparationTestAgent(TestCase):
         )
 
     def test_agent__construction(self):
-        agent = build_preparation_agent(validation_executor=self.validation_executor)
+        agent = build_preparation_graph(validation_executor=self.validation_executor)
         graph = agent.compile()
 
         self.assertIsInstance(
@@ -77,7 +77,7 @@ class PreparationTestAgent(TestCase):
                 workspace_path, f"{package_path}Target"
             )
 
-            agent = build_preparation_agent(
+            agent = build_preparation_graph(
                 validation_executor=self.validation_executor
             )
             graph = agent.compile()

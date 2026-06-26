@@ -11,7 +11,7 @@ from bxagent.mapping import (
     map_workflow_to_workspace,
 )
 from bxagent.models import build_base_model
-from bxagent.preparation import build_preparation_agent
+from bxagent.preparation import build_preparation_graph
 from bxagent.validation import ValidationExecutor, implementations
 
 from .nodes.comprehension_node import create_comprehension_node
@@ -59,7 +59,7 @@ def build_workflow_agent(workspace_path: Path) -> StateGraph[WorkflowState]:
             "workspace_operability": map_workflow_to_workspace,
         },
     )
-    preparation_agent = build_preparation_agent(
+    preparation_agent = build_preparation_graph(
         validation_executor=validation_executor
     ).compile()
     call_preparation_node = create_preparation_node(preparation_agent)
