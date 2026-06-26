@@ -5,6 +5,8 @@ from pydantic import BaseModel, Field
 
 from .state import WorkflowState
 from bxagent.config import Config
+from bxagent.validation import ValidationPipe
+from bxagent.validation.filter import IsErrorFilter, IsReportCandidateFilter
 
 config = Config.get_instance()
 
@@ -36,17 +38,18 @@ def create_check_transformation_iteration_function(llm: BaseChatModel):
         all_results = []
 
         for run in runs:
-            if (
-                len(run.errors) > 0
-            ):  # If there are any errors in the validation runs, continue with the transformation process, as it might be able to fix the issues in the next iteration.
-                return "continue"
+            if len(run.errors) > 0:
+                return "error"
 
             all_results.extend(run.results)
+
+        report_pipe = ValidationPipe() | IsReportCandidateFilter | IsErrorFilter
+        filtered_results = report_pipe.filter_results(all_results)
 
         llm_input = (
             f"Source model description: {state['transformation_source_model_description']}\n"
             f"Target model description: {state['transformation_target_model_description']}\n"
-            f"Validation results from the latest iteration: {[result.content for result in all_results]}\n"
+            f"Validation results from the latest iteration: {[result.content for result in filtered_results]}\n"
         )
 
         response: IterationRoute = router.invoke(

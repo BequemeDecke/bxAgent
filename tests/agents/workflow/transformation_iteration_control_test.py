@@ -7,6 +7,7 @@ from unittest import TestCase
 from unittest.mock import Mock
 
 from langchain.chat_models import BaseChatModel
+from langchain.messages import SystemMessage, HumanMessage
 
 from bxagent.agents.workflow.state import WorkflowState
 from bxagent.agents.workflow.transformation_iteration_control import (
@@ -20,6 +21,7 @@ class TestTransformationIterationControl(TestCase):
     def setUp(self):
         mocked_llm = Mock(spec=BaseChatModel)
         mocked_llm_structured_output = Mock(spec=BaseChatModel)
+        self.mocked_llm = mocked_llm_structured_output
         mocked_llm.with_structured_output.return_value = mocked_llm_structured_output
         mocked_llm_structured_output.invoke.return_value = IterationRoute(
             decision="stop"
@@ -69,7 +71,7 @@ class TestTransformationIterationControl(TestCase):
             ],
         }
         result = self.check_transformation_iteration(state, max_iterations)
-        self.assertEqual(result, "continue")
+        self.assertEqual(result, "error")
 
     def test_transformation_iteration_control__run_results_no_errors(self):
         max_iterations = 3
@@ -85,7 +87,16 @@ class TestTransformationIterationControl(TestCase):
                     results=[
                         ValidationResult(
                             content="Validation result content",
-                        )
+                            metadata={"include_in_report": True, "success": True},
+                        ),
+                        ValidationResult(
+                            content="Another validation result content",
+                            metadata={"include_in_report": False, "success": True},
+                        ),
+                        ValidationResult(
+                            content="Validation result with error",
+                            metadata={"include_in_report": True, "success": False},
+                        ),
                     ],
                     errors=[],
                 )
@@ -93,3 +104,12 @@ class TestTransformationIterationControl(TestCase):
         }
         result = self.check_transformation_iteration(state, max_iterations)
         self.assertEqual(result, "stop")
+
+        called_args = self.mocked_llm.invoke.call_args[0][0]
+        self.assertIsInstance(called_args[0], SystemMessage)
+
+        human_message = called_args[1]
+        self.assertIsInstance(human_message, HumanMessage)
+        self.assertNotIn("Validation result content", human_message.content)
+        self.assertNotIn("Another validation result content", human_message.content)
+        self.assertIn("Validation result with error", human_message.content)
