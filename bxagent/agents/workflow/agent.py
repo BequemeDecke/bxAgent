@@ -27,7 +27,7 @@ from .transformation_iteration_control import (
 def build_workflow_agent(workspace_path: Path) -> StateGraph[WorkflowState]:
     llm = build_base_model()
     check_transformation_iteration = create_check_transformation_iteration_function(llm)
-    call_comprehension_agent = create_comprehension_node(
+    call_comprehension_node = create_comprehension_node(
         comprehension_agent=build_comprehension_agent()
     )
     validation_executor = ValidationExecutor(
@@ -50,7 +50,7 @@ def build_workflow_agent(workspace_path: Path) -> StateGraph[WorkflowState]:
             },
         }
     )
-    validation_agent_work = create_validation_node(
+    call_validation_node = create_validation_node(
         validation_executor=validation_executor,
         mapper={
             "file_existence": map_workflow_to_file,
@@ -72,12 +72,10 @@ def build_workflow_agent(workspace_path: Path) -> StateGraph[WorkflowState]:
     call_implementation_node = create_implementation_node(implementation_agent)
 
     builder = StateGraph(WorkflowState)
-
-    # TODO: Add the rest of the workflow nodes and edges!
     builder.add_node("preparation", call_preparation_node)
-    builder.add_node("comprehension", call_comprehension_agent)
+    builder.add_node("comprehension", call_comprehension_node)
     builder.add_node("implementation", call_implementation_node)
-    builder.add_node("validation", validation_agent_work)
+    builder.add_node("validation", call_validation_node)
 
     builder.add_edge(START, "preparation")
     builder.add_edge("preparation", "comprehension")
