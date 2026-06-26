@@ -1,13 +1,19 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple, Callable
+from typing import Any, Dict, List, Optional, Tuple, Callable, TypedDict, Unpack
+
+
+class ValidationMetadata(TypedDict):
+    success: bool
 
 
 @dataclass
 class ValidationResult:
     content: str
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: Unpack[ValidationMetadata] = field(
+        default_factory=lambda: {"success": True}
+    )
 
 
 @dataclass
