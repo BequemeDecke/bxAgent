@@ -1,5 +1,4 @@
 import asyncio
-
 from unittest import TestCase
 from unittest.mock import patch
 
@@ -35,21 +34,64 @@ class CommandInstalled(TestCase):
 
         self.assertEqual(
             len(results),
-            1,
-            "There should be one result for the installed command.",
+            2,
+            "There should be two results for the validation.",
         )
         self.assertEqual(
             len(errors),
-            1,
-            "There should be one error for the non-existent command.",
+            0,
+            "There should be no errors occurred during validation.",
         )
         self.assertIn(
             "Command 'python' is installed on the system.",
             [result.content for result in results],
             "Expected success message for 'python' was not returned.",
         )
+        self.assertTrue(
+            any(
+                result.metadata.get("success") is True
+                for result in results
+                if "python" in result.content
+            ),
+            "Expected success message for 'python' was not returned.",
+        )
+        self.assertTrue(
+            any(
+                result.metadata.get("success") is False
+                for result in results
+                if "nonexistentcommand" in result.content
+            )
+        )
+
+    @patch("shutil.which")
+    def test_run__exception_in_which(self, mock_which):
+        mock_which.side_effect = Exception("Unexpected error in shutil.which")
+        command_installed_validation = CommandInstalledValidation()
+
+        results, errors = asyncio.run(
+            command_installed_validation.run(commands=["python"])
+        )
+
+        self.assertEqual(
+            len(results),
+            0,
+            "There should be no results when an exception occurs in shutil.which.",
+        )
+        self.assertEqual(
+            len(errors),
+            1,
+            "There should be one error when an exception occurs in shutil.which.",
+        )
+
+        actual_error = errors[0]
+
         self.assertIn(
-            "Command 'nonexistentcommand' is not installed on the system.",
-            [error.message for error in errors],
-            "Expected error message for 'nonexistentcommand' was not returned.",
+            "An error occurred while checking command 'python': Unexpected error in shutil.which",
+            actual_error.message,
+            "Expected error message for the exception was not returned.",
+        )
+        self.assertEqual(
+            actual_error.type,
+            "Exception",
+            "Expected error type for the exception was not returned.",
         )

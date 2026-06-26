@@ -26,18 +26,27 @@ class CommandInstalledValidation(Validation):
         errors = []
 
         for command in commands:
-            if shutil.which(command) is None:
+            try:
+                if shutil.which(command) is None:
+                    results.append(
+                        ValidationResult(
+                            content=f"Command '{command}' is not installed on the system.",
+                            metadata={"success": False, "include_in_report": False},
+                        )
+                    )
+                else:
+                    results.append(
+                        ValidationResult(
+                            content=f"Command '{command}' is installed on the system.",
+                            metadata={"success": True, "include_in_report": False},
+                        )
+                    )
+            except Exception as e:
                 errors.append(
                     ValidationError(
-                        message=f"Command '{command}' is not installed on the system.",
-                        type="CommandNotInstalled",
+                        message=f"An error occurred while checking command '{command}': {str(e)}",
+                        type=type(e).__name__,
                         details={"command": command},
-                    )
-                )
-            else:
-                results.append(
-                    ValidationResult(
-                        content=f"Command '{command}' is installed on the system."
                     )
                 )
         return results, errors
