@@ -36,32 +36,32 @@ class TestWorkspaceOperability(TestCase):
 
             self.assertEqual(
                 len(results),
-                0,
-                "There should be no results when the workspace folder is missing.",
+                4,
+                "There should be four failing results when the workspace folder is missing.",
             )
             self.assertEqual(
                 len(errors),
-                4,
-                "There should be four errors when the workspace folder is missing.",
+                0,
+                "There should be no errors when the workspace folder is missing.",
             )
             self.assertIn(
                 f"Workspace path '{workspace_path}' does not exist or is not a directory.",
-                [error.message for error in errors],
+                [result.content for result in results],
                 "Expected workspace path error was not returned.",
             )
             self.assertIn(
                 "Required file 'TRANSFORMATION.md' is missing in the workspace.",
-                [error.message for error in errors],
+                [result.content for result in results],
                 "Expected TRANSFORMATION.md error was not returned.",
             )
             self.assertIn(
                 "Required folder 'src' is missing in the workspace.",
-                [error.message for error in errors],
+                [result.content for result in results],
                 "Expected src folder error was not returned.",
             )
             self.assertIn(
                 f"Package path 'de.example.bxagent' is invalid. Missing directory: '{workspace_path / 'src' / 'de'}'.",
-                [error.message for error in errors],
+                [result.content for result in results],
                 "Expected package path error was not returned.",
             )
 
@@ -81,16 +81,16 @@ class TestWorkspaceOperability(TestCase):
 
             self.assertEqual(
                 len(results),
-                0,
-                "There should be no results when TRANSFORMATION.md is missing.",
+                1,
+                "There should be one failed result when TRANSFORMATION.md is missing.",
             )
             self.assertEqual(
                 len(errors),
-                1,
-                "There should be one error when TRANSFORMATION.md is missing.",
+                0,
+                "There should be no errors when TRANSFORMATION.md is missing.",
             )
             self.assertEqual(
-                errors[0].message,
+                results[0].content,
                 "Required file 'TRANSFORMATION.md' is missing in the workspace.",
                 "Expected TRANSFORMATION.md error message does not match.",
             )
@@ -112,16 +112,16 @@ class TestWorkspaceOperability(TestCase):
 
             self.assertEqual(
                 len(results),
-                0,
-                "There should be no results when the package path is invalid.",
+                1,
+                "There should be one failed result when the package path is invalid.",
             )
             self.assertEqual(
                 len(errors),
-                1,
-                "There should be one error when the package path is invalid.",
+                0,
+                "There should be no errors when the package path is invalid.",
             )
             self.assertEqual(
-                errors[0].message,
+                results[0].content,
                 f"Package path 'de.example.bxagent' is invalid. Missing directory: '{workspace_path / 'src' / 'de' / 'example' / 'bxagent'}'.",
                 "Expected package path error message does not match.",
             )

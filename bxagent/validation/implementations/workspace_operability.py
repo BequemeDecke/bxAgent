@@ -24,30 +24,30 @@ class WorkspaceOperabilityValidation(Validation):
         # Check if the workspace path exists and is a directory
         workspace_path: Path = kwargs.get("workspace_path")
         if not workspace_path.exists() or not workspace_path.is_dir():
-            errors.append(
-                ValidationError(
-                    message=f"Workspace path '{workspace_path}' does not exist or is not a directory.",
-                    type="InvalidWorkspacePath",
+            results.append(
+                ValidationResult(
+                    content=f"Workspace path '{workspace_path}' does not exist or is not a directory.",
+                    metadata={"success": False, "include_in_report": False},
                 )
             )
 
         # Check if the TRANSFORMATION.md file exists in the workspace
         transformation_md_path = workspace_path / "TRANSFORMATION.md"
         if not transformation_md_path.exists() or not transformation_md_path.is_file():
-            errors.append(
-                ValidationError(
-                    message="Required file 'TRANSFORMATION.md' is missing in the workspace.",
-                    type="MissingFile",
+            results.append(
+                ValidationResult(
+                    content="Required file 'TRANSFORMATION.md' is missing in the workspace.",
+                    metadata={"success": False, "include_in_report": False},
                 )
             )
 
         # Check if the src folder exists in the workspace
         src_folder = workspace_path / "src"
         if not src_folder.exists() or not src_folder.is_dir():
-            errors.append(
-                ValidationError(
-                    message="Required folder 'src' is missing in the workspace.",
-                    type="MissingFolder",
+            results.append(
+                ValidationResult(
+                    content="Required folder 'src' is missing in the workspace.",
+                    metadata={"success": False, "include_in_report": False},
                 )
             )
 
@@ -58,10 +58,10 @@ class WorkspaceOperabilityValidation(Validation):
         for part in package_parts:
             current_path = current_path / part
             if not current_path.exists() or not current_path.is_dir():
-                errors.append(
-                    ValidationError(
-                        message=f"Package path '{package_path}' is invalid. Missing directory: '{current_path}'.",
-                        type="InvalidPackagePath",
+                results.append(
+                    ValidationResult(
+                        content=f"Package path '{package_path}' is invalid. Missing directory: '{current_path}'.",
+                        metadata={"success": False, "include_in_report": False},
                     )
                 )
                 break
