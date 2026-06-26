@@ -1,15 +1,14 @@
 import asyncio
 import subprocess
-
+from pathlib import Path
 from typing import List
 from unittest import TestCase
 from unittest.mock import patch
-from pathlib import Path
 
 from bxagent.validation.implementations.java_compilation import (
     JavaCompilationValidation,
-    parse_javac_output,
     ValidationError,
+    parse_javac_output,
 )
 
 ERROR_BLOCK_1 = """
@@ -69,7 +68,6 @@ SYMBOL_ERRORS = """
 
 
 class TestJavaCompilation(TestCase):
-
     @patch("shutil.which")
     def test_setup__fail_if_javac_not_found(self, mock_which):
         """
@@ -110,7 +108,9 @@ class TestJavaCompilation(TestCase):
         )
 
         java_compilation_validation = JavaCompilationValidation()
-        results, errors = asyncio.run(java_compilation_validation.run(files=[Path("Test.java")]))
+        results, errors = asyncio.run(
+            java_compilation_validation.run(files=[Path("Test.java")])
+        )
 
         self.assertEqual(
             len(results),
@@ -133,7 +133,7 @@ class TestJavaCompilation(TestCase):
                 ],
                 f"Expected error message not found in actual error message '{error.message}'.",
             )
-            
+
     @patch("subprocess.run")
     def test_run__valid_syntax(self, mock_subprocess_run):
         mock_subprocess_run.return_value = subprocess.CompletedProcess(
@@ -142,10 +142,12 @@ class TestJavaCompilation(TestCase):
             stdout=JAVAC_SUCCESS_OUTPUT,
             stderr="",
         )
-        
+
         java_compilation_validation = JavaCompilationValidation()
-        results, errors = asyncio.run(java_compilation_validation.run(files=[Path("Test.java")]))
-        
+        results, errors = asyncio.run(
+            java_compilation_validation.run(files=[Path("Test.java")])
+        )
+
         self.assertEqual(
             len(results),
             1,
@@ -156,10 +158,10 @@ class TestJavaCompilation(TestCase):
             0,
             "There should be no ValidationErrors when javac returns a success output.",
         )
-        
+
     def test_run__missing_files_parameter(self):
         java_compilation_validation = JavaCompilationValidation()
-        
+
         with self.assertRaises(
             ValueError,
             msg="JavaCompilationValidation's 'run' method should raise ValueError if 'files' parameter is missing.",
@@ -168,7 +170,6 @@ class TestJavaCompilation(TestCase):
 
 
 class TestJavaCompilationValidation__parse_javac_output(TestCase):
-
     def test_parse_javac_output__no_errors(self):
         errors = parse_javac_output(JAVAC_SUCCESS_OUTPUT)
 

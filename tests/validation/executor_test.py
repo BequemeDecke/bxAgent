@@ -1,13 +1,18 @@
 import asyncio
-import unittest
 import datetime
-
+import unittest
 from dataclasses import asdict
 from typing import List
+
 from pydantic import BaseModel
 
-from bxagent.validation.types import ValidationRun, ValidationResult, Validation, ValidationError
-from bxagent.validation.executor import ValidationExecutor, LinkedValidation
+from bxagent.validation.executor import LinkedValidation, ValidationExecutor
+from bxagent.validation.types import (
+    Validation,
+    ValidationError,
+    ValidationResult,
+    ValidationRun,
+)
 
 
 class MockedValidationCaseImplementation(Validation):
@@ -38,7 +43,9 @@ class FailingValidationCaseImplementation(Validation):
         raise Exception("This validation case is designed to fail.")
 
 
-def assert_validation_run_equal_except(equal_method, actual: ValidationRun, expected: ValidationRun):
+def assert_validation_run_equal_except(
+    equal_method, actual: ValidationRun, expected: ValidationRun
+):
     actual_dict = asdict(actual)
     expected_dict = asdict(expected)
 
@@ -163,7 +170,9 @@ class TestValidationExecutor__execute_all(unittest.TestCase):
             iteration=1,
             results=[],
             errors=[
-                ValidationError(message="error1", details={"exception_type": "Exception"})
+                ValidationError(
+                    message="error1", details={"exception_type": "Exception"}
+                )
             ],
         )
         self.executor = ValidationExecutor(
@@ -239,7 +248,9 @@ class TestValidationExecutor__execute_all(unittest.TestCase):
         )
 
         for actual_run, expected_run in zip(actual, expected_runs):
-            assert_validation_run_equal_except(self.assertEqual, actual_run, expected_run)
+            assert_validation_run_equal_except(
+                self.assertEqual, actual_run, expected_run
+            )
 
 
 class TestValidationExecutor__get_latest_results(unittest.TestCase):
@@ -257,7 +268,9 @@ class TestValidationExecutor__get_latest_results(unittest.TestCase):
             iteration=1,
             results=[],
             errors=[
-                ValidationError(message="error1", details={"exception_type": "Exception"})
+                ValidationError(
+                    message="error1", details={"exception_type": "Exception"}
+                )
             ],
         )
         self.executor = ValidationExecutor(
@@ -335,12 +348,17 @@ class TestValidationExecutor__get_latest_results(unittest.TestCase):
 
         latest_results = self.executor.get_latest_results()
         for actual_run, expected_run in zip(latest_results, expected_results):
-            assert_validation_run_equal_except(self.assertEqual, actual_run, expected_run)
+            assert_validation_run_equal_except(
+                self.assertEqual, actual_run, expected_run
+            )
 
 
 class TestValidationExecutor__register_linked_validation(unittest.TestCase):
     def setUp(self):
-        self.results = [ValidationResult(content="result1"), ValidationResult(content="result2")]
+        self.results = [
+            ValidationResult(content="result1"),
+            ValidationResult(content="result2"),
+        ]
         self.errors = [
             ValidationError(message="error", details={"exception_type": "Exception"})
         ]
@@ -389,7 +407,9 @@ class TestValidationExecutor__register_linked_validation(unittest.TestCase):
             ValueError,
             msg="Should raise ValueError for non-existent existing validation ID.",
         ):
-            self.executor.register_linked_validation("linked_validation", "non_existent_validation")
+            self.executor.register_linked_validation(
+                "linked_validation", "non_existent_validation"
+            )
 
     def test_register_linked_validation__duplicate_new_validation_id(self):
         with self.assertRaises(
@@ -400,7 +420,9 @@ class TestValidationExecutor__register_linked_validation(unittest.TestCase):
     def test_register_linked_validation__linked_validation_execution(self):
         self.executor.register_linked_validation("linked_validation", "validation2")
         run = asyncio.run(
-            self.executor.execute_specific("linked_validation", input={"param1": "value1"})
+            self.executor.execute_specific(
+                "linked_validation", input={"param1": "value1"}
+            )
         )
         self.assertEqual(
             run.results,

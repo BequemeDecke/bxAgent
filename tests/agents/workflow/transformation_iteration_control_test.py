@@ -5,15 +5,15 @@ This test checks if the transformation iteration control node correctly limits t
 from datetime import datetime, timedelta
 from unittest import TestCase
 from unittest.mock import Mock
+
 from langchain.chat_models import BaseChatModel
-from langchain.messages import AIMessage
 
 from bxagent.agents.workflow.state import WorkflowState
 from bxagent.agents.workflow.transformation_iteration_control import (
-    create_check_transformation_iteration_function,
     IterationRoute,
+    create_check_transformation_iteration_function,
 )
-from bxagent.validation.types import ValidationRun, ValidationResult, ValidationError
+from bxagent.validation.types import ValidationError, ValidationResult, ValidationRun
 
 
 class TestTransformationIterationControl(TestCase):
@@ -21,7 +21,9 @@ class TestTransformationIterationControl(TestCase):
         mocked_llm = Mock(spec=BaseChatModel)
         mocked_llm_structured_output = Mock(spec=BaseChatModel)
         mocked_llm.with_structured_output.return_value = mocked_llm_structured_output
-        mocked_llm_structured_output.invoke.return_value = IterationRoute(decision="stop")
+        mocked_llm_structured_output.invoke.return_value = IterationRoute(
+            decision="stop"
+        )
         self.check_transformation_iteration = (
             create_check_transformation_iteration_function(llm=mocked_llm)
         )
@@ -36,7 +38,6 @@ class TestTransformationIterationControl(TestCase):
         }
         result = self.check_transformation_iteration(state, max_iterations)
         self.assertEqual(result, "stop")
-
 
     def test_transformation_iteration_control__run_results_have_errors(self):
         max_iterations = 3

@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple, Callable
 
@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Optional, Tuple, Callable
 @dataclass
 class ValidationResult:
     content: str
-    format: Optional[str] = None
+    metadata: Dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -34,5 +34,7 @@ class Validation(ABC):
         pass
 
     @abstractmethod
-    async def run(self, **kwargs) -> Tuple[List[ValidationResult], List[ValidationError]]:
+    async def run(
+        self, **kwargs
+    ) -> Tuple[List[ValidationResult], List[ValidationError]]:
         pass

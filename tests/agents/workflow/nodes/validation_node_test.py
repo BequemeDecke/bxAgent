@@ -5,18 +5,18 @@ It is more of an integration test that checks the interaction between the valida
 """
 
 import asyncio
-
+from typing import Any, Dict
 from unittest import TestCase
 from unittest.mock import Mock
-from typing import Dict, Any
+
 from pydantic import BaseModel
 
-from bxagent.validation.types import Validation, ValidationResult, ValidationError, StateToValidationMapper
-from bxagent.validation import ValidationExecutor
 from bxagent.agents.workflow.nodes.validation_node import (
     create_validation_node,
 )
 from bxagent.agents.workflow.state import WorkflowState
+from bxagent.validation import ValidationExecutor
+from bxagent.validation.types import Validation, ValidationError, ValidationResult
 
 
 class MockedSchema(BaseModel):
@@ -37,7 +37,12 @@ class TestValidationNode__ExecutionModeAll(TestCase):
         validation_id = "test_validation"
 
         validation_executor = ValidationExecutor(
-            validations={validation_id: {"validation": mocked_validation, "validation_schema": MockedSchema}}
+            validations={
+                validation_id: {
+                    "validation": mocked_validation,
+                    "validation_schema": MockedSchema,
+                }
+            }
         )
         validation_agent_work = create_validation_node(
             validation_executor=validation_executor,
@@ -62,7 +67,9 @@ class TestValidationNode__ExecutionModeAll(TestCase):
             "Some validation result",
             "The validation result content should match.",
         )
-        self.assertEqual(len(run_result.errors), 1, "There should be one validation error.")
+        self.assertEqual(
+            len(run_result.errors), 1, "There should be one validation error."
+        )
         self.assertEqual(
             run_result.errors[0].message,
             "Some validation error",
@@ -70,7 +77,8 @@ class TestValidationNode__ExecutionModeAll(TestCase):
         )
 
         self.assertTrue(
-            mocked_validation.run.called, "The validation's run method should have been called."
+            mocked_validation.run.called,
+            "The validation's run method should have been called.",
         )
         self.assertEqual(
             mocked_validation.run.call_args.kwargs,
@@ -88,7 +96,12 @@ class TestValidationNode__ExecutionModeAll(TestCase):
         validation_id = "test_validation"
 
         validation_executor = ValidationExecutor(
-            validations={validation_id: {"validation": mocked_validation, "validation_schema": MockedSchema}}
+            validations={
+                validation_id: {
+                    "validation": mocked_validation,
+                    "validation_schema": MockedSchema,
+                }
+            }
         )
         validation_agent_work = create_validation_node(
             validation_executor=validation_executor,
@@ -117,7 +130,12 @@ class TestValidationNode__ExecutionModeSpecific(TestCase):
         validation_id = "test_validation"
 
         validation_executor = ValidationExecutor(
-            validations={validation_id: {"validation": mocked_validation, "validation_schema": MockedSchema}}
+            validations={
+                validation_id: {
+                    "validation": mocked_validation,
+                    "validation_schema": MockedSchema,
+                }
+            }
         )
         validation_agent_work = create_validation_node(
             validation_executor=validation_executor,
@@ -142,7 +160,9 @@ class TestValidationNode__ExecutionModeSpecific(TestCase):
             "Some validation result",
             "The validation result content should match.",
         )
-        self.assertEqual(len(run_result.errors), 1, "There should be one validation error.")
+        self.assertEqual(
+            len(run_result.errors), 1, "There should be one validation error."
+        )
         self.assertEqual(
             run_result.errors[0].message,
             "Some validation error",
@@ -150,7 +170,8 @@ class TestValidationNode__ExecutionModeSpecific(TestCase):
         )
 
         self.assertTrue(
-            mocked_validation.run.called, "The validation's run method should have been called."
+            mocked_validation.run.called,
+            "The validation's run method should have been called.",
         )
         self.assertEqual(
             mocked_validation.run.call_args.kwargs,
@@ -168,7 +189,12 @@ class TestValidationNode__ExecutionModeSpecific(TestCase):
         validation_id = "test_validation"
 
         validation_executor = ValidationExecutor(
-            validations={validation_id: {"validation": mocked_validation, "validation_schema": MockedSchema}}
+            validations={
+                validation_id: {
+                    "validation": mocked_validation,
+                    "validation_schema": MockedSchema,
+                }
+            }
         )
         validation_agent_work = create_validation_node(
             validation_executor=validation_executor,
