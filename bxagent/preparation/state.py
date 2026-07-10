@@ -14,9 +14,12 @@ class ModelImplementation(TypedDict):
 class PreparationState(TypedDict):
     required_commands: list[str] # List of required commands to be available in the system PATH in order to run the agent properly
     workspace_path: Path
-    package_path: str
+    package_path: str # deprecated: It's now groupId and artifactId
     latest_validation_runs: Dict[str, ValidationRun] = []
     transformation_plan: Optional[TransformationPlan] = None
     bxtool_path: Optional[Path] = None
     source_model: ModelImplementation
     target_model: ModelImplementation
+
+    group_id: Optional[str] = None  # Maven groupId for the generated project
+    artifact_id: Optional[str] = None  # Maven artifactId for the generated project
