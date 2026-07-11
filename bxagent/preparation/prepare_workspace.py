@@ -112,8 +112,9 @@ def create_prepare_workspace_node(fix_strategy: StructureFixStrategy):
         workspace.mkdir(parents=True, exist_ok=True)
 
         # Check if the folder is empty => Create the Parent project, else execute the strategy
+        fixed_state = {} # State to overwrite
         if any(workspace.iterdir()) and not is_workspace_structure_correct(workspace, group_id, artifact_id):
-            return fix_strategy.fix_structure(state)
+            fixed_state = fix_strategy.fix_structure(state)
         else:
             create_parent_project(workspace, group_id)
 
@@ -151,9 +152,9 @@ def create_prepare_workspace_node(fix_strategy: StructureFixStrategy):
         if app_java_path.exists():
             app_java_path.unlink()
 
-        return {
-            "transformation_plan": tp,
-            "bxtool_path": bxtool_path,
-        }
+        # Update the state with the new paths and transformation plan
+        new_state = PreparationState(transformation_plan=tp, bxtool_path=bxtool_path)
+        new_state.update(fixed_state)
+        return new_state
 
     return prepare_workspace_node
