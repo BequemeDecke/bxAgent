@@ -7,14 +7,18 @@ from unittest.mock import Mock, patch
 
 from bxagent.comprehension import TransformationPlanData
 from bxagent.comprehension.plan import TransformationPlan
-from bxagent.preparation.prepare_workspace import create_prepare_workspace_node
+from bxagent.preparation.prepare_workspace import (
+    create_prepare_workspace_node,
+    StructureFixStrategy,
+)
 from bxagent.preparation.state import PreparationState
 
 
 class TestPrepareWorkspace(TestCase):
     def setUp(self):
         self.maxDiff = None
-        self.prepare_workspace_node = create_prepare_workspace_node()
+        self.fix_strategy = Mock(spec=StructureFixStrategy)
+        self.prepare_workspace_node = create_prepare_workspace_node(self.fix_strategy)
         self.fake_data = TransformationPlanData(
             iteration=0,
             source_model_package="de.example.bxagent",
@@ -27,8 +31,68 @@ class TestPrepareWorkspace(TestCase):
         )
         self.template_path = Path.cwd() / "templates"
 
-    @patch("subprocess.run", return_value=subprocess.CompletedProcess(args=["mvn", "archetype:generate"], returncode=0))
-    def test_prepare_workspace__create_workspace(self, mock_run: Mock):
+    @patch(
+        "subprocess.run",
+        return_value=subprocess.CompletedProcess(
+            args=["mvn", "archetype:generate"], returncode=0
+        ),
+    )
+    def test_prepare_workspace__given_folder_does_not_exist(self, mock_run: Mock):
+        """
+        This test checks if the workspace is created successfully if the given workspace folder does not exist
+        """
+        with tempfile.TemporaryDirectory() as temp_dir:
+            workspace_path = (
+                Path(temp_dir) / "workspace"
+            )  # This folder is not created yet
+            input_state = PreparationState(
+                required_commands=[],
+                workspace_path=workspace_path,
+                group_id="de.example",
+                artifact_id="bxagent",
+                # package_path="de.example.bxagent",
+            )
+
+            output_state: PreparationState = self.prepare_workspace_node(input_state)
+
+            # Check direct output
+            self.assertIsInstance(
+                output_state.get("transformation_plan"),
+                TransformationPlan,
+                "The output state should contain a transformation plan.",
+            )
+            self.assertIsInstance(
+                output_state.get("bxtool_path"),
+                Path,
+                "The output state should contain the bxtool path.",
+            )
+
+            # Check if maven was called to create the project structure
+            mock_run.assert_called_once()
+
+            # Check indirect output
+            self.assertTrue(
+                (Path(workspace_path) / "bxagent" / "src").exists(),
+                "The 'src' folder should be created in the workspace.",
+            )
+            self.assertTrue(
+                (Path(workspace_path) / "pom.xml").exists(),
+            )
+            self.assertTrue(
+                (Path(workspace_path) / "bxagent" / "TRANSFORMATION.md").exists(),
+                "The 'TRANSFORMATION.md' file should be created in the workspace.",
+            )
+
+    @patch(
+        "subprocess.run",
+        return_value=subprocess.CompletedProcess(
+            args=["mvn", "archetype:generate"], returncode=0
+        ),
+    )
+    def test_prepare_workspace__given_folder_exists(self, mock_run: Mock):
+        """
+        This test checks if the workspace is created successfully if the given workspace folder exists
+        """
         with tempfile.TemporaryDirectory() as temp_dir:
             input_state = PreparationState(
                 required_commands=[],
@@ -61,75 +125,58 @@ class TestPrepareWorkspace(TestCase):
                 "The 'src' folder should be created in the workspace.",
             )
             self.assertTrue(
+                (Path(temp_dir) / "pom.xml").exists(),
+            )
+            self.assertTrue(
                 (Path(temp_dir) / "bxagent" / "TRANSFORMATION.md").exists(),
                 "The 'TRANSFORMATION.md' file should be created in the workspace.",
             )
 
-            # Changed 10.07.2026, because Maven is now used. See the integration test below
-            # self.assertTrue(
-            #     (Path(temp_dir) / "src" / "de" / "example" / "bxagent").exists(),
-            #     "The package path should be created in the 'src' folder",
-            # )
-            # self.assertTrue(
-            #     (
-            #         Path(temp_dir)
-            #         / "src"
-            #         / "de"
-            #         / "example"
-            #         / "bxagent"
-            #         / "BxAgentJavaBxTool.java"
-            #     ).exists(),
-            #     "The transformation Java file should be created in the package path.",
-            # )
+    def test_prepare_workspace__content_exists_structure_incorrect(self):
+        """
+        This test checks if the StructureFixStrategy is invoked if the workspace folder exists but the structure is incorrect.
+        Some strategies would be:
+        - Delete the existing content and create the structure again
+        - Move the existing content to a backup folder and create the structure again
+        - Merge the existing content with the new structure (if possible)
+        - Abort the operation and ask the user to fix the structure manually
+        """
 
-    @patch("subprocess.run", return_value=subprocess.CompletedProcess(args=["mvn", "archetype:generate"], returncode=0))
-    def test_prepare_workspace__workspace_already_exists(self, mock_run: Mock):
         with tempfile.TemporaryDirectory() as temp_dir:
             input_state = PreparationState(
                 required_commands=[],
                 workspace_path=Path(temp_dir),
-                # package_path="de.example.bxagent",
                 group_id="de.example",
-                artifact_id="bxagent"
+                artifact_id="bxagent",
             )
 
             # Create the workspace manually
-            (Path(temp_dir) / "bxagent" / "src").mkdir(parents=True)
+            # There is no "pom.xml"
+            (Path(temp_dir) / "bxagent").mkdir(parents=True)
             (Path(temp_dir) / "bxagent" / "TRANSFORMATION.md").touch()
-            (Path(temp_dir) / "bxagent" / "src" / "main" / "java" / "de" / "example" / "bxagent").mkdir(parents=True)
+            (
+                Path(temp_dir)
+                / "bxagent"
+                / "src"
+                / "main"
+                / "java"
+                / "de"
+                / "example"
+                / "bxagent"
+            ).mkdir(parents=True)
 
             self.prepare_workspace_node(input_state)
+            self.fix_strategy.fix_structure.assert_called_once_with(input_state)
 
-            # Check if maven was called to create the project structure
-            mock_run.assert_called_once()
-
-            self.assertTrue(
-                (Path(temp_dir) / "bxagent" / "src").exists(),
-                "The 'src' folder should be created in the workspace.",
-            )
-            self.assertTrue(
-                (Path(temp_dir) / "bxagent" / "TRANSFORMATION.md").exists(),
-                "The 'TRANSFORMATION.md' file should be created in the workspace.",
-            )
-            # self.assertTrue(
-            #     (Path(temp_dir) / "bxagent" / "src" / "main" / "java" / "de" / "example" / "bxagent").exists(),
-            #     "The package path should be created in the 'src' folder",
-            # )
-            # self.assertTrue(
-            #     (
-            #         Path(temp_dir)
-            #         / "src"
-            #         / "de"
-            #         / "example"
-            #         / "bxagent"
-            #         / "BxAgentJavaBxTool.java"
-            #     ).exists(),
-            #     "The transformation Java file should be created in the package path.",
-            # )
-
-    @patch("subprocess.run", return_value=subprocess.CompletedProcess(args=["mvn", "archetype:generate"], returncode=0))
+    @patch(
+        "subprocess.run",
+        return_value=subprocess.CompletedProcess(
+            args=["mvn", "archetype:generate"], returncode=0
+        ),
+    )
     def test_prepare_workspace__transformation_plan_exists(self, mock_run: Mock):
         with tempfile.TemporaryDirectory() as temp_dir:
+            # Create a fake transformation plan in the workspace
             tp_path = Path(temp_dir) / "bxagent" / "TRANSFORMATION.md"
             tp_path.parent.mkdir(parents=True, exist_ok=True)
             tp_path.touch()
@@ -145,12 +192,15 @@ class TestPrepareWorkspace(TestCase):
             )
             tp.update_iteration(1)
 
+            # Create the rest of the necessary structure for the workspace
+            (Path(temp_dir) / "pom.xml").touch()
+
             input_state = PreparationState(
                 required_commands=[],
                 workspace_path=Path(temp_dir),
                 # package_path="de.example.bxagent",
                 group_id="de.example",
-                artifact_id="bxagent"
+                artifact_id="bxagent",
             )
 
             output_state = self.prepare_workspace_node(input_state)
@@ -175,7 +225,7 @@ class TestPrepareWorkspace(TestCase):
             workspace_path=None,  # Missing workspace path
             # package_path="de.example.bxagent",
             group_id="de.example",
-            artifact_id="bxagent"
+            artifact_id="bxagent",
         )
 
         with self.assertRaises(ValueError):
@@ -185,7 +235,7 @@ class TestPrepareWorkspace(TestCase):
             required_commands=[],
             workspace_path=Path("/some/path"),
             group_id=None,
-            artifact_id="bxagent"
+            artifact_id="bxagent",
         )
 
         with self.assertRaises(ValueError):
@@ -195,7 +245,7 @@ class TestPrepareWorkspace(TestCase):
             required_commands=[],
             workspace_path=Path("/some/path"),
             group_id="de.example",
-            artifact_id=None
+            artifact_id=None,
         )
 
         with self.assertRaises(ValueError):
@@ -216,13 +266,22 @@ class TestMavenIntegration(TestCase):
                 artifact_id="bxagent",
             )
 
-            create_prepare_workspace_node()(
+            create_prepare_workspace_node(fix_strategy=Mock(spec=StructureFixStrategy))(
                 input_state
             )
 
             # Check for the correct structure
             self.assertTrue(
-                (Path(temp_dir) / "bxagent" / "src" / "main" / "java" / "de" / "example" / "bxagent").exists(),
+                (
+                    Path(temp_dir)
+                    / "bxagent"
+                    / "src"
+                    / "main"
+                    / "java"
+                    / "de"
+                    / "example"
+                    / "bxagent"
+                ).exists(),
                 "The 'src/main/java/de/example/bxagent' folder should be created in the workspace.",
             )
 

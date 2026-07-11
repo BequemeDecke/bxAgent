@@ -1,11 +1,100 @@
+from abc import ABC, abstractmethod
 import subprocess
+
+from pathlib import Path
 
 from bxagent.comprehension import TransformationPlan, FileTransformationPlanParser
 
 from .state import PreparationState
 
 
-def create_prepare_workspace_node():
+class StructureFixStrategy(ABC):
+    """
+    Abstract base class for strategies to fix the workspace structure.
+    """
+
+    @abstractmethod
+    def fix_structure(self, state: PreparationState) -> PreparationState:
+        pass
+
+
+def create_maven_project(group_id: str, artifact_id: str, workspace: Path):
+    cp_process = subprocess.run(
+        [
+            "mvn",
+            "archetype:generate",
+            "-DgroupId=" + group_id,
+            "-DartifactId=" + artifact_id,
+            "-DarchetypeArtifactId=maven-archetype-simple",
+            "-DarchetypeVersion=1.5",
+            "-DinteractiveMode=false",
+        ],
+        check=True,
+        cwd=workspace,
+    )
+    if cp_process.returncode != 0:
+        raise RuntimeError(
+            f"Failed to create Maven project. Return code: {cp_process.returncode}"
+        )
+    
+BASE_POM_XML = """<?xml version="1.0" encoding="UTF-8"?>
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>{group_id}</groupId>
+  <artifactId>workspace</artifactId>
+  <version>1.0</version>
+  <packaging>pom</packaging>
+
+  <name>Workspace</name>
+  <modules>
+    <!-- Module werden hier hinzugefügt -->
+  </modules>
+
+  <properties>
+    <maven.compiler.source>11</maven.compiler.source>
+    <maven.compiler.target>11</maven.compiler.target>
+  </properties>
+
+</project>
+"""
+
+
+def create_parent_project(workspace: Path, group_id: str):
+    """
+    Create the parent project structure in the given directory.
+    This assumes that the directory has been created and is empty!
+    """
+    pom_xml_path = workspace / "pom.xml"
+    pom_xml_path.write_text(BASE_POM_XML.format(group_id=group_id, artifact_id="workspace"))
+
+
+def is_workspace_structure_correct(workspace: Path, group_id: str, artifact_id: str) -> bool:
+    """
+    Check if the workspace structure is valid.
+    Returns True if the structure is valid, False otherwise.
+    """
+    # Check for the existence of the parent pom.xml
+    parent_pom_path = workspace / "pom.xml"
+    if not parent_pom_path.exists():
+        return False
+
+    # Check for the existence of the transformation module (Maven project)
+    transformation_module_path = workspace / artifact_id
+    if not transformation_module_path.exists():
+        return False
+
+    # Check for the existence of the TRANSFORMATION.md file
+    transformation_md_path = transformation_module_path / "TRANSFORMATION.md"
+    if not transformation_md_path.exists():
+        return False
+    
+    return True
+
+
+def create_prepare_workspace_node(fix_strategy: StructureFixStrategy):
     def prepare_workspace_node(state: PreparationState) -> PreparationState:
         workspace = state.get("workspace_path")
         if workspace is None:
@@ -19,28 +108,19 @@ def create_prepare_workspace_node():
         if artifact_id is None:
             raise ValueError("Artifact ID is not set in the state.")
 
-        # Create workspace directory if it does not exist
-        if not workspace.exists():
-            workspace.mkdir(parents=True)
+        # Create workspace if directory does not exist
+        workspace.mkdir(parents=True, exist_ok=True)
 
-        # Create the maven project
-        cp_process = subprocess.run(
-            [
-                "mvn",
-                "archetype:generate",
-                "-DgroupId=" + group_id,
-                "-DartifactId=" + artifact_id,
-                "-DarchetypeArtifactId=maven-archetype-simple",
-                "-DarchetypeVersion=1.5",
-                "-DinteractiveMode=false",
-            ],
-            check=True,
-            cwd=workspace,
+        # Check if the folder is empty => Create the Parent project, else execute the strategy
+        if any(workspace.iterdir()) and not is_workspace_structure_correct(workspace, group_id, artifact_id):
+            return fix_strategy.fix_structure(state)
+        else:
+            create_parent_project(workspace, group_id)
+
+        # Create the transformation module (Maven project) inside the workspace
+        create_maven_project(
+            group_id=group_id, artifact_id=artifact_id, workspace=workspace
         )
-        if cp_process.returncode != 0:
-            raise RuntimeError(
-                f"Failed to create Maven project. Return code: {cp_process.returncode}"
-            )
 
         package_path = (
             workspace
