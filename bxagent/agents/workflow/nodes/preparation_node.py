@@ -21,11 +21,13 @@ def create_preparation_node(agent: CompiledStateGraph):
         if target_model_path is None:
             raise ValueError("Target model path is required for the preparation agent.")
 
-        package_path = state.get("transformation_package_path")
-        if package_path is None:
-            raise ValueError(
-                "Transformation package path is required for the preparation agent."
-            )
+        group_id = state.get("group_id")
+        if group_id is None:
+            raise ValueError("Group ID is required for the preparation agent.")
+        
+        artifact_id = state.get("artifact_id")
+        if artifact_id is None:
+            raise ValueError("Artifact ID is required for the preparation agent.")
 
         prep_invoke_state = PreparationState(
             workspace_path=workspace_path,
@@ -39,7 +41,8 @@ def create_preparation_node(agent: CompiledStateGraph):
                 path=target_model_path,
                 implementation=None,  # This will be set by the explore_models node after reading the model package
             ),
-            package_path=package_path,
+            group_id=group_id,
+            artifact_id=artifact_id,
             required_commands=state.get("required_commands", []),
         )
         response: GraphOutput = await agent.ainvoke(prep_invoke_state, version="v2")

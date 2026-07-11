@@ -7,6 +7,7 @@ from bxagent.agents.workflow.nodes.validation_node import (
 )
 
 from .explore_models import create_explore_models_node
+from .implementations.clear_workspace import ClearWorkspaceStrategy
 from .state import PreparationState
 from .prepare_workspace import create_prepare_workspace_node
 
@@ -17,7 +18,7 @@ def build_preparation_graph(validation_executor: ValidationExecutor) -> StateGra
         mapper={
             "workspace_operability": lambda state: {
                 "workspace_path": state.get("workspace_path"),
-                "package_path": state.get("package_path"),
+                "package_path": f"{state.get('group_id')}.{state.get('artifact_id')}",
             },
             "commands_installed": lambda state: {
                 "commands": state.get("required_commands", []),
@@ -26,7 +27,7 @@ def build_preparation_graph(validation_executor: ValidationExecutor) -> StateGra
         execution_mode="specific",
     )
     explore_models_node = create_explore_models_node()
-    prepare_workspace_node = create_prepare_workspace_node()
+    prepare_workspace_node = create_prepare_workspace_node(fix_strategy=ClearWorkspaceStrategy())
 
     graph = StateGraph(PreparationState)
     graph.add_node("prepare_workspace", prepare_workspace_node)

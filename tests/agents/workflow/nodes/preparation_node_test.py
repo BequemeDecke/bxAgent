@@ -4,10 +4,10 @@ This test checks if the preparation node correctly prepares the workspace.
 
 import asyncio
 import logging
+import shutil
 import tempfile
 from pathlib import Path
 from unittest import TestCase
-from unittest.mock import Mock, patch
 
 from bxagent.agents.workflow.nodes.preparation_node import (
     create_preparation_node,
@@ -39,8 +39,11 @@ def create_test_model_package(temp_dir: Path, package_name: str):
     )
 
 
-class TestPreparationNode(TestCase):
+class TestPreparationNodeIntegration(TestCase):
     def setUp(self):
+        if shutil.which("mvn") is None:
+            self.skipTest("Maven is not installed. Skipping integration tests.")
+
         self.preparation_agent = build_preparation_graph(
             validation_executor=ValidationExecutor(
                 validations={
@@ -58,32 +61,33 @@ class TestPreparationNode(TestCase):
 
         self.call_preparation_node = create_preparation_node(self.preparation_agent)
 
-    @patch("shutil.which")
-    def test_preparation_node__invoke_subgraph(self, mock_which: Mock):
-        mock_which.side_effect = lambda cmd: (
-            f"/usr/bin/{cmd}" if cmd in ["git", "docker"] else None
-        )
-
+    def test_preparation_node__invoke_subgraph(self):
         with tempfile.TemporaryDirectory() as temp_dir:
-            workspace_path = Path(temp_dir)
-            package_path = "de.example.bxagent"
-            transformation_plan_path = workspace_path / "TRANSFORMATION.md"
+            workspace_path = Path(temp_dir) / "workspace"
+            workspace_path.mkdir()
+            models_path = Path(temp_dir) / "models"
+            models_path.mkdir()
+            group_id = "de.example"
+            artifact_id = "bxagent"
+            package_path = f"{group_id}.{artifact_id}"
+            transformation_plan_path = workspace_path / artifact_id / "TRANSFORMATION.md"
 
             (
                 (source_model_path, source_file, *_),
                 (target_model_path, target_file, *_),
             ) = (
-                create_test_model_package(workspace_path, "Source"),
-                create_test_model_package(workspace_path, "Target"),
+                create_test_model_package(models_path, "Source"),
+                create_test_model_package(models_path, "Target"),
             )
 
             initial_state = WorkflowState(
                 transformation_plan=None,
                 workspace_path=workspace_path,
-                transformation_package_path=package_path,
+                group_id=group_id,
+                artifact_id=artifact_id,
                 source_model_path=source_model_path,
                 target_model_path=target_model_path,
-                required_commands=["git", "docker"],
+                required_commands=["mvn", "git"],
             )
 
             output: WorkflowState = asyncio.run(

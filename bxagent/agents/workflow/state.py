@@ -13,7 +13,9 @@ class WorkflowState(TypedDict):
     written_files: list[Path]
     required_commands: list[str]
     workspace_path: Path
-    transformation_package_path: str
+    transformation_package_path: str # deprecated
+    group_id: str
+    artifact_id: str
     bxtool_path: Optional[Path]
 
     source_model_path: Optional[Path]

@@ -1,6 +1,8 @@
 import asyncio
 import logging
 import tempfile
+import shutil
+
 from pathlib import Path
 from unittest import TestCase
 from unittest.mock import Mock, patch
@@ -35,8 +37,11 @@ def create_test_model_package(temp_dir: Path, package_name: str):
     )
 
 
-class PreparationTestAgent(TestCase):
+class TestPreparationAgentIntegration(TestCase):
     def setUp(self):
+        if shutil.which("mvn") is None:
+            self.skipTest("Maven is not installed. Skipping integration tests.")
+
         self.validation_executor = ValidationExecutor(
             validations={
                 "workspace_operability": {
@@ -60,21 +65,20 @@ class PreparationTestAgent(TestCase):
             "The preparation agent should compile to a CompiledStateGraph.",
         )
 
-    @patch("shutil.which")
-    def test_agent__execution(self, mock_which: Mock):
-        mock_which.side_effect = lambda cmd: (
-            f"/usr/bin/{cmd}" if cmd in ["git", "docker"] else None
-        )
-
+    def test_agent__execution(self):
         with tempfile.TemporaryDirectory() as temp_dir:
-            workspace_path = Path(temp_dir)
-            package_path = "de.example.bxagent"
+            workspace_path = Path(temp_dir, "workspace")
+            workspace_path.mkdir()
+            models_path = Path(temp_dir, "models")
+            models_path.mkdir()
+            group_id = "de.example"
+            artifact_id = "bxagent"
 
             (source_model_path, *_) = create_test_model_package(
-                workspace_path, package_path
+                models_path, "Source"
             )
             (target_model_path, *_) = create_test_model_package(
-                workspace_path, f"{package_path}Target"
+                models_path, "Target"
             )
 
             agent = build_preparation_graph(
@@ -83,8 +87,9 @@ class PreparationTestAgent(TestCase):
             graph = agent.compile()
             initial_state = PreparationState(
                 workspace_path=workspace_path,
-                package_path=package_path,
-                required_commands=["git", "docker"],
+                group_id=group_id,
+                artifact_id=artifact_id,
+                required_commands=["mvn"],
                 source_model=ModelImplementation(
                     name="Source",
                     path=source_model_path,
