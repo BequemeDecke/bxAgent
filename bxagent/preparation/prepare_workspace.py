@@ -2,10 +2,31 @@ from abc import ABC, abstractmethod
 import subprocess
 
 from pathlib import Path
+from typing import List
 
 from bxagent.comprehension import TransformationPlan, FileTransformationPlanParser
 
+from .pom import add_dependencies_to_pom, Dependency, install_dependencies
 from .state import PreparationState
+
+
+EMF_DEPENDENCIES: List[Dependency] = [
+    {
+        "group_id": "org.eclipse.emf",
+        "artifact_id": "org.eclipse.emf.ecore",
+        "version": "2.30.0",
+    },
+    {
+        "group_id": "org.eclipse.emf",
+        "artifact_id": "org.eclipse.emf.common",
+        "version": "2.30.0",
+    },
+    {
+        "group_id": "org.eclipse.emf",
+        "artifact_id": "org.eclipse.emf.ecore.xmi",
+        "version": "2.30.0",
+    }
+]
 
 
 class StructureFixStrategy(ABC):
@@ -151,6 +172,13 @@ def create_prepare_workspace_node(fix_strategy: StructureFixStrategy):
         app_java_path = package_path / "App.java"
         if app_java_path.exists():
             app_java_path.unlink()
+
+        # Add EMF dependencies to the pom.xml of the transformation module  
+        pom_path = workspace / artifact_id / "pom.xml"
+        pom_content = pom_path.read_text()
+        pom_content = add_dependencies_to_pom(pom_content, EMF_DEPENDENCIES)
+        pom_path.write_text(pom_content)
+        install_dependencies(workspace / artifact_id)
 
         # Update the state with the new paths and transformation plan
         new_state = PreparationState(transformation_plan=tp, bxtool_path=bxtool_path)
