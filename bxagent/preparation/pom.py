@@ -10,6 +10,26 @@ class Dependency(TypedDict):
     version: Optional[str]
 
 
+def add_module_to_pom(pom_path: Path, group_id: str, artifact_id: str, version: Optional[str] = None):
+    """
+    Add a module to the given pom.xml content.
+    Returns the modified pom.xml content as a string.
+    """
+    register_all_namespaces(pom_path)
+    tree = ET.parse(pom_path)
+    root = tree.getroot()
+    modules_element = root.find("modules")
+
+    if modules_element is None:
+        modules_element = ET.SubElement(root, "modules")
+
+    module_element = ET.SubElement(modules_element, "module")
+    module_element.text = artifact_id
+
+    # Write the modified XML back to the pom.xml file
+    tree.write(pom_path, encoding="utf-8", xml_declaration=True)
+
+
 def add_dependencies_to_pom(pom_path: Path, dependencies: List[Dependency]):
     """
     Add dependencies to the given pom.xml content.

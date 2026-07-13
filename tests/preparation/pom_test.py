@@ -8,6 +8,7 @@ from unittest.mock import Mock, patch
 from bxagent.preparation.pom import (
     Dependency,
     add_dependencies_to_pom,
+    add_module_to_pom,
     install_dependencies,
 )
 
@@ -127,3 +128,21 @@ class TestInstallDependencies(TestCase):
         mock_run.assert_called_once_with(
             ["mvn", "validate"], cwd=workspace_path, check=True
         )
+
+class TestAddModuleToPom(TestCase):
+    def test_add_module_to_pom(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            pom_path = Path(temp_dir, "pom.xml")
+            pom_path.write_text(INITIAL_POM)
+
+            group_id = "com.example"
+            artifact_id = "my-module"
+            version = "1.0-SNAPSHOT"
+
+            add_module_to_pom(pom_path, group_id, artifact_id, version)
+
+            modified_pom = pom_path.read_text()
+            logging.debug(f"Modified POM:\n{modified_pom}")
+
+            self.assertIn("<modules>", modified_pom)
+            self.assertIn(f"<module>{artifact_id}</module>", modified_pom)
