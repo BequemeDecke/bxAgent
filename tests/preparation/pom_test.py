@@ -1,11 +1,15 @@
 import logging
-from pathlib import Path
 import tempfile
+from pathlib import Path
 from typing import List
 from unittest import TestCase
 from unittest.mock import Mock, patch
 
-from bxagent.preparation.pom import Dependency, add_dependencies_to_pom, install_dependencies
+from bxagent.preparation.pom import (
+    Dependency,
+    add_dependencies_to_pom,
+    install_dependencies,
+)
 
 INITIAL_POM = """<project>
     <modelVersion>4.0.0</modelVersion>
@@ -38,7 +42,7 @@ class TestAddDependencies(TestCase):
         with tempfile.TemporaryDirectory() as temp_dir:
             pom_path = Path(temp_dir, "pom.xml")
             pom_path.write_text(INITIAL_POM)
-            
+
             dependencies: List[Dependency] = [
                 {
                     "group_id": "org.springframework",
@@ -56,6 +60,17 @@ class TestAddDependencies(TestCase):
 
             modified_pom = pom_path.read_text()
             logging.debug(f"Modified POM:\n{modified_pom}")
+
+            self.assertEqual(
+                modified_pom.count("<dependencies>"),
+                1,
+                "There should be exactly 1 <dependencies> section in the modified POM.",
+            )
+            self.assertEqual(
+                modified_pom.count("<dependency>"),
+                2,
+                "There should be exactly 2 <dependency> entries in the modified POM.",
+            )
 
             self.assertIn("<dependencies>", modified_pom)
             self.assertIn("<dependency>", modified_pom)
@@ -83,9 +98,7 @@ class TestAddDependencies(TestCase):
                 },
             ]
 
-            add_dependencies_to_pom(
-                pom_path, dependencies
-            )
+            add_dependencies_to_pom(pom_path, dependencies)
 
             modified_pom = pom_path.read_text()
             logging.debug(f"Modified POM:\n{modified_pom}")
@@ -98,6 +111,7 @@ class TestAddDependencies(TestCase):
             self.assertIn("<version>5.3.8</version>", modified_pom)
             self.assertIn("<groupId>org.apache.commons</groupId>", modified_pom)
             self.assertIn("<artifactId>commons-lang3</artifactId>", modified_pom)
+
 
 class TestInstallDependencies(TestCase):
     @patch("subprocess.run")
