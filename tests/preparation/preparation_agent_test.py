@@ -99,6 +99,7 @@ class TestPreparationAgentIntegration(TestCase):
                     path=target_model_path,
                     implementation=None,
                 ),
+                install_benchmarx=True,
             )
 
             output: GraphOutput = asyncio.run(
