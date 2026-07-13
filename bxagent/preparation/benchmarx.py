@@ -16,7 +16,7 @@ def create_download_benchmarx_node(benchmarx_repo_url: str = BENCHMARX_REPOSITOR
         workspace_path = state.get("workspace_path")  # Safe operation
 
         cp = subprocess.run(
-            ["git", "clone", benchmarx_repo_url, BENCHMARX_REPOSITORY_NAME],
+            ["git", "clone", "--depth", "1", benchmarx_repo_url, BENCHMARX_REPOSITORY_NAME],
             cwd=workspace_path,
             check=True,
         )

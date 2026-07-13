@@ -1,4 +1,6 @@
 from pathlib import Path
+import shutil
+import tempfile
 from unittest import TestCase
 from unittest.mock import Mock, patch
 
@@ -37,3 +39,29 @@ class TestBenchmarx(TestCase):
 
         actual_state = self.download_benchmarx(input_state)
         self.assertIsNone(actual_state)  # Should return None when skipping installation
+
+class TestBenchmarxIntegration(TestCase):
+    def setUp(self):
+        if shutil.which("git") is None:
+            self.skipTest("Git is not available in the environment.")
+
+    def test_download_benchmarx_integration(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            workspace_path = Path(temp_dir, "workspace")
+            workspace_path.mkdir()
+
+            input_state: PreparationState = {
+                "workspace_path": workspace_path,
+                "install_benchmarx": True,
+            }
+
+            download_node = create_download_benchmarx_node()
+            output_state = download_node(input_state)
+
+            self.assertIsNotNone(output_state)
+            benchmarx_path = output_state.get("benchmarx_path")
+            self.assertIsNotNone(benchmarx_path)
+            self.assertTrue(
+                benchmarx_path.exists(),
+                "The benchmarx path should point to an existing directory.",
+            )
