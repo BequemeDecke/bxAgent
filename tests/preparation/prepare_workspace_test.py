@@ -18,6 +18,7 @@ class TestPrepareWorkspace(TestCase):
     def setUp(self):
         self.maxDiff = None
         self.fix_strategy = Mock(spec=StructureFixStrategy)
+        self.fix_strategy.fix_structure.return_value = PreparationState()
         self.prepare_workspace_node = create_prepare_workspace_node(self.fix_strategy)
         self.fake_data = TransformationPlanData(
             iteration=0,
@@ -32,12 +33,20 @@ class TestPrepareWorkspace(TestCase):
         self.template_path = Path.cwd() / "templates"
 
     @patch(
+            "bxagent.preparation.pom.install_dependencies",
+            return_value=None,
+    )
+    @patch(
+            "bxagent.preparation.pom.add_dependencies_to_pom",
+            return_value=None,
+    )
+    @patch(
         "subprocess.run",
         return_value=subprocess.CompletedProcess(
             args=["mvn", "archetype:generate"], returncode=0
         ),
     )
-    def test_prepare_workspace__given_folder_does_not_exist(self, mock_run: Mock):
+    def test_prepare_workspace__given_folder_does_not_exist(self, mock_run: Mock, mock_add_dependencies: Mock, mock_install_dependencies: Mock):
         """
         This test checks if the workspace is created successfully if the given workspace folder does not exist
         """
@@ -69,6 +78,8 @@ class TestPrepareWorkspace(TestCase):
 
             # Check if maven was called to create the project structure
             mock_run.assert_called_once()
+            mock_add_dependencies.assert_called_once() 
+            mock_install_dependencies.assert_called_once()
 
             # Check indirect output
             self.assertTrue(
@@ -84,12 +95,20 @@ class TestPrepareWorkspace(TestCase):
             )
 
     @patch(
+            "bxagent.preparation.pom.install_dependencies",
+            return_value=None,
+    )
+    @patch(
+            "bxagent.preparation.pom.add_dependencies_to_pom",
+            return_value=None,
+    )
+    @patch(
         "subprocess.run",
         return_value=subprocess.CompletedProcess(
             args=["mvn", "archetype:generate"], returncode=0
         ),
     )
-    def test_prepare_workspace__given_folder_exists(self, mock_run: Mock):
+    def test_prepare_workspace__given_folder_exists(self, mock_run: Mock, mock_add_dependencies: Mock, mock_install_dependencies: Mock):
         """
         This test checks if the workspace is created successfully if the given workspace folder exists
         """
@@ -118,6 +137,8 @@ class TestPrepareWorkspace(TestCase):
 
             # Check if maven was called to create the project structure
             mock_run.assert_called_once()
+            mock_add_dependencies.assert_called_once()
+            mock_install_dependencies.assert_called_once()
 
             # Check indirect output
             self.assertTrue(
@@ -132,7 +153,15 @@ class TestPrepareWorkspace(TestCase):
                 "The 'TRANSFORMATION.md' file should be created in the workspace.",
             )
 
-    def test_prepare_workspace__content_exists_structure_incorrect(self):
+    @patch(
+            "bxagent.preparation.pom.install_dependencies",
+            return_value=None,
+    )
+    @patch(
+            "bxagent.preparation.pom.add_dependencies_to_pom",
+            return_value=None,
+    )
+    def test_prepare_workspace__content_exists_structure_incorrect(self, mock_add_dependencies: Mock, mock_install_dependencies: Mock):
         """
         This test checks if the StructureFixStrategy is invoked if the workspace folder exists but the structure is incorrect.
         Some strategies would be:
@@ -168,13 +197,24 @@ class TestPrepareWorkspace(TestCase):
             self.prepare_workspace_node(input_state)
             self.fix_strategy.fix_structure.assert_called_once_with(input_state)
 
+            mock_add_dependencies.assert_called_once()
+            mock_install_dependencies.assert_called_once()
+
+    @patch(
+            "bxagent.preparation.pom.install_dependencies",
+            return_value=None,
+    )
+    @patch(
+            "bxagent.preparation.pom.add_dependencies_to_pom",
+            return_value=None,
+    )
     @patch(
         "subprocess.run",
         return_value=subprocess.CompletedProcess(
             args=["mvn", "archetype:generate"], returncode=0
         ),
     )
-    def test_prepare_workspace__transformation_plan_exists(self, mock_run: Mock):
+    def test_prepare_workspace__transformation_plan_exists(self, mock_run: Mock, mock_add_dependencies: Mock, mock_install_dependencies: Mock):
         with tempfile.TemporaryDirectory() as temp_dir:
             # Create a fake transformation plan in the workspace
             tp_path = Path(temp_dir) / "bxagent" / "TRANSFORMATION.md"
@@ -218,6 +258,8 @@ class TestPrepareWorkspace(TestCase):
             )
 
             mock_run.assert_called_once()
+            mock_add_dependencies.assert_called_once()
+            mock_install_dependencies.assert_called_once()
 
     def test_prepare_workspace__state_properties_missing(self):
         input_state = PreparationState(

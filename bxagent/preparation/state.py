@@ -23,3 +23,5 @@ class PreparationState(TypedDict):
 
     group_id: Optional[str] = None  # Maven groupId for the generated project
     artifact_id: Optional[str] = None  # Maven artifactId for the generated project
+    install_benchmarx: bool = True  # Whether to install the benchmarx tool in the workspace
+    benchmarx_path: Optional[Path] = None  # Path to the benchmarx tool in the workspace

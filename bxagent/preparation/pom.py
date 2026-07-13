@@ -2,7 +2,7 @@ from pathlib import Path
 import subprocess
 import xml.etree.ElementTree as ET
 from typing import List, Optional, TypedDict
-
+from bxagent.util import register_all_namespaces
 
 class Dependency(TypedDict):
     group_id: str
@@ -10,12 +10,14 @@ class Dependency(TypedDict):
     version: Optional[str]
 
 
-def add_dependencies_to_pom(pom: str, dependencies: List[Dependency]) -> str:
+def add_dependencies_to_pom(pom_path: Path, dependencies: List[Dependency]):
     """
     Add dependencies to the given pom.xml content.
     Returns the modified pom.xml content as a string.
     """
-    root = ET.fromstring(pom)
+    register_all_namespaces(pom_path)
+    tree = ET.parse(pom_path)
+    root = tree.getroot()
     dependencies_element = root.find("dependencies")
 
     if dependencies_element is None:
@@ -33,7 +35,8 @@ def add_dependencies_to_pom(pom: str, dependencies: List[Dependency]) -> str:
             version_element = ET.SubElement(dependency_element, "version")
             version_element.text = dep["version"]
 
-    return ET.tostring(root, encoding="unicode")
+    # Write the modified XML back to the pom.xml file
+    tree.write(pom_path, encoding="utf-8", xml_declaration=True)
 
 
 def install_dependencies(workspace: Path):

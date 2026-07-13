@@ -5,7 +5,6 @@ import shutil
 
 from pathlib import Path
 from unittest import TestCase
-from unittest.mock import Mock, patch
 
 from langgraph.graph.state import CompiledStateGraph
 from langgraph.types import GraphOutput
@@ -143,4 +142,14 @@ class TestPreparationAgentIntegration(TestCase):
             self.assertTrue(
                 bxtool_path.exists(),
                 "The bxtool path should point to an existing file.",
+            )
+
+            benchmarx_path = output_state.get("benchmarx_path")
+            self.assertIsNotNone(
+                benchmarx_path,
+                "The benchmarx path should be set in the output state.",
+            )
+            self.assertTrue(
+                benchmarx_path.exists(),
+                "The benchmarx path should point to an existing directory.",
             )

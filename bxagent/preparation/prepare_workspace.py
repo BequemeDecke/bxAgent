@@ -6,11 +6,11 @@ from typing import List
 
 from bxagent.comprehension import TransformationPlan, FileTransformationPlanParser
 
-from .pom import add_dependencies_to_pom, Dependency, install_dependencies
+import bxagent.preparation.pom as pom_utils
 from .state import PreparationState
 
 
-EMF_DEPENDENCIES: List[Dependency] = [
+EMF_DEPENDENCIES: List[pom_utils.Dependency] = [
     {
         "group_id": "org.eclipse.emf",
         "artifact_id": "org.eclipse.emf.ecore",
@@ -175,10 +175,8 @@ def create_prepare_workspace_node(fix_strategy: StructureFixStrategy):
 
         # Add EMF dependencies to the pom.xml of the transformation module  
         pom_path = workspace / artifact_id / "pom.xml"
-        pom_content = pom_path.read_text()
-        pom_content = add_dependencies_to_pom(pom_content, EMF_DEPENDENCIES)
-        pom_path.write_text(pom_content)
-        install_dependencies(workspace / artifact_id)
+        pom_utils.add_dependencies_to_pom(pom_path, EMF_DEPENDENCIES)
+        pom_utils.install_dependencies(workspace / artifact_id)
 
         # Update the state with the new paths and transformation plan
         new_state = PreparationState(transformation_plan=tp, bxtool_path=bxtool_path)
