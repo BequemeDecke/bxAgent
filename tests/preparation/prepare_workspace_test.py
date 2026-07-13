@@ -12,6 +12,7 @@ from bxagent.preparation.prepare_workspace import (
     StructureFixStrategy,
 )
 from bxagent.preparation.state import PreparationState
+from bxagent.util import copy_workspace, log_workspace_structure
 
 
 class TestPrepareWorkspace(TestCase):
@@ -308,9 +309,14 @@ class TestMavenIntegration(TestCase):
                 artifact_id="bxagent",
             )
 
-            create_prepare_workspace_node(fix_strategy=Mock(spec=StructureFixStrategy))(
-                input_state
-            )
+            try: 
+                create_prepare_workspace_node(fix_strategy=Mock(spec=StructureFixStrategy))(
+                    input_state
+                )
+            except Exception as e:
+                log_workspace_structure(Path(temp_dir))
+                copy_workspace(Path(temp_dir), Path.cwd() / ".bx-agent-workspace/prepare_workspace_test")
+                self.fail(f"prepare_workspace_node raised an exception unexpectedly: {e}")
 
             # Check for the correct structure
             self.assertTrue(

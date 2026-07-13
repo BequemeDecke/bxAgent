@@ -2,7 +2,7 @@ from pathlib import Path
 import subprocess
 import xml.etree.ElementTree as ET
 from typing import List, Optional, TypedDict
-from bxagent.util import register_all_namespaces
+from bxagent.util import get_all_namespaces
 
 class Dependency(TypedDict):
     group_id: str
@@ -15,10 +15,13 @@ def add_module_to_pom(pom_path: Path, group_id: str, artifact_id: str, version: 
     Add a module to the given pom.xml content.
     Returns the modified pom.xml content as a string.
     """
-    register_all_namespaces(pom_path)
+    namespaces = get_all_namespaces(pom_path)
+    for ns in namespaces:
+        ET.register_namespace(ns, namespaces[ns])
+
     tree = ET.parse(pom_path)
     root = tree.getroot()
-    modules_element = root.find("modules")
+    modules_element = root.find("modules", namespaces)
 
     if modules_element is None:
         modules_element = ET.SubElement(root, "modules")
@@ -35,10 +38,13 @@ def add_dependencies_to_pom(pom_path: Path, dependencies: List[Dependency]):
     Add dependencies to the given pom.xml content.
     Returns the modified pom.xml content as a string.
     """
-    register_all_namespaces(pom_path)
+    namespaces = get_all_namespaces(pom_path)
+    for ns in namespaces:
+        ET.register_namespace(ns, namespaces[ns])
+
     tree = ET.parse(pom_path)
     root = tree.getroot()
-    dependencies_element = root.find("dependencies")
+    dependencies_element = root.find("dependencies", namespaces)
 
     if dependencies_element is None:
         dependencies_element = ET.SubElement(root, "dependencies")

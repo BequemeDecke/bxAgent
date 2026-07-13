@@ -19,22 +19,89 @@ INITIAL_POM = """<project>
     <version>1.0-SNAPSHOT</version>
 </project>"""
 
-INITIAL_POM_WITH_DEPENDENCIES = """<project>
-    <modelVersion>4.0.0</modelVersion>
-    <groupId>com.example</groupId>
-    <artifactId>my-app</artifactId>
-    <version>1.0-SNAPSHOT</version>
-    <dependencies>
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-core</artifactId>
-            <version>5.3.8</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-lang3</artifactId>
-        </dependency>
-    </dependencies>
+INITIAL_POM_WITH_DEPENDENCIES = """<?xml version='1.0' encoding='utf-8'?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <artifactId>workspace</artifactId>
+    <groupId>de.example</groupId>
+    <version>1.0</version>
+  </parent>
+
+  <groupId>de.example</groupId>
+  <artifactId>bxagent</artifactId>
+  <version>1.0-SNAPSHOT</version>
+
+  <name>bxagent</name>
+  <description>A simple bxagent.</description>
+  
+  <url>http://www.example.com</url>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <maven.compiler.source>8</maven.compiler.source>
+    <maven.compiler.target>8</maven.compiler.target>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>3.8.1</version>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <artifactId>maven-clean-plugin</artifactId>
+          <version>3.4.0</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-site-plugin</artifactId>
+          <version>3.12.1</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-project-info-reports-plugin</artifactId>
+          <version>3.6.1</version>
+        </plugin>
+        
+        <plugin>
+          <artifactId>maven-resources-plugin</artifactId>
+          <version>3.3.1</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <version>3.13.0</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <version>3.3.0</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-jar-plugin</artifactId>
+          <version>3.4.2</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-install-plugin</artifactId>
+          <version>3.1.2</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-deploy-plugin</artifactId>
+          <version>3.1.2</version>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+  </build>
+
+  <reporting>
+    <plugins>
+      <plugin>
+        <artifactId>maven-project-info-reports-plugin</artifactId>
+      </plugin>
+    </plugins>
+  </reporting>
 </project>"""
 
 
@@ -104,9 +171,8 @@ class TestAddDependencies(TestCase):
             modified_pom = pom_path.read_text()
             logging.debug(f"Modified POM:\n{modified_pom}")
 
-            self.assertIn("<project>", modified_pom)
-            self.assertIn("<dependencies>", modified_pom)
-            self.assertEqual(modified_pom.count("<dependency>"), 4)
+            self.assertEqual(modified_pom.count("<dependencies>"), 1, "There should be exactly 1 <dependencies> section in the modified POM.")
+            self.assertEqual(modified_pom.count("<dependency>"), 3, "There should be exactly 3 <dependency> entries in the modified POM.")
             self.assertIn("<groupId>org.springframework</groupId>", modified_pom)
             self.assertIn("<artifactId>spring-core</artifactId>", modified_pom)
             self.assertIn("<version>5.3.8</version>", modified_pom)
