@@ -9,9 +9,9 @@ from unittest import TestCase
 from langgraph.graph.state import CompiledStateGraph
 from langgraph.types import GraphOutput
 
-from bxagent.preparation.agent import build_preparation_graph
-from bxagent.preparation.state import ModelImplementation, PreparationState
-from bxagent.evaluation import EvaluationExecutor, implementations
+from mdagent.preparation.agent import build_preparation_graph
+from mdagent.preparation.state import ModelImplementation, PreparationState
+from mdagent.evaluation import EvaluationExecutor, implementations
 
 
 def create_test_model_package(temp_dir: Path, package_name: str):
@@ -71,7 +71,7 @@ class TestPreparationAgentIntegration(TestCase):
             models_path = Path(temp_dir, "models")
             models_path.mkdir()
             group_id = "de.example"
-            artifact_id = "bxagent"
+            artifact_id = "mdagent"
 
             (source_model_path, *_) = create_test_model_package(
                 models_path, "Source"

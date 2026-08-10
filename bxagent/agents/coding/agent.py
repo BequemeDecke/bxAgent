@@ -3,8 +3,8 @@ from pathlib import Path
 from deepagents import create_deep_agent
 from deepagents.backends import FilesystemBackend
 
-from bxagent import models
-from bxagent.config import Config
+from mdagent import models
+from mdagent.config import Config
 
 from .middleware import CodingDeepAgentState, CodingDeepAgentStateMiddleware
 

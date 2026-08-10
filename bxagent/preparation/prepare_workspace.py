@@ -4,9 +4,9 @@ import subprocess
 from pathlib import Path
 from typing import List
 
-from bxagent.comprehension import TransformationPlan, FileTransformationPlanParser
+from mdagent.comprehension import TransformationPlan, FileTransformationPlanParser
 
-import bxagent.preparation.pom as pom_utils
+import mdagent.preparation.pom as pom_utils
 from .state import PreparationState
 
 

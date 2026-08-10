@@ -9,12 +9,12 @@ import tempfile
 from pathlib import Path
 from unittest import TestCase
 
-from bxagent.agents.workflow.nodes.preparation_node import (
+from mdagent.agents.workflow.nodes.preparation_node import (
     create_preparation_node,
 )
-from bxagent.agents.workflow.state import WorkflowState
-from bxagent.preparation import build_preparation_graph
-from bxagent.evaluation import EvaluationExecutor, implementations
+from mdagent.agents.workflow.state import WorkflowState
+from mdagent.preparation import build_preparation_graph
+from mdagent.evaluation import EvaluationExecutor, implementations
 
 
 def create_test_model_package(temp_dir: Path, package_name: str):
@@ -68,7 +68,7 @@ class TestPreparationNodeIntegration(TestCase):
             models_path = Path(temp_dir) / "models"
             models_path.mkdir()
             group_id = "de.example"
-            artifact_id = "bxagent"
+            artifact_id = "mdagent"
             package_path = f"{group_id}.{artifact_id}"
             transformation_plan_path = workspace_path / artifact_id / "TRANSFORMATION.md"
 

@@ -4,9 +4,9 @@ from langchain.messages import SystemMessage, HumanMessage
 from pydantic import BaseModel, Field
 
 from .state import WorkflowState
-from bxagent.config import Config
-from bxagent.evaluation import EvaluationPipe
-from bxagent.evaluation.filter import IsErrorFilter, IsReportCandidateFilter
+from mdagent.config import Config
+from mdagent.evaluation import EvaluationPipe
+from mdagent.evaluation.filter import IsErrorFilter, IsReportCandidateFilter
 
 config = Config.get_instance()
 

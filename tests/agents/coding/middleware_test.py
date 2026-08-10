@@ -8,7 +8,7 @@ from langchain.agents import create_agent
 from langchain.messages import ToolMessage, AIMessage, HumanMessage
 from pathlib import Path
 
-from bxagent.agents.coding.middleware import (
+from mdagent.agents.coding.middleware import (
     extract_written_files,
     CodingDeepAgentStateMiddleware,
 )

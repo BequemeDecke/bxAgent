@@ -5,14 +5,14 @@ from pathlib import Path
 from unittest import TestCase
 from unittest.mock import Mock, patch
 
-from bxagent.comprehension import TransformationPlanData
-from bxagent.comprehension.plan import TransformationPlan
-from bxagent.preparation.prepare_workspace import (
+from mdagent.comprehension import TransformationPlanData
+from mdagent.comprehension.plan import TransformationPlan
+from mdagent.preparation.prepare_workspace import (
     create_prepare_workspace_node,
     StructureFixStrategy,
 )
-from bxagent.preparation.state import PreparationState
-from bxagent.util import copy_workspace, log_workspace_structure
+from mdagent.preparation.state import PreparationState
+from mdagent.util import copy_workspace, log_workspace_structure
 
 
 class TestPrepareWorkspace(TestCase):
@@ -23,8 +23,8 @@ class TestPrepareWorkspace(TestCase):
         self.prepare_workspace_node = create_prepare_workspace_node(self.fix_strategy)
         self.fake_data = TransformationPlanData(
             iteration=0,
-            source_model_package="de.example.bxagent",
-            target_model_package="de.example.bxagent",
+            source_model_package="de.example.mdagent",
+            target_model_package="de.example.mdagent",
             source_model_implementation="",
             target_model_implementation="",
             transformation_direction="",
@@ -34,11 +34,11 @@ class TestPrepareWorkspace(TestCase):
         self.template_path = Path.cwd() / "templates"
 
     @patch(
-            "bxagent.preparation.pom.install_dependencies",
+            "mdagent.preparation.pom.install_dependencies",
             return_value=None,
     )
     @patch(
-            "bxagent.preparation.pom.add_dependencies_to_pom",
+            "mdagent.preparation.pom.add_dependencies_to_pom",
             return_value=None,
     )
     @patch(
@@ -59,8 +59,8 @@ class TestPrepareWorkspace(TestCase):
                 required_commands=[],
                 workspace_path=workspace_path,
                 group_id="de.example",
-                artifact_id="bxagent",
-                # package_path="de.example.bxagent",
+                artifact_id="mdagent",
+                # package_path="de.example.mdagent",
             )
 
             output_state: PreparationState = self.prepare_workspace_node(input_state)
@@ -84,23 +84,23 @@ class TestPrepareWorkspace(TestCase):
 
             # Check indirect output
             self.assertTrue(
-                (Path(workspace_path) / "bxagent" / "src").exists(),
+                (Path(workspace_path) / "mdagent" / "src").exists(),
                 "The 'src' folder should be created in the workspace.",
             )
             self.assertTrue(
                 (Path(workspace_path) / "pom.xml").exists(),
             )
             self.assertTrue(
-                (Path(workspace_path) / "bxagent" / "TRANSFORMATION.md").exists(),
+                (Path(workspace_path) / "mdagent" / "TRANSFORMATION.md").exists(),
                 "The 'TRANSFORMATION.md' file should be created in the workspace.",
             )
 
     @patch(
-            "bxagent.preparation.pom.install_dependencies",
+            "mdagent.preparation.pom.install_dependencies",
             return_value=None,
     )
     @patch(
-            "bxagent.preparation.pom.add_dependencies_to_pom",
+            "mdagent.preparation.pom.add_dependencies_to_pom",
             return_value=None,
     )
     @patch(
@@ -118,8 +118,8 @@ class TestPrepareWorkspace(TestCase):
                 required_commands=[],
                 workspace_path=Path(temp_dir),
                 group_id="de.example",
-                artifact_id="bxagent",
-                # package_path="de.example.bxagent",
+                artifact_id="mdagent",
+                # package_path="de.example.mdagent",
             )
 
             output_state: PreparationState = self.prepare_workspace_node(input_state)
@@ -143,23 +143,23 @@ class TestPrepareWorkspace(TestCase):
 
             # Check indirect output
             self.assertTrue(
-                (Path(temp_dir) / "bxagent" / "src").exists(),
+                (Path(temp_dir) / "mdagent" / "src").exists(),
                 "The 'src' folder should be created in the workspace.",
             )
             self.assertTrue(
                 (Path(temp_dir) / "pom.xml").exists(),
             )
             self.assertTrue(
-                (Path(temp_dir) / "bxagent" / "TRANSFORMATION.md").exists(),
+                (Path(temp_dir) / "mdagent" / "TRANSFORMATION.md").exists(),
                 "The 'TRANSFORMATION.md' file should be created in the workspace.",
             )
 
     @patch(
-            "bxagent.preparation.pom.install_dependencies",
+            "mdagent.preparation.pom.install_dependencies",
             return_value=None,
     )
     @patch(
-            "bxagent.preparation.pom.add_dependencies_to_pom",
+            "mdagent.preparation.pom.add_dependencies_to_pom",
             return_value=None,
     )
     def test_prepare_workspace__content_exists_structure_incorrect(self, mock_add_dependencies: Mock, mock_install_dependencies: Mock):
@@ -177,22 +177,22 @@ class TestPrepareWorkspace(TestCase):
                 required_commands=[],
                 workspace_path=Path(temp_dir),
                 group_id="de.example",
-                artifact_id="bxagent",
+                artifact_id="mdagent",
             )
 
             # Create the workspace manually
             # There is no "pom.xml"
-            (Path(temp_dir) / "bxagent").mkdir(parents=True)
-            (Path(temp_dir) / "bxagent" / "TRANSFORMATION.md").touch()
+            (Path(temp_dir) / "mdagent").mkdir(parents=True)
+            (Path(temp_dir) / "mdagent" / "TRANSFORMATION.md").touch()
             (
                 Path(temp_dir)
-                / "bxagent"
+                / "mdagent"
                 / "src"
                 / "main"
                 / "java"
                 / "de"
                 / "example"
-                / "bxagent"
+                / "mdagent"
             ).mkdir(parents=True)
 
             self.prepare_workspace_node(input_state)
@@ -202,11 +202,11 @@ class TestPrepareWorkspace(TestCase):
             mock_install_dependencies.assert_called_once()
 
     @patch(
-            "bxagent.preparation.pom.install_dependencies",
+            "mdagent.preparation.pom.install_dependencies",
             return_value=None,
     )
     @patch(
-            "bxagent.preparation.pom.add_dependencies_to_pom",
+            "mdagent.preparation.pom.add_dependencies_to_pom",
             return_value=None,
     )
     @patch(
@@ -218,7 +218,7 @@ class TestPrepareWorkspace(TestCase):
     def test_prepare_workspace__transformation_plan_exists(self, mock_run: Mock, mock_add_dependencies: Mock, mock_install_dependencies: Mock):
         with tempfile.TemporaryDirectory() as temp_dir:
             # Create a fake transformation plan in the workspace
-            tp_path = Path(temp_dir) / "bxagent" / "TRANSFORMATION.md"
+            tp_path = Path(temp_dir) / "mdagent" / "TRANSFORMATION.md"
             tp_path.parent.mkdir(parents=True, exist_ok=True)
             tp_path.touch()
             tp = TransformationPlan.from_dict(
@@ -239,9 +239,9 @@ class TestPrepareWorkspace(TestCase):
             input_state = PreparationState(
                 required_commands=[],
                 workspace_path=Path(temp_dir),
-                # package_path="de.example.bxagent",
+                # package_path="de.example.mdagent",
                 group_id="de.example",
-                artifact_id="bxagent",
+                artifact_id="mdagent",
             )
 
             output_state = self.prepare_workspace_node(input_state)
@@ -266,9 +266,9 @@ class TestPrepareWorkspace(TestCase):
         input_state = PreparationState(
             required_commands=[],
             workspace_path=None,  # Missing workspace path
-            # package_path="de.example.bxagent",
+            # package_path="de.example.mdagent",
             group_id="de.example",
-            artifact_id="bxagent",
+            artifact_id="mdagent",
         )
 
         with self.assertRaises(ValueError):
@@ -278,7 +278,7 @@ class TestPrepareWorkspace(TestCase):
             required_commands=[],
             workspace_path=Path("/some/path"),
             group_id=None,
-            artifact_id="bxagent",
+            artifact_id="mdagent",
         )
 
         with self.assertRaises(ValueError):
@@ -306,7 +306,7 @@ class TestMavenIntegration(TestCase):
                 required_commands=["mvn"],
                 workspace_path=Path(temp_dir),
                 group_id="de.example",
-                artifact_id="bxagent",
+                artifact_id="mdagent",
             )
 
             try: 
@@ -315,35 +315,35 @@ class TestMavenIntegration(TestCase):
                 )
             except Exception as e:
                 log_workspace_structure(Path(temp_dir))
-                copy_workspace(Path(temp_dir), Path.cwd() / ".bx-agent-workspace/prepare_workspace_test")
+                copy_workspace(Path(temp_dir), Path.cwd() / ".mdagent-workspace/prepare_workspace_test")
                 self.fail(f"prepare_workspace_node raised an exception unexpectedly: {e}")
 
             # Check for the correct structure
             self.assertTrue(
                 (
                     Path(temp_dir)
-                    / "bxagent"
+                    / "mdagent"
                     / "src"
                     / "main"
                     / "java"
                     / "de"
                     / "example"
-                    / "bxagent"
+                    / "mdagent"
                 ).exists(),
-                "The 'src/main/java/de/example/bxagent' folder should be created in the workspace.",
+                "The 'src/main/java/de/example/mdagent' folder should be created in the workspace.",
             )
 
             # Check if the transformation Java file is created
             self.assertTrue(
                 (
                     Path(temp_dir)
-                    / "bxagent"
+                    / "mdagent"
                     / "src"
                     / "main"
                     / "java"
                     / "de"
                     / "example"
-                    / "bxagent"
+                    / "mdagent"
                     / "BxAgentJavaBxTool.java"
                 ).exists(),
                 "The transformation Java file should be created in the package path.",
@@ -353,13 +353,13 @@ class TestMavenIntegration(TestCase):
             self.assertFalse(
                 (
                     Path(temp_dir)
-                    / "bxagent"
+                    / "mdagent"
                     / "src"
                     / "main"
                     / "java"
                     / "de"
                     / "example"
-                    / "bxagent"
+                    / "mdagent"
                     / "App.java"
                 ).exists(),
                 "The App.java file should be deleted.",

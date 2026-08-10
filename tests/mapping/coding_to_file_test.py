@@ -1,7 +1,7 @@
 from unittest import TestCase
 
-from bxagent.implementation.state import ImplementationState
-from bxagent.mapping import map_coding_to_file
+from mdagent.implementation.state import ImplementationState
+from mdagent.mapping import map_coding_to_file
 
 class TestCodingToFileMapping(TestCase):
     def test_mapping(self):

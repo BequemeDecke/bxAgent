@@ -15,7 +15,7 @@ from langchain.agents.middleware import (
 )
 from langchain.messages import AnyMessage, ToolMessage
 
-from bxagent.config import Config
+from mdagent.config import Config
 
 from .state import CodingDeepAgentState
 

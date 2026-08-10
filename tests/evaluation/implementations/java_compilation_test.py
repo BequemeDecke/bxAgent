@@ -5,12 +5,12 @@ from typing import List
 from unittest import TestCase
 from unittest.mock import patch
 
-from bxagent.evaluation.implementations.java_compilation import (
+from mdagent.evaluation.implementations.java_compilation import (
     JavaCompilationEvaluation,
     EvaluationError,
     parse_javac_output,
 )
-from bxagent.evaluation.types import EvaluationResult
+from mdagent.evaluation.types import EvaluationResult
 
 ERROR_BLOCK_1 = """
     ublic static void main(String[] args) {
@@ -23,11 +23,11 @@ ERROR_BLOCK_3 = """
 ^"""
 
 JAVAC_ERROR_OUTPUT = f"""
-./.bx-agent-workspace/test/Family.java:2: Fehler: <ID> erwartet
+./.mdagent-workspace/test/Family.java:2: Fehler: <ID> erwartet
 {ERROR_BLOCK_1}
-./.bx-agent-workspace/test/Family.java:6: Fehler: ';' erwartet
+./.mdagent-workspace/test/Family.java:6: Fehler: ';' erwartet
 {ERROR_BLOCK_2}
-./.bx-agent-workspace/test/Family.java:10: Fehler: class, interface, enum oder record erwartet
+./.mdagent-workspace/test/Family.java:10: Fehler: class, interface, enum oder record erwartet
 {ERROR_BLOCK_3}
 3 Fehler
 """
@@ -35,32 +35,32 @@ JAVAC_ERROR_OUTPUT = f"""
 JAVAC_SUCCESS_OUTPUT = ""
 
 SYMBOL_ERRORS = """
-./.bx-agent-workspace/transformation/transformation/Family.java:29: Fehler: Symbol nicht gefunden
+./.mdagent-workspace/transformation/transformation/Family.java:29: Fehler: Symbol nicht gefunden
     FamilyMember getFather();
     ^
   Symbol: Klasse FamilyMember
   Ort: Schnittstelle Family
-./.bx-agent-workspace/transformation/transformation/Family.java:36: Fehler: Symbol nicht gefunden
+./.mdagent-workspace/transformation/transformation/Family.java:36: Fehler: Symbol nicht gefunden
     void setFather(FamilyMember father);
                    ^
   Symbol: Klasse FamilyMember
   Ort: Schnittstelle Family
-./.bx-agent-workspace/transformation/transformation/Family.java:43: Fehler: Symbol nicht gefunden
+./.mdagent-workspace/transformation/transformation/Family.java:43: Fehler: Symbol nicht gefunden
     FamilyMember getMother();
     ^
   Symbol: Klasse FamilyMember
   Ort: Schnittstelle Family
-./.bx-agent-workspace/transformation/transformation/Family.java:50: Fehler: Symbol nicht gefunden
+./.mdagent-workspace/transformation/transformation/Family.java:50: Fehler: Symbol nicht gefunden
     void setMother(FamilyMember mother);
                    ^
   Symbol: Klasse FamilyMember
   Ort: Schnittstelle Family
-./.bx-agent-workspace/transformation/transformation/Family.java:57: Fehler: Symbol nicht gefunden
+./.mdagent-workspace/transformation/transformation/Family.java:57: Fehler: Symbol nicht gefunden
     List<FamilyMember> getSons();
          ^
   Symbol: Klasse FamilyMember
   Ort: Schnittstelle Family
-./.bx-agent-workspace/transformation/transformation/Family.java:64: Fehler: Symbol nicht gefunden
+./.mdagent-workspace/transformation/transformation/Family.java:64: Fehler: Symbol nicht gefunden
     List<FamilyMember> getDaughters();
          ^
   Symbol: Klasse FamilyMember
@@ -213,7 +213,7 @@ class TestJavaCompilationEvaluation__parse_javac_output(TestCase):
             EvaluationResult(
                 content="Fehler: <ID> erwartet",
                 metadata={
-                    "file": "./.bx-agent-workspace/test/Family.java",
+                    "file": "./.mdagent-workspace/test/Family.java",
                     "line": 2,
                     "block": ERROR_BLOCK_1,
                 },
@@ -221,7 +221,7 @@ class TestJavaCompilationEvaluation__parse_javac_output(TestCase):
             EvaluationResult(
                 content="Fehler: ';' erwartet",
                 metadata={
-                    "file": "./.bx-agent-workspace/test/Family.java",
+                    "file": "./.mdagent-workspace/test/Family.java",
                     "line": 6,
                     "block": ERROR_BLOCK_2,
                 },
@@ -229,7 +229,7 @@ class TestJavaCompilationEvaluation__parse_javac_output(TestCase):
             EvaluationResult(
                 content="Fehler: class, interface, enum oder record erwartet",
                 metadata={
-                    "file": "./.bx-agent-workspace/test/Family.java",
+                    "file": "./.mdagent-workspace/test/Family.java",
                     "line": 10,
                     "block": ERROR_BLOCK_3,
                 },

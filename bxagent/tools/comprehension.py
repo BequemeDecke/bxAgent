@@ -1,7 +1,7 @@
 from langchain.tools import ToolRuntime, tool
 from typing import Optional
 
-from bxagent.comprehension import TransformationPlan
+from mdagent.comprehension import TransformationPlan
 
 @tool
 def update_model_implementation(

@@ -51,7 +51,7 @@ class WorkspaceOperabilityEvaluation(Evaluation):
                 )
             )
 
-        # Check if the package path exists within the src folder e.g. de.hof-university.bxagent
+        # Check if the package path exists within the src folder e.g. de.hof-university.mdagent
         package_path = kwargs.get("package_path")
         package_parts = package_path.split(".")
         current_path = src_folder

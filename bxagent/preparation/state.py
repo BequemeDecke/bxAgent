@@ -1,8 +1,8 @@
 from pathlib import Path
 from typing import Dict, TypedDict, Optional
 
-from bxagent.comprehension.plan import TransformationPlan
-from bxagent.evaluation.types import EvaluationRun
+from mdagent.comprehension.plan import TransformationPlan
+from mdagent.evaluation.types import EvaluationRun
 
 
 class ModelImplementation(TypedDict):

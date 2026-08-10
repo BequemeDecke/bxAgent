@@ -2,7 +2,7 @@ from pathlib import Path
 
 from langchain.chat_models import BaseChatModel
 
-from bxagent.implementation.bxtool import BxToolForEMF, BxToolTemplateResolver
+from mdagent.implementation.bxtool import BxToolForEMF, BxToolTemplateResolver
 
 from .state import ImplementationState
 

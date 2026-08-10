@@ -1,7 +1,7 @@
 from langfuse import Langfuse
 from langfuse.langchain import CallbackHandler as LangfuseCallbackHandler
 
-from bxagent.config import Config
+from mdagent.config import Config
 
 
 # --- Builder Functions ---

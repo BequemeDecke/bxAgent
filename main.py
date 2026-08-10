@@ -5,7 +5,7 @@ from argparse import ArgumentParser
 from pathlib import Path
 from langchain.messages import HumanMessage
 
-from bxagent.agents import build_bx_agent
+from mdagent.agents import build_bx_agent
 
 
 def parse_arguments():
@@ -61,7 +61,7 @@ def main():
         }
     
     if args.use_langfuse:
-        from bxagent.monitoring import build_langfuse_client # Dynamic import to avoid unnecessary dependency if not using Langfuse
+        from mdagent.monitoring import build_langfuse_client # Dynamic import to avoid unnecessary dependency if not using Langfuse
         
         langfuse_client, langfuse_handler = build_langfuse_client()
         config["callbacks"] = [langfuse_handler]
@@ -71,7 +71,7 @@ def main():
         {"messages": [HumanMessage(content=input_prompt)]},
         config,
     )
-    logging.info(f"Received response from bxAgent: {response}")
+    logging.info(f"Received response from mdagent: {response}")
     
     if args.use_langfuse:
         langfuse_client.flush()  # Ensure all events are sent to Langfuse

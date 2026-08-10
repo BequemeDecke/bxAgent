@@ -11,12 +11,12 @@ from unittest.mock import Mock
 
 from pydantic import BaseModel
 
-from bxagent.agents.workflow.nodes.evaluation_node import (
+from mdagent.agents.workflow.nodes.evaluation_node import (
     create_evaluation_node,
 )
-from bxagent.agents.workflow.state import WorkflowState
-from bxagent.evaluation import EvaluationExecutor
-from bxagent.evaluation.types import Evaluation, EvaluationError, EvaluationResult
+from mdagent.agents.workflow.state import WorkflowState
+from mdagent.evaluation import EvaluationExecutor
+from mdagent.evaluation.types import Evaluation, EvaluationError, EvaluationResult
 
 
 class MockedSchema(BaseModel):

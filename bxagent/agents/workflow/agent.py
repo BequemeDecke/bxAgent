@@ -2,17 +2,17 @@ from pathlib import Path
 
 from langgraph.graph import END, START, StateGraph
 
-from bxagent.agents.coding.agent import build_coding_deep_agent
-from bxagent.agents.comprehension import build_comprehension_agent
-from bxagent.implementation import build_implementation_graph
-from bxagent.mapping import (
+from mdagent.agents.coding.agent import build_coding_deep_agent
+from mdagent.agents.comprehension import build_comprehension_agent
+from mdagent.implementation import build_implementation_graph
+from mdagent.mapping import (
     map_workflow_to_commands,
     map_workflow_to_file,
     map_workflow_to_workspace,
 )
-from bxagent.models import build_base_model
-from bxagent.preparation import build_preparation_graph
-from bxagent.evaluation import EvaluationExecutor, implementations
+from mdagent.models import build_base_model
+from mdagent.preparation import build_preparation_graph
+from mdagent.evaluation import EvaluationExecutor, implementations
 
 from .nodes.comprehension_node import create_comprehension_node
 from .nodes.implementation_node import create_implementation_node

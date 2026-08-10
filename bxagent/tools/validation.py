@@ -1,7 +1,7 @@
 from typing import Dict, List
 
 from langchain.tools import BaseTool, tool
-from bxagent.evaluation import EvaluationExecutor, Evaluation, EvaluationRun
+from mdagent.evaluation import EvaluationExecutor, Evaluation, EvaluationRun
 
 def create_evaluation_tools(evaluations: Dict[str, Evaluation]) -> List[BaseTool]:
     """

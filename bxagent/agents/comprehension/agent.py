@@ -2,11 +2,11 @@ from langchain.agents import create_agent
 from langchain.chat_models import BaseChatModel
 from langchain.messages import SystemMessage
 
-from bxagent.models import build_base_model
-from bxagent.comprehension import (
+from mdagent.models import build_base_model
+from mdagent.comprehension import (
     TransformationPlan,
 )
-from bxagent.tools.comprehension import transformation_plan_tools
+from mdagent.tools.comprehension import transformation_plan_tools
 from .state import ComprehensionAgentState
 
 COMPREHENSION_SYSTEM_PROMPT = """

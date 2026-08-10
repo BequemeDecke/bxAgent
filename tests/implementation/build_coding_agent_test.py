@@ -4,15 +4,15 @@ from unittest.mock import patch, Mock
 from langgraph.graph import StateGraph
 from langgraph.graph.state import CompiledStateGraph
 
-from bxagent.implementation.agent import build_coding_agent_subgraph
+from mdagent.implementation.agent import build_coding_agent_subgraph
 
 
 class TestBuildCodingAgent(TestCase):
 
-    @patch("bxagent.tools.coding.agent.create_implement_transformation_node")
-    @patch("bxagent.tools.coding.agent.create_implement_bx_tool_node")
-    @patch("bxagent.tools.coding.agent.create_evaluation_node")
-    @patch("bxagent.tools.coding.agent.create_evaluate_transformation_implementation")
+    @patch("mdagent.tools.coding.agent.create_implement_transformation_node")
+    @patch("mdagent.tools.coding.agent.create_implement_bx_tool_node")
+    @patch("mdagent.tools.coding.agent.create_evaluation_node")
+    @patch("mdagent.tools.coding.agent.create_evaluate_transformation_implementation")
     def test_build_coding_agent_subgraph(
         self,
         mock_evaluate_transformation_implementation: Mock,

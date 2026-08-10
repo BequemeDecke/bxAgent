@@ -1,6 +1,6 @@
 from typing import Literal
 
-from bxagent.config import Config
+from mdagent.config import Config
 from .state import ImplementationState
 
 config = Config.get_instance()

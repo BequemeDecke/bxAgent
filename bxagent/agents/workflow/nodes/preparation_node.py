@@ -1,7 +1,7 @@
 from langgraph.graph.state import CompiledStateGraph
 from langgraph.types import GraphOutput
 
-from bxagent.preparation.state import ModelImplementation, PreparationState
+from mdagent.preparation.state import ModelImplementation, PreparationState
 
 from ..state import WorkflowState
 

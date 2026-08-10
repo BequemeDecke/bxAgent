@@ -1,8 +1,8 @@
 from unittest import TestCase
 
-from bxagent.implementation.state import ImplementationState # Fix cyclic import from __init__ files
-from bxagent.agents.workflow.state import WorkflowState
-from bxagent.mapping import map_workflow_to_commands
+from mdagent.implementation.state import ImplementationState # Fix cyclic import from __init__ files
+from mdagent.agents.workflow.state import WorkflowState
+from mdagent.mapping import map_workflow_to_commands
 
 class TestWorkflowToCommandsMapping(TestCase):
     def test_mapping(self):

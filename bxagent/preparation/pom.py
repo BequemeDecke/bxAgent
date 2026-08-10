@@ -2,7 +2,7 @@ from pathlib import Path
 import subprocess
 import xml.etree.ElementTree as ET
 from typing import List, Optional, TypedDict
-from bxagent.util import get_all_namespaces
+from mdagent.util import get_all_namespaces
 
 class Dependency(TypedDict):
     group_id: str

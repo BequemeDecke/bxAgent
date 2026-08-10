@@ -1,4 +1,4 @@
-import bxagent.evaluation.implementations as implementations
+import mdagent.evaluation.implementations as implementations
 
 from .executor import EvaluationExecutor
 from .pipefilter import EvaluationFilter, EvaluationPipe

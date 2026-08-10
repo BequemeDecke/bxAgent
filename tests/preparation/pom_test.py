@@ -5,7 +5,7 @@ from typing import List
 from unittest import TestCase
 from unittest.mock import Mock, patch
 
-from bxagent.preparation.pom import (
+from mdagent.preparation.pom import (
     Dependency,
     add_dependencies_to_pom,
     add_module_to_pom,
@@ -29,11 +29,11 @@ INITIAL_POM_WITH_DEPENDENCIES = """<?xml version='1.0' encoding='utf-8'?>
   </parent>
 
   <groupId>de.example</groupId>
-  <artifactId>bxagent</artifactId>
+  <artifactId>mdagent</artifactId>
   <version>1.0-SNAPSHOT</version>
 
-  <name>bxagent</name>
-  <description>A simple bxagent.</description>
+  <name>mdagent</name>
+  <description>A simple mdagent.</description>
   
   <url>http://www.example.com</url>
 

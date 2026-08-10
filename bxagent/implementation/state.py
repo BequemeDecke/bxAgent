@@ -1,8 +1,8 @@
 from typing import Dict, TypedDict, List
 from pathlib import Path
 
-from bxagent.evaluation.types import EvaluationRun
-from bxagent.comprehension.plan import TransformationPlan
+from mdagent.evaluation.types import EvaluationRun
+from mdagent.comprehension.plan import TransformationPlan
 
 
 class ImplementationState(TypedDict):

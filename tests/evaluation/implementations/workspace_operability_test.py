@@ -3,7 +3,7 @@ import tempfile
 
 from pathlib import Path
 from unittest import TestCase
-from bxagent.evaluation.implementations.workspace_operability import (
+from mdagent.evaluation.implementations.workspace_operability import (
     WorkspaceOperabilityEvaluation,
 )
 
@@ -30,7 +30,7 @@ class TestWorkspaceOperability(TestCase):
             results, errors = asyncio.run(
                 workspace_operability_evaluation.run(
                     workspace_path=workspace_path,
-                    package_path="de.example.bxagent",
+                    package_path="de.example.mdagent",
                 )
             )
 
@@ -60,7 +60,7 @@ class TestWorkspaceOperability(TestCase):
                 "Expected src folder error was not returned.",
             )
             self.assertIn(
-                f"Package path 'de.example.bxagent' is invalid. Missing directory: '{workspace_path / 'src' / 'de'}'.",
+                f"Package path 'de.example.mdagent' is invalid. Missing directory: '{workspace_path / 'src' / 'de'}'.",
                 [result.content for result in results],
                 "Expected package path error was not returned.",
             )
@@ -106,7 +106,7 @@ class TestWorkspaceOperability(TestCase):
             results, errors = asyncio.run(
                 workspace_operability_evaluation.run(
                     workspace_path=workspace_path,
-                    package_path="de.example.bxagent",
+                    package_path="de.example.mdagent",
                 )
             )
 
@@ -122,6 +122,6 @@ class TestWorkspaceOperability(TestCase):
             )
             self.assertEqual(
                 results[0].content,
-                f"Package path 'de.example.bxagent' is invalid. Missing directory: '{workspace_path / 'src' / 'de' / 'example' / 'bxagent'}'.",
+                f"Package path 'de.example.mdagent' is invalid. Missing directory: '{workspace_path / 'src' / 'de' / 'example' / 'mdagent'}'.",
                 "Expected package path error message does not match.",
             )

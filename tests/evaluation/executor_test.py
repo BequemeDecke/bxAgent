@@ -6,8 +6,8 @@ from typing import List
 
 from pydantic import BaseModel
 
-from bxagent.evaluation.executor import LinkedEvaluation, EvaluationExecutor
-from bxagent.evaluation.types import (
+from mdagent.evaluation.executor import LinkedEvaluation, EvaluationExecutor
+from mdagent.evaluation.types import (
     Evaluation,
     EvaluationError,
     EvaluationResult,

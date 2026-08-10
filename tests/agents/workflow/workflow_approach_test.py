@@ -10,12 +10,12 @@ import logging
 from pathlib import Path
 from unittest import TestCase
 
-from bxagent.agents.workflow.agent import build_workflow_agent
-from bxagent.agents.workflow.state import WorkflowState
-from bxagent.comprehension.plan import FileTransformationPlanParser, TransformationPlan
-from bxagent.monitoring import build_langfuse_client
+from mdagent.agents.workflow.agent import build_workflow_agent
+from mdagent.agents.workflow.state import WorkflowState
+from mdagent.comprehension.plan import FileTransformationPlanParser, TransformationPlan
+from mdagent.monitoring import build_langfuse_client
 
-TEST_ENVIRONMENT = Path(".bxagent-tests")
+TEST_ENVIRONMENT = Path(".mdagent-tests")
 
 
 class TestWorkflowApproach(TestCase):
