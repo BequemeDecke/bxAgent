@@ -3,29 +3,29 @@ from typing import List, Tuple
 
 from pydantic import BaseModel
 
-from ..types import Validation, ValidationError, ValidationResult
+from ..types import Evaluation, EvaluationError, EvaluationResult
 
 
-class WorkspaceOperabilityValidationConfig(BaseModel):
+class WorkspaceOperabilityEvaluationConfig(BaseModel):
     workspace_path: Path
     package_path: str
 
 
-class WorkspaceOperabilityValidation(Validation):
+class WorkspaceOperabilityEvaluation(Evaluation):
     async def setup(self) -> None:
         pass
 
     async def run(
         self, **kwargs
-    ) -> Tuple[List[ValidationResult], List[ValidationError]]:
-        results: List[ValidationResult] = []
-        errors: List[ValidationError] = []
+    ) -> Tuple[List[EvaluationResult], List[EvaluationError]]:
+        results: List[EvaluationResult] = []
+        errors: List[EvaluationError] = []
 
         # Check if the workspace path exists and is a directory
         workspace_path: Path = kwargs.get("workspace_path")
         if not workspace_path.exists() or not workspace_path.is_dir():
             results.append(
-                ValidationResult(
+                EvaluationResult(
                     content=f"Workspace path '{workspace_path}' does not exist or is not a directory.",
                     metadata={"success": False, "include_in_report": False},
                 )
@@ -35,7 +35,7 @@ class WorkspaceOperabilityValidation(Validation):
         transformation_md_path = workspace_path / "TRANSFORMATION.md"
         if not transformation_md_path.exists() or not transformation_md_path.is_file():
             results.append(
-                ValidationResult(
+                EvaluationResult(
                     content="Required file 'TRANSFORMATION.md' is missing in the workspace.",
                     metadata={"success": False, "include_in_report": False},
                 )
@@ -45,7 +45,7 @@ class WorkspaceOperabilityValidation(Validation):
         src_folder = workspace_path / "src"
         if not src_folder.exists() or not src_folder.is_dir():
             results.append(
-                ValidationResult(
+                EvaluationResult(
                     content="Required folder 'src' is missing in the workspace.",
                     metadata={"success": False, "include_in_report": False},
                 )
@@ -59,7 +59,7 @@ class WorkspaceOperabilityValidation(Validation):
             current_path = current_path / part
             if not current_path.exists() or not current_path.is_dir():
                 results.append(
-                    ValidationResult(
+                    EvaluationResult(
                         content=f"Package path '{package_path}' is invalid. Missing directory: '{current_path}'.",
                         metadata={"success": False, "include_in_report": False},
                     )

@@ -11,7 +11,7 @@ from langgraph.types import GraphOutput
 
 from bxagent.preparation.agent import build_preparation_graph
 from bxagent.preparation.state import ModelImplementation, PreparationState
-from bxagent.evaluation import ValidationExecutor, implementations
+from bxagent.evaluation import EvaluationExecutor, implementations
 
 
 def create_test_model_package(temp_dir: Path, package_name: str):
@@ -41,21 +41,21 @@ class TestPreparationAgentIntegration(TestCase):
         if shutil.which("mvn") is None:
             self.skipTest("Maven is not installed. Skipping integration tests.")
 
-        self.validation_executor = ValidationExecutor(
-            validations={
+        self.evaluation_executor = EvaluationExecutor(
+            evaluations={
                 "workspace_operability": {
-                    "validation": implementations.WorkspaceOperabilityValidation(),
-                    "validation_schema": implementations.WorkspaceOperabilityValidationConfig,
+                    "evaluation": implementations.WorkspaceOperabilityEvaluation(),
+                    "evaluation_schema": implementations.WorkspaceOperabilityEvaluationConfig,
                 },
                 "commands_installed": {
-                    "validation": implementations.CommandInstalledValidation(),
-                    "validation_schema": implementations.CommandInstalledValidationConfig,
+                    "evaluation": implementations.CommandInstalledEvaluation(),
+                    "evaluation_schema": implementations.CommandInstalledEvaluationConfig,
                 },
             }
         )
 
     def test_agent__construction(self):
-        agent = build_preparation_graph(validation_executor=self.validation_executor)
+        agent = build_preparation_graph(evaluation_executor=self.evaluation_executor)
         graph = agent.compile()
 
         self.assertIsInstance(
@@ -81,7 +81,7 @@ class TestPreparationAgentIntegration(TestCase):
             )
 
             agent = build_preparation_graph(
-                validation_executor=self.validation_executor
+                evaluation_executor=self.evaluation_executor
             )
             graph = agent.compile()
             initial_state = PreparationState(
@@ -108,16 +108,16 @@ class TestPreparationAgentIntegration(TestCase):
             output_state: PreparationState = output.value
             logging.debug(f"Output state: {output_state}")
 
-            validation_runs = output_state.get("latest_validation_runs", {})
+            evaluation_runs = output_state.get("latest_evaluation_runs", {})
             errors = []
-            for validation_name, validation_run in validation_runs.items():
-                if validation_run.errors:
-                    errors.extend(validation_run.errors)
+            for evaluation_name, evaluation_run in evaluation_runs.items():
+                if evaluation_run.errors:
+                    errors.extend(evaluation_run.errors)
 
             self.assertEqual(
                 errors,
                 [],
-                "All validations should pass with the mocked environment.",
+                "All evaluations should pass with the mocked environment.",
             )
             self.assertTrue(
                 output_state["workspace_path"].exists(),

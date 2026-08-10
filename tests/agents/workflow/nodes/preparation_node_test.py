@@ -14,7 +14,7 @@ from bxagent.agents.workflow.nodes.preparation_node import (
 )
 from bxagent.agents.workflow.state import WorkflowState
 from bxagent.preparation import build_preparation_graph
-from bxagent.evaluation import ValidationExecutor, implementations
+from bxagent.evaluation import EvaluationExecutor, implementations
 
 
 def create_test_model_package(temp_dir: Path, package_name: str):
@@ -45,15 +45,15 @@ class TestPreparationNodeIntegration(TestCase):
             self.skipTest("Maven is not installed. Skipping integration tests.")
 
         self.preparation_agent = build_preparation_graph(
-            validation_executor=ValidationExecutor(
-                validations={
+            evaluation_executor=EvaluationExecutor(
+                evaluations={
                     "workspace_operability": {
-                        "validation": implementations.WorkspaceOperabilityValidation(),
-                        "validation_schema": implementations.WorkspaceOperabilityValidationConfig,
+                        "evaluation": implementations.WorkspaceOperabilityEvaluation(),
+                        "evaluation_schema": implementations.WorkspaceOperabilityEvaluationConfig,
                     },
                     "commands_installed": {
-                        "validation": implementations.CommandInstalledValidation(),
-                        "validation_schema": implementations.CommandInstalledValidationConfig,
+                        "evaluation": implementations.CommandInstalledEvaluation(),
+                        "evaluation_schema": implementations.CommandInstalledEvaluationConfig,
                     },
                 }
             )

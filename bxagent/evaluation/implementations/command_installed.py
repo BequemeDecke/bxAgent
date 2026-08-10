@@ -2,22 +2,22 @@ import shutil
 from typing import List, Tuple
 from pydantic import BaseModel
 
-from ..types import Validation, ValidationResult, ValidationError
+from ..types import Evaluation, EvaluationResult, EvaluationError
 
 
-class CommandInstalledValidationConfig(BaseModel):
+class CommandInstalledEvaluationConfig(BaseModel):
     commands: List[str]
 
 
-class CommandInstalledValidation(Validation):
+class CommandInstalledEvaluation(Evaluation):
     async def setup(self):
         pass
 
     async def run(
         self, **kwargs
-    ) -> Tuple[List[ValidationResult], List[ValidationError]]:
+    ) -> Tuple[List[EvaluationResult], List[EvaluationError]]:
         """
-        This validation checks whether the specified commands are installed on the machine.
+        This evaluation checks whether the specified commands are installed on the machine.
         """
 
         commands = kwargs.get("commands", [])
@@ -29,21 +29,21 @@ class CommandInstalledValidation(Validation):
             try:
                 if shutil.which(command) is None:
                     results.append(
-                        ValidationResult(
+                        EvaluationResult(
                             content=f"Command '{command}' is not installed on the system.",
                             metadata={"success": False, "include_in_report": False},
                         )
                     )
                 else:
                     results.append(
-                        ValidationResult(
+                        EvaluationResult(
                             content=f"Command '{command}' is installed on the system.",
                             metadata={"success": True, "include_in_report": False},
                         )
                     )
             except Exception as e:
                 errors.append(
-                    ValidationError(
+                    EvaluationError(
                         message=f"An error occurred while checking command '{command}': {str(e)}",
                         type=type(e).__name__,
                         details={"command": command},

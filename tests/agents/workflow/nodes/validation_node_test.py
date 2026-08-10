@@ -1,7 +1,7 @@
 """
-This test checks if the validation node correctly executes the validation core and returns the expected results.
+This test checks if the evaluation node correctly executes the evaluation core and returns the expected results.
 
-It is more of an integration test that checks the interaction between the validation node and the validation core, rather than a unit test of the validation node itself.
+It is more of an integration test that checks the interaction between the evaluation node and the evaluation core, rather than a unit test of the evaluation node itself.
 """
 
 import asyncio
@@ -11,199 +11,199 @@ from unittest.mock import Mock
 
 from pydantic import BaseModel
 
-from bxagent.agents.workflow.nodes.validation_node import (
-    create_validation_node,
+from bxagent.agents.workflow.nodes.evaluation_node import (
+    create_evaluation_node,
 )
 from bxagent.agents.workflow.state import WorkflowState
-from bxagent.evaluation import ValidationExecutor
-from bxagent.evaluation.types import Validation, ValidationError, ValidationResult
+from bxagent.evaluation import EvaluationExecutor
+from bxagent.evaluation.types import Evaluation, EvaluationError, EvaluationResult
 
 
 class MockedSchema(BaseModel):
     some_field: str
 
 
-class TestValidationNode__ExecutionModeAll(TestCase):
-    def test_validation_node__updates_state_with_latest_results(self):
+class TestEvaluationNode__ExecutionModeAll(TestCase):
+    def test_evaluation_node__updates_state_with_latest_results(self):
         def mocked_mapper(state: WorkflowState) -> Dict[str, Any]:
             return {"some_field": "some_value"}
 
-        mocked_validation = Mock(spec=Validation)
-        mocked_validation.run.return_value = (
-            [ValidationResult(content="Some validation result")],
-            [ValidationError(message="Some validation error", type="ValidationError")],
+        mocked_evaluation = Mock(spec=Evaluation)
+        mocked_evaluation.run.return_value = (
+            [EvaluationResult(content="Some evaluation result")],
+            [EvaluationError(message="Some evaluation error", type="EvaluationError")],
         )
 
-        validation_id = "test_validation"
+        evaluation_id = "test_evaluation"
 
-        validation_executor = ValidationExecutor(
-            validations={
-                validation_id: {
-                    "validation": mocked_validation,
-                    "validation_schema": MockedSchema,
+        evaluation_executor = EvaluationExecutor(
+            evaluations={
+                evaluation_id: {
+                    "evaluation": mocked_evaluation,
+                    "evaluation_schema": MockedSchema,
                 }
             }
         )
-        validation_agent_work = create_validation_node(
-            validation_executor=validation_executor,
-            mapper={validation_id: mocked_mapper},
+        evaluation_agent_work = create_evaluation_node(
+            evaluation_executor=evaluation_executor,
+            mapper={evaluation_id: mocked_mapper},
             execution_mode="all",
         )
 
-        result = asyncio.run(validation_agent_work(WorkflowState()))
+        result = asyncio.run(evaluation_agent_work(WorkflowState()))
 
         self.assertEqual(
-            len(result["latest_validation_runs"]),
+            len(result["latest_evaluation_runs"]),
             1,
-            "There should be results for one validation run.",
+            "There should be results for one evaluation run.",
         )
 
-        run_result = result["latest_validation_runs"][0]
+        run_result = result["latest_evaluation_runs"][0]
         self.assertEqual(
-            len(run_result.results), 1, "There should be one validation result."
+            len(run_result.results), 1, "There should be one evaluation result."
         )
         self.assertEqual(
             run_result.results[0].content,
-            "Some validation result",
-            "The validation result content should match.",
+            "Some evaluation result",
+            "The evaluation result content should match.",
         )
         self.assertEqual(
-            len(run_result.errors), 1, "There should be one validation error."
+            len(run_result.errors), 1, "There should be one evaluation error."
         )
         self.assertEqual(
             run_result.errors[0].message,
-            "Some validation error",
-            "The validation error message should match.",
+            "Some evaluation error",
+            "The evaluation error message should match.",
         )
 
         self.assertTrue(
-            mocked_validation.run.called,
-            "The validation's run method should have been called.",
+            mocked_evaluation.run.called,
+            "The evaluation's run method should have been called.",
         )
         self.assertEqual(
-            mocked_validation.run.call_args.kwargs,
+            mocked_evaluation.run.call_args.kwargs,
             {"some_field": "some_value"},
-            "The validation should have been called with the mapped parameters.",
+            "The evaluation should have been called with the mapped parameters.",
         )
 
-    def test_validation_node__validation_has_no_mapper(self):
-        mocked_validation = Mock(spec=Validation)
-        mocked_validation.run.return_value = (
-            [ValidationResult(content="Some validation result")],
-            [ValidationError(message="Some validation error", type="ValidationError")],
+    def test_evaluation_node__evaluation_has_no_mapper(self):
+        mocked_evaluation = Mock(spec=Evaluation)
+        mocked_evaluation.run.return_value = (
+            [EvaluationResult(content="Some evaluation result")],
+            [EvaluationError(message="Some evaluation error", type="EvaluationError")],
         )
 
-        validation_id = "test_validation"
+        evaluation_id = "test_evaluation"
 
-        validation_executor = ValidationExecutor(
-            validations={
-                validation_id: {
-                    "validation": mocked_validation,
-                    "validation_schema": MockedSchema,
+        evaluation_executor = EvaluationExecutor(
+            evaluations={
+                evaluation_id: {
+                    "evaluation": mocked_evaluation,
+                    "evaluation_schema": MockedSchema,
                 }
             }
         )
-        validation_agent_work = create_validation_node(
-            validation_executor=validation_executor,
+        evaluation_agent_work = create_evaluation_node(
+            evaluation_executor=evaluation_executor,
             mapper={},  # No mapper provided
             execution_mode="all",
         )
 
         with self.assertRaises(
             KeyError,
-            msg="A KeyError should be raised when no mapper is provided for the validation.",
+            msg="A KeyError should be raised when no mapper is provided for the evaluation.",
         ):
-            asyncio.run(validation_agent_work(WorkflowState()))
+            asyncio.run(evaluation_agent_work(WorkflowState()))
 
 
-class TestValidationNode__ExecutionModeSpecific(TestCase):
-    def test_validation_node__updates_state_with_latest_results_specific(self):
+class TestEvaluationNode__ExecutionModeSpecific(TestCase):
+    def test_evaluation_node__updates_state_with_latest_results_specific(self):
         def mocked_mapper(state: WorkflowState) -> Dict[str, Any]:
             return {"some_field": "some_value"}
 
-        mocked_validation = Mock(spec=Validation)
-        mocked_validation.run.return_value = (
-            [ValidationResult(content="Some validation result")],
-            [ValidationError(message="Some validation error", type="ValidationError")],
+        mocked_evaluation = Mock(spec=Evaluation)
+        mocked_evaluation.run.return_value = (
+            [EvaluationResult(content="Some evaluation result")],
+            [EvaluationError(message="Some evaluation error", type="EvaluationError")],
         )
 
-        validation_id = "test_validation"
+        evaluation_id = "test_evaluation"
 
-        validation_executor = ValidationExecutor(
-            validations={
-                validation_id: {
-                    "validation": mocked_validation,
-                    "validation_schema": MockedSchema,
+        evaluation_executor = EvaluationExecutor(
+            evaluations={
+                evaluation_id: {
+                    "evaluation": mocked_evaluation,
+                    "evaluation_schema": MockedSchema,
                 }
             }
         )
-        validation_agent_work = create_validation_node(
-            validation_executor=validation_executor,
-            mapper={validation_id: mocked_mapper},
+        evaluation_agent_work = create_evaluation_node(
+            evaluation_executor=evaluation_executor,
+            mapper={evaluation_id: mocked_mapper},
             execution_mode="specific",
         )
 
-        result = asyncio.run(validation_agent_work(WorkflowState()))
+        result = asyncio.run(evaluation_agent_work(WorkflowState()))
 
         self.assertIn(
-            validation_id,
-            result["latest_validation_runs"],
-            "The latest validation runs should contain the specific validation id.",
+            evaluation_id,
+            result["latest_evaluation_runs"],
+            "The latest evaluation runs should contain the specific evaluation id.",
         )
 
-        run_result = result["latest_validation_runs"][validation_id]
+        run_result = result["latest_evaluation_runs"][evaluation_id]
         self.assertEqual(
-            len(run_result.results), 1, "There should be one validation result."
+            len(run_result.results), 1, "There should be one evaluation result."
         )
         self.assertEqual(
             run_result.results[0].content,
-            "Some validation result",
-            "The validation result content should match.",
+            "Some evaluation result",
+            "The evaluation result content should match.",
         )
         self.assertEqual(
-            len(run_result.errors), 1, "There should be one validation error."
+            len(run_result.errors), 1, "There should be one evaluation error."
         )
         self.assertEqual(
             run_result.errors[0].message,
-            "Some validation error",
-            "The validation error message should match.",
+            "Some evaluation error",
+            "The evaluation error message should match.",
         )
 
         self.assertTrue(
-            mocked_validation.run.called,
-            "The validation's run method should have been called.",
+            mocked_evaluation.run.called,
+            "The evaluation's run method should have been called.",
         )
         self.assertEqual(
-            mocked_validation.run.call_args.kwargs,
+            mocked_evaluation.run.call_args.kwargs,
             {"some_field": "some_value"},
-            "The validation should have been called with the mapped parameters.",
+            "The evaluation should have been called with the mapped parameters.",
         )
 
-    def test_validation_node__validation_has_no_mapper_specific(self):
-        mocked_validation = Mock(spec=Validation)
-        mocked_validation.run.return_value = (
-            [ValidationResult(content="Some validation result")],
-            [ValidationError(message="Some validation error", type="ValidationError")],
+    def test_evaluation_node__evaluation_has_no_mapper_specific(self):
+        mocked_evaluation = Mock(spec=Evaluation)
+        mocked_evaluation.run.return_value = (
+            [EvaluationResult(content="Some evaluation result")],
+            [EvaluationError(message="Some evaluation error", type="EvaluationError")],
         )
 
-        validation_id = "test_validation"
+        evaluation_id = "test_evaluation"
 
-        validation_executor = ValidationExecutor(
-            validations={
-                validation_id: {
-                    "validation": mocked_validation,
-                    "validation_schema": MockedSchema,
+        evaluation_executor = EvaluationExecutor(
+            evaluations={
+                evaluation_id: {
+                    "evaluation": mocked_evaluation,
+                    "evaluation_schema": MockedSchema,
                 }
             }
         )
-        validation_agent_work = create_validation_node(
-            validation_executor=validation_executor,
+        evaluation_agent_work = create_evaluation_node(
+            evaluation_executor=evaluation_executor,
             mapper={},  # No mapper provided
             execution_mode="specific",
         )
 
         self.assertEqual(
-            asyncio.run(validation_agent_work(WorkflowState())),
-            {"latest_validation_runs": {}},
-            "When no mapper is provided for specific execution mode, the latest validation runs should be empty.",
+            asyncio.run(evaluation_agent_work(WorkflowState())),
+            {"latest_evaluation_runs": {}},
+            "When no mapper is provided for specific execution mode, the latest evaluation runs should be empty.",
         )

@@ -6,11 +6,11 @@ from unittest import TestCase
 from unittest.mock import patch
 
 from bxagent.evaluation.implementations.java_compilation import (
-    JavaCompilationValidation,
-    ValidationError,
+    JavaCompilationEvaluation,
+    EvaluationError,
     parse_javac_output,
 )
-from bxagent.evaluation.types import ValidationResult
+from bxagent.evaluation.types import EvaluationResult
 
 ERROR_BLOCK_1 = """
     ublic static void main(String[] args) {
@@ -76,29 +76,29 @@ class TestJavaCompilation(TestCase):
         """
 
         self.assertTrue(
-            hasattr(JavaCompilationValidation, "setup"),
-            "JavaCompilationValidation should have a 'setup' method.",
+            hasattr(JavaCompilationEvaluation, "setup"),
+            "JavaCompilationEvaluation should have a 'setup' method.",
         )
 
         mock_which.return_value = None
-        java_compilation_validation = JavaCompilationValidation()
+        java_compilation_evaluation = JavaCompilationEvaluation()
 
         with self.assertRaises(
             RuntimeError,
-            msg="JavaCompilationValidation's 'setup' method should raise RuntimeError if javac is not installed on the system.",
+            msg="JavaCompilationEvaluation's 'setup' method should raise RuntimeError if javac is not installed on the system.",
         ):
-            asyncio.run(java_compilation_validation.setup())
+            asyncio.run(java_compilation_evaluation.setup())
 
     def test_run__method_defined(self):
         self.assertTrue(
-            hasattr(JavaCompilationValidation, "run"),
-            "JavaCompilationValidation should have a 'run' method.",
+            hasattr(JavaCompilationEvaluation, "run"),
+            "JavaCompilationEvaluation should have a 'run' method.",
         )
 
     @patch("subprocess.run")
     def test_run__invalid_syntax(self, mock_subprocess_run):
         """
-        Test that the run method returns an ValidationError when javac returns a syntax error.
+        Test that the run method returns an EvaluationError when javac returns a syntax error.
         """
 
         mock_subprocess_run.return_value = subprocess.CompletedProcess(
@@ -108,20 +108,20 @@ class TestJavaCompilation(TestCase):
             stderr=JAVAC_ERROR_OUTPUT,
         )
 
-        java_compilation_validation = JavaCompilationValidation()
+        java_compilation_evaluation = JavaCompilationEvaluation()
         results, errors = asyncio.run(
-            java_compilation_validation.run(files=[Path("Test.java")])
+            java_compilation_evaluation.run(files=[Path("Test.java")])
         )
 
         self.assertEqual(
             len(results),
             3,
-            "There should be three failed ValidationResults when javac returns a syntax error.",
+            "There should be three failed EvaluationResults when javac returns a syntax error.",
         )
         self.assertEqual(
             len(errors),
             0,
-            "There should be no ValidationErrors for the provided javac error output.",
+            "There should be no EvaluationErrors for the provided javac error output.",
         )
 
         for result in results:
@@ -144,60 +144,60 @@ class TestJavaCompilation(TestCase):
             stderr="",
         )
 
-        java_compilation_validation = JavaCompilationValidation()
+        java_compilation_evaluation = JavaCompilationEvaluation()
         results, errors = asyncio.run(
-            java_compilation_validation.run(files=[Path("Test.java")])
+            java_compilation_evaluation.run(files=[Path("Test.java")])
         )
 
         self.assertEqual(
             len(results),
             1,
-            "There should be one ValidationResult when javac returns a success output (since we haven't implemented result parsing yet).",
+            "There should be one EvaluationResult when javac returns a success output (since we haven't implemented result parsing yet).",
         )
         self.assertEqual(
             len(errors),
             0,
-            "There should be no ValidationErrors when javac returns a success output.",
+            "There should be no EvaluationErrors when javac returns a success output.",
         )
 
     def test_run__missing_files_parameter(self):
-        java_compilation_validation = JavaCompilationValidation()
+        java_compilation_evaluation = JavaCompilationEvaluation()
 
         with self.assertRaises(
             ValueError,
-            msg="JavaCompilationValidation's 'run' method should raise ValueError if 'files' parameter is missing.",
+            msg="JavaCompilationEvaluation's 'run' method should raise ValueError if 'files' parameter is missing.",
         ):
-            asyncio.run(java_compilation_validation.run())
+            asyncio.run(java_compilation_evaluation.run())
 
     @patch("subprocess.run")
     def test_run__exception_occurs_during_javac(self, mock_subprocess_run):
         mock_subprocess_run.side_effect = Exception("Test exception")
 
-        java_compilation_validation = JavaCompilationValidation()
+        java_compilation_evaluation = JavaCompilationEvaluation()
         results, errors = asyncio.run(
-            java_compilation_validation.run(files=[Path("Test.java")])
+            java_compilation_evaluation.run(files=[Path("Test.java")])
         )
 
         self.assertEqual(
             len(results),
             0,
-            "There should be no ValidationResult objects when an exception occurs during javac execution.",
+            "There should be no EvaluationResult objects when an exception occurs during javac execution.",
         )
         self.assertEqual(
             len(errors),
             1,
-            "There should be one ValidationError when an exception occurs during javac execution.",
+            "There should be one EvaluationError when an exception occurs during javac execution.",
         )
 
 
-class TestJavaCompilationValidation__parse_javac_output(TestCase):
+class TestJavaCompilationEvaluation__parse_javac_output(TestCase):
     def test_parse_javac_output__no_errors(self):
         errors = parse_javac_output(JAVAC_SUCCESS_OUTPUT)
 
         self.assertEqual(
             len(errors),
             0,
-            "There should be no ValidationErrors for the provided javac success output.",
+            "There should be no EvaluationErrors for the provided javac success output.",
         )
 
     def test_parse_javac_output__with_errors(self):
@@ -206,11 +206,11 @@ class TestJavaCompilationValidation__parse_javac_output(TestCase):
         self.assertEqual(
             len(errors),
             3,
-            "There should be three ValidationResult objects for the provided javac error output.",
+            "There should be three EvaluationResult objects for the provided javac error output.",
         )
 
-        expected_errors: List[ValidationResult] = [
-            ValidationResult(
+        expected_errors: List[EvaluationResult] = [
+            EvaluationResult(
                 content="Fehler: <ID> erwartet",
                 metadata={
                     "file": "./.bx-agent-workspace/test/Family.java",
@@ -218,7 +218,7 @@ class TestJavaCompilationValidation__parse_javac_output(TestCase):
                     "block": ERROR_BLOCK_1,
                 },
             ),
-            ValidationResult(
+            EvaluationResult(
                 content="Fehler: ';' erwartet",
                 metadata={
                     "file": "./.bx-agent-workspace/test/Family.java",
@@ -226,7 +226,7 @@ class TestJavaCompilationValidation__parse_javac_output(TestCase):
                     "block": ERROR_BLOCK_2,
                 },
             ),
-            ValidationResult(
+            EvaluationResult(
                 content="Fehler: class, interface, enum oder record erwartet",
                 metadata={
                     "file": "./.bx-agent-workspace/test/Family.java",
@@ -249,7 +249,7 @@ class TestJavaCompilationValidation__parse_javac_output(TestCase):
         self.assertEqual(
             len(errors),
             6,
-            "There should be six ValidationResult objects for the provided javac symbol error output.",
+            "There should be six EvaluationResult objects for the provided javac symbol error output.",
         )
 
         expected_error_messages = [

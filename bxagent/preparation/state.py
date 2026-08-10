@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Dict, TypedDict, Optional
 
 from bxagent.comprehension.plan import TransformationPlan
-from bxagent.evaluation.types import ValidationRun
+from bxagent.evaluation.types import EvaluationRun
 
 
 class ModelImplementation(TypedDict):
@@ -15,7 +15,7 @@ class PreparationState(TypedDict):
     required_commands: list[str] # List of required commands to be available in the system PATH in order to run the agent properly
     workspace_path: Path
     package_path: str # deprecated: It's now groupId and artifactId
-    latest_validation_runs: Dict[str, ValidationRun] = []
+    latest_evaluation_runs: Dict[str, EvaluationRun] = []
     transformation_plan: Optional[TransformationPlan] = None
     bxtool_path: Optional[Path] = None
     source_model: ModelImplementation

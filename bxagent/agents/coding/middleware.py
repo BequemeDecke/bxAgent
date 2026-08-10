@@ -2,7 +2,7 @@
 State management for the Coding agent.
 
 Uses a Node-style hook, because as mentioned in the documentation:
-Run sequentially at specific execution points. Use for logging, validation, and state updates.
+Run sequentially at specific execution points. Use for logging, evaluation, and state updates.
 
 https://docs.langchain.com/oss/python/langchain/middleware/custom#node-style-hooks
 """

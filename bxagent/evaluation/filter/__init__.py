@@ -1,14 +1,14 @@
 from typing import List
 
-from ..pipefilter import ValidationFilter
-from ..types import ValidationResult
+from ..pipefilter import EvaluationFilter
+from ..types import EvaluationResult
 
 
 def _is_report_candidate_filter(
-    results: List[ValidationResult],
-) -> List[ValidationResult]:
+    results: List[EvaluationResult],
+) -> List[EvaluationResult]:
     """
-    Filter function to determine if validation results should be included in the report.
+    Filter function to determine if evaluation results should be included in the report.
     Returns a list of results that should be included.
     """
     return [
@@ -16,17 +16,17 @@ def _is_report_candidate_filter(
     ]
 
 
-IsReportCandidateFilter: ValidationFilter = _is_report_candidate_filter
+IsReportCandidateFilter: EvaluationFilter = _is_report_candidate_filter
 
 
 def _is_error_filter(
-    results: List[ValidationResult],
-) -> List[ValidationResult]:
+    results: List[EvaluationResult],
+) -> List[EvaluationResult]:
     """
-    Filter function to determine if validation results are errors.
+    Filter function to determine if evaluation results are errors.
     Returns a list of results that are errors.
     """
     return [result for result in results if result.metadata.get("success") is False]
 
 
-IsErrorFilter: ValidationFilter = _is_error_filter
+IsErrorFilter: EvaluationFilter = _is_error_filter

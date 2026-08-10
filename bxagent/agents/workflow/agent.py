@@ -12,12 +12,12 @@ from bxagent.mapping import (
 )
 from bxagent.models import build_base_model
 from bxagent.preparation import build_preparation_graph
-from bxagent.evaluation import ValidationExecutor, implementations
+from bxagent.evaluation import EvaluationExecutor, implementations
 
 from .nodes.comprehension_node import create_comprehension_node
 from .nodes.implementation_node import create_implementation_node
 from .nodes.preparation_node import create_preparation_node
-from .nodes.validation_node import create_validation_node
+from .nodes.evaluation_node import create_evaluation_node
 from .state import WorkflowState
 from .transformation_iteration_control import (
     create_check_transformation_iteration_function,
@@ -30,28 +30,28 @@ def build_workflow_agent(workspace_path: Path) -> StateGraph[WorkflowState]:
     call_comprehension_node = create_comprehension_node(
         comprehension_agent=build_comprehension_agent()
     )
-    validation_executor = ValidationExecutor(
-        validations={
+    evaluation_executor = EvaluationExecutor(
+        evaluations={
             "workspace_operability": {
-                "validation": implementations.WorkspaceOperabilityValidation(),
-                "validation_schema": implementations.WorkspaceOperabilityValidationConfig,
+                "evaluation": implementations.WorkspaceOperabilityEvaluation(),
+                "evaluation_schema": implementations.WorkspaceOperabilityEvaluationConfig,
             },
             "commands_installed": {
-                "validation": implementations.CommandInstalledValidation(),
-                "validation_schema": implementations.CommandInstalledValidationConfig,
+                "evaluation": implementations.CommandInstalledEvaluation(),
+                "evaluation_schema": implementations.CommandInstalledEvaluationConfig,
             },
             "file_existence": {
-                "validation": implementations.FileExistenceValidation(),
-                "validation_schema": implementations.FileExistenceValidationConfig,
+                "evaluation": implementations.FileExistenceEvaluation(),
+                "evaluation_schema": implementations.FileExistenceEvaluationConfig,
             },
             "java_compilation": {
-                "validation": implementations.JavaCompilationValidation(),
-                "validation_schema": implementations.JavaCompilationValidationConfig,
+                "evaluation": implementations.JavaCompilationEvaluation(),
+                "evaluation_schema": implementations.JavaCompilationEvaluationConfig,
             },
         }
     )
-    call_validation_node = create_validation_node(
-        validation_executor=validation_executor,
+    call_evaluation_node = create_evaluation_node(
+        evaluation_executor=evaluation_executor,
         mapper={
             "file_existence": map_workflow_to_file,
             "java_compilation": map_workflow_to_file,
@@ -60,12 +60,12 @@ def build_workflow_agent(workspace_path: Path) -> StateGraph[WorkflowState]:
         },
     )
     preparation_agent = build_preparation_graph(
-        validation_executor=validation_executor
+        evaluation_executor=evaluation_executor
     ).compile()
     call_preparation_node = create_preparation_node(preparation_agent)
     coding_deep_agent = build_coding_deep_agent(workspace_path=workspace_path)
     implementation_agent = build_implementation_graph(
-        validation_executor=validation_executor,
+        evaluation_executor=evaluation_executor,
         coding_deep_agent=coding_deep_agent,
         workspace_path=workspace_path,
     ).compile()
@@ -75,15 +75,15 @@ def build_workflow_agent(workspace_path: Path) -> StateGraph[WorkflowState]:
     builder.add_node("preparation", call_preparation_node)
     builder.add_node("comprehension", call_comprehension_node)
     builder.add_node("implementation", call_implementation_node)
-    builder.add_node("validation", call_validation_node)
+    builder.add_node("evaluation", call_evaluation_node)
 
     builder.add_edge(START, "preparation")
     builder.add_edge("preparation", "comprehension")
     builder.add_edge("comprehension", "implementation")
-    builder.add_edge("implementation", "validation")
+    builder.add_edge("implementation", "evaluation")
 
     builder.add_conditional_edges(
-        "validation",
+        "evaluation",
         check_transformation_iteration,
         {
             "stop": END,

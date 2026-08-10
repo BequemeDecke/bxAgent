@@ -3,7 +3,7 @@ from unittest import TestCase
 from bxagent.implementation.evaluate_transformation_implementation import (
     create_evaluate_transformation_implementation,
 )
-from bxagent.evaluation.types import ValidationRun, ValidationError
+from bxagent.evaluation.types import EvaluationRun, EvaluationError
 from bxagent.implementation.state import ImplementationState
 
 
@@ -24,7 +24,7 @@ class TestEvaluateTransformationImplementation(TestCase):
             transformation_target_model_description="Target model description",
             implementation_iteration=MAX_ITERATIONS,
             bxtool_path=None,
-            latest_validation_results={},
+            latest_evaluation_results={},
         )
 
         # Call the function under test
@@ -41,7 +41,7 @@ class TestEvaluateTransformationImplementation(TestCase):
 
     def test_evaluate_transformation_implementation__implementation_error(self):
         """
-        Test that the evaluation correctly identifies when there is an implementation error based on the latest validation results.
+        Test that the evaluation correctly identifies when there is an implementation error based on the latest evaluation results.
         """
         # Prepare function under test
         self.evaluate_transformation_implementation = (
@@ -53,15 +53,15 @@ class TestEvaluateTransformationImplementation(TestCase):
             transformation_target_model_description="Target model description",
             implementation_iteration=1,
             bxtool_path=None,
-            latest_validation_results={
-                "validation1": ValidationRun(
+            latest_evaluation_results={
+                "evaluation1": EvaluationRun(
                     started_at=None,
                     execution_time_ms=100,
                     iteration=1,
                     results=[],
-                    errors=[ValidationError(message="Error in implementation", type="ValidationError")],
+                    errors=[EvaluationError(message="Error in implementation", type="EvaluationError")],
                 ),
-                "integration_compilation": ValidationRun(
+                "integration_compilation": EvaluationRun(
                     started_at=None,
                     execution_time_ms=100,
                     iteration=1,
@@ -80,12 +80,12 @@ class TestEvaluateTransformationImplementation(TestCase):
         self.assertEqual(
             evaluation,
             "implementation_error",
-            "The evaluation should indicate that there is an implementation error based on the latest validation results.",
+            "The evaluation should indicate that there is an implementation error based on the latest evaluation results.",
         )
 
     def test_evaluate_transformation_implementation__integration_error(self):
         """
-        Test that the evaluation correctly identifies when there is an integration error based on the latest validation results.
+        Test that the evaluation correctly identifies when there is an integration error based on the latest evaluation results.
         """
         # Prepare function under test
         self.evaluate_transformation_implementation = (
@@ -97,13 +97,13 @@ class TestEvaluateTransformationImplementation(TestCase):
             transformation_target_model_description="Target model description",
             implementation_iteration=1,
             bxtool_path=None,
-            latest_validation_results={
-                "integration_compilation": ValidationRun(
+            latest_evaluation_results={
+                "integration_compilation": EvaluationRun(
                     started_at=None,
                     execution_time_ms=100,
                     iteration=1,
                     results=[],
-                    errors=[ValidationError(message="Error in integration", type="ValidationError")],
+                    errors=[EvaluationError(message="Error in integration", type="EvaluationError")],
                 )
             },
         )
@@ -117,12 +117,12 @@ class TestEvaluateTransformationImplementation(TestCase):
         self.assertEqual(
             evaluation,
             "integration_error",
-            "The evaluation should indicate that there is an integration error based on the latest validation results.",
+            "The evaluation should indicate that there is an integration error based on the latest evaluation results.",
         )
 
     def test_evaluate_transformation_implementation__implementation_success(self):
         """
-        Test that the evaluation correctly identifies when the implementation is successful based on the latest validation results.
+        Test that the evaluation correctly identifies when the implementation is successful based on the latest evaluation results.
         """
         # Prepare function under test
         self.evaluate_transformation_implementation = (
@@ -135,15 +135,15 @@ class TestEvaluateTransformationImplementation(TestCase):
             transformation_target_model_description="Target model description",
             implementation_iteration=1,
             bxtool_path=None,
-            latest_validation_results={
-                "validation1": ValidationRun(
+            latest_evaluation_results={
+                "evaluation1": EvaluationRun(
                     started_at=None,
                     execution_time_ms=100,
                     iteration=1,
                     results=[],
                     errors=[],
                 ),
-                "integration_compilation": ValidationRun(
+                "integration_compilation": EvaluationRun(
                     started_at=None,
                     execution_time_ms=100,
                     iteration=1,
@@ -162,5 +162,5 @@ class TestEvaluateTransformationImplementation(TestCase):
         self.assertEqual(
             evaluation,
             "implementation_success",
-            "The evaluation should indicate that the implementation is successful based on the latest validation results.",
+            "The evaluation should indicate that the implementation is successful based on the latest evaluation results.",
         )

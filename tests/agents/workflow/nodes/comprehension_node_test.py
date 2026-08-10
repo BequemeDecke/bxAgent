@@ -67,7 +67,7 @@ class TestComprehensionNode(TestCase):
         with self.assertRaises(ValueError) as context:
             call_sub(
                 {
-                    "latest_validation_runs": [],
+                    "latest_evaluation_runs": [],
                 }
             )
 

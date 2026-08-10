@@ -1,43 +1,43 @@
 from typing import Dict, List
 
 from langchain.tools import BaseTool, tool
-from bxagent.evaluation import ValidationExecutor, Validation, ValidationRun
+from bxagent.evaluation import EvaluationExecutor, Evaluation, EvaluationRun
 
-def create_validation_tools(validations: Dict[str, Validation]) -> List[BaseTool]:
+def create_evaluation_tools(evaluations: Dict[str, Evaluation]) -> List[BaseTool]:
     """
-    Factory function to create an instance of the ValidationTool.
+    Factory function to create an instance of the EvaluationTool.
     This function can be extended to accept parameters for customization.
     """
-    executor = ValidationExecutor(validations)
+    executor = EvaluationExecutor(evaluations)
     
-    @tool("validation_tool", return_direct=True)
-    async def validation_tool() -> List[ValidationRun]:
-        """Executes all validations and returns their latest results.
+    @tool("evaluation_tool", return_direct=True)
+    async def evaluation_tool() -> List[EvaluationRun]:
+        """Executes all evaluations and returns their latest results.
 
         Returns:
-            List[ValidationRun]: A list of the latest ValidationRun for each validation.
+            List[EvaluationRun]: A list of the latest EvaluationRun for each evaluation.
         """
         return await executor.execute_all()
     
-    @tool("validation_tool_specific", return_direct=True)
-    async def validation_tool_specific(validation_id: str) -> ValidationRun:
-        """Executes a specific validation and returns its latest result.
+    @tool("evaluation_tool_specific", return_direct=True)
+    async def evaluation_tool_specific(evaluation_id: str) -> EvaluationRun:
+        """Executes a specific evaluation and returns its latest result.
 
         Args:
-            validation_id (str): The ID of the validation to execute.
+            evaluation_id (str): The ID of the evaluation to execute.
 
         Returns:
-            ValidationRun: The latest ValidationRun for the specified validation.
+            EvaluationRun: The latest EvaluationRun for the specified evaluation.
         """
-        return await executor.execute_specific(validation_id)
+        return await executor.execute_specific(evaluation_id)
     
-    @tool("validation_tool_latest_results", return_direct=True)
-    def validation_tool_latest_results() -> List[ValidationRun]:
-        """Returns the latest results of all validations without executing them.
+    @tool("evaluation_tool_latest_results", return_direct=True)
+    def evaluation_tool_latest_results() -> List[EvaluationRun]:
+        """Returns the latest results of all evaluations without executing them.
 
         Returns:
-            List[ValidationRun]: A list of the latest ValidationRun for each validation.
+            List[EvaluationRun]: A list of the latest EvaluationRun for each evaluation.
         """
         return executor.get_latest_results()
 
-    return [validation_tool, validation_tool_specific, validation_tool_latest_results]
+    return [evaluation_tool, evaluation_tool_specific, evaluation_tool_latest_results]

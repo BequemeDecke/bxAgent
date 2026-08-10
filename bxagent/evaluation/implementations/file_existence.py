@@ -2,21 +2,21 @@ from typing import List, Tuple
 from pathlib import Path
 from pydantic import BaseModel
 
-from ..types import Validation, ValidationResult, ValidationError
+from ..types import Evaluation, EvaluationResult, EvaluationError
 
 
-class FileExistenceValidationConfig(BaseModel):
+class FileExistenceEvaluationConfig(BaseModel):
     files: List[Path]
 
 
-class FileExistenceValidation(Validation):
+class FileExistenceEvaluation(Evaluation):
     async def setup(self):
         pass
 
     async def run(
         self, **kwargs
-    ) -> Tuple[List[ValidationResult], List[ValidationError]]:
-        config = FileExistenceValidationConfig(**kwargs)
+    ) -> Tuple[List[EvaluationResult], List[EvaluationError]]:
+        config = FileExistenceEvaluationConfig(**kwargs)
         files = config.files
 
         results = []
@@ -24,7 +24,7 @@ class FileExistenceValidation(Validation):
         for file in files:
             if file.exists():
                 results.append(
-                    ValidationResult(
+                    EvaluationResult(
                         content=f"File exists: {file}",
                         metadata={
                             "file": str(file),
@@ -35,7 +35,7 @@ class FileExistenceValidation(Validation):
                 )
             else:
                 results.append(
-                    ValidationResult(
+                    EvaluationResult(
                         content=f"File does not exist: {file}",
                         metadata={
                             "file": str(file),

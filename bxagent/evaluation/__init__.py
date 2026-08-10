@@ -1,17 +1,17 @@
 import bxagent.evaluation.implementations as implementations
 
-from .executor import ValidationExecutor
-from .pipefilter import ValidationFilter, ValidationPipe
-from .types import Validation, ValidationError, ValidationResult, ValidationRun
+from .executor import EvaluationExecutor
+from .pipefilter import EvaluationFilter, EvaluationPipe
+from .types import Evaluation, EvaluationError, EvaluationResult, EvaluationRun
 
 __all__ = [
-    "ValidationExecutor",
-    "Validation",
-    "ValidationRun",
-    "ValidationResult",
-    "ValidationError",
-    "StateToValidationMapper",
+    "EvaluationExecutor",
+    "Evaluation",
+    "EvaluationRun",
+    "EvaluationResult",
+    "EvaluationError",
+    "StateToEvaluationMapper",
     "implementations",
-    "ValidationPipe",
-    "ValidationFilter",
+    "EvaluationPipe",
+    "EvaluationFilter",
 ]

@@ -1,7 +1,7 @@
 from typing import Dict, TypedDict, List
 from pathlib import Path
 
-from bxagent.evaluation.types import ValidationRun
+from bxagent.evaluation.types import EvaluationRun
 from bxagent.comprehension.plan import TransformationPlan
 
 
@@ -11,5 +11,5 @@ class ImplementationState(TypedDict):
     written_java_files: List[Path]  # All of these files have to be compiled together
     bxtool_path: Path  # This field will be used by a higher component
     transformation_implementation: str  # This field will be used by a higher component
-    latest_validation_results: Dict[str, ValidationRun]  # Store the results of the latest validations
+    latest_evaluation_results: Dict[str, EvaluationRun]  # Store the results of the latest evaluations
     implementation_iteration: int  # Keep track of the number of implementation iterations

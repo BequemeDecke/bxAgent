@@ -4,91 +4,91 @@ import datetime
 from typing import List, Dict, Tuple, TypedDict, Any
 from pydantic import BaseModel
 
-from .types import Validation, ValidationResult, ValidationRun, ValidationError
+from .types import Evaluation, EvaluationResult, EvaluationRun, EvaluationError
 
 
-class ValidationInit(TypedDict):
-    validation: Validation
-    validation_schema: BaseModel
+class EvaluationInit(TypedDict):
+    evaluation: Evaluation
+    evaluation_schema: BaseModel
 
 
-class LinkedValidation(Validation):
-    def __init__(self, validation: Validation):
-        self.validation = validation
+class LinkedEvaluation(Evaluation):
+    def __init__(self, evaluation: Evaluation):
+        self.evaluation = evaluation
 
     async def setup(self):
-        await self.validation.setup()
+        await self.evaluation.setup()
 
     async def run(
         self, **kwargs
-    ) -> Tuple[List[ValidationResult], List[ValidationError]]:
-        return await self.validation.run(**kwargs)
+    ) -> Tuple[List[EvaluationResult], List[EvaluationError]]:
+        return await self.evaluation.run(**kwargs)
 
 
-class ValidationExecutor:
-    def __init__(self, validations: Dict[str, ValidationInit]):
-        self.validations = validations
-        self.iterations: Dict[str, List[ValidationRun]] = {
-            validation_id: [] for validation_id in validations
+class EvaluationExecutor:
+    def __init__(self, evaluations: Dict[str, EvaluationInit]):
+        self.evaluations = evaluations
+        self.iterations: Dict[str, List[EvaluationRun]] = {
+            evaluation_id: [] for evaluation_id in evaluations
         }
 
-    def register_linked_validation(
-        self, new_validation_id: str, existing_validation_id: str
+    def register_linked_evaluation(
+        self, new_evaluation_id: str, existing_evaluation_id: str
     ):
-        if existing_validation_id not in self.validations:
-            raise ValueError(f"Validation with id {existing_validation_id} not found.")
+        if existing_evaluation_id not in self.evaluations:
+            raise ValueError(f"Evaluation with id {existing_evaluation_id} not found.")
 
-        if new_validation_id in self.validations:
-            raise ValueError(f"Validation with id {new_validation_id} already exists.")
+        if new_evaluation_id in self.evaluations:
+            raise ValueError(f"Evaluation with id {new_evaluation_id} already exists.")
 
-        linked_validation = LinkedValidation(
-            validation=self.validations[existing_validation_id]["validation"]
+        linked_evaluation = LinkedEvaluation(
+            evaluation=self.evaluations[existing_evaluation_id]["evaluation"]
         )
-        self.validations[new_validation_id] = {
-            "validation": linked_validation,
-            "validation_schema": self.validations[existing_validation_id][
-                "validation_schema"
+        self.evaluations[new_evaluation_id] = {
+            "evaluation": linked_evaluation,
+            "evaluation_schema": self.evaluations[existing_evaluation_id][
+                "evaluation_schema"
             ],
         }
-        self.iterations[new_validation_id] = []
+        self.iterations[new_evaluation_id] = []
 
     async def execute_all(
         self, input: Dict[str, Dict[str, Any]]
-    ) -> List[ValidationRun]:
+    ) -> List[EvaluationRun]:
         results = []
         tasks = [
-            self.execute_specific(validation_id, input=input[validation_id])
-            for validation_id in self.validations.keys()
+            self.execute_specific(evaluation_id, input=input[evaluation_id])
+            for evaluation_id in self.evaluations.keys()
         ]
         results = await asyncio.gather(*tasks)
         return results
 
     async def execute_specific(
-        self, validation_id: str, input: Dict[str, Any]
-    ) -> ValidationRun:
-        if validation_id not in self.validations:
-            raise ValueError(f"Validation with id {validation_id} not found.")
+        self, evaluation_id: str, input: Dict[str, Any]
+    ) -> EvaluationRun:
+        if evaluation_id not in self.evaluations:
+            raise ValueError(f"Evaluation with id {evaluation_id} not found.")
 
-        validation_init = self.validations[validation_id]
-        validation = validation_init["validation"]
-        validation_schema = validation_init["validation_schema"]
+        evaluation_init = self.evaluations[evaluation_id]
+        evaluation = evaluation_init["evaluation"]
+        evaluation_schema = evaluation_init["evaluation_schema"]
 
-        validated_params = validation_schema.model_validate(input)
+        validated_params = evaluation_schema.model_validate(input)
 
         started_at = datetime.datetime.now()
         iteration = (
-            self.iterations[validation_id][-1].iteration + 1
-            if self.iterations[validation_id]
+            self.iterations[evaluation_id][-1].iteration + 1
+            if self.iterations[evaluation_id]
             else 1
         )
 
         try:
-            run_tuple = await validation.run(**validated_params.model_dump())
+            run_tuple = await evaluation.run(**validated_params.model_dump())
         except Exception as e:
             run_tuple = (
                 [],
                 [
-                    ValidationError(
+                    EvaluationError(
                         message=str(e),
                         type=type(e).__name__,
                         details={"exception_type": type(e).__name__},
@@ -99,15 +99,15 @@ class ValidationExecutor:
             (datetime.datetime.now() - started_at).total_seconds() * 1000
         )
 
-        run = ValidationRun(
+        run = EvaluationRun(
             started_at=started_at,
             execution_time_ms=execution_time_ms,
             iteration=iteration,
             results=run_tuple[0],
             errors=run_tuple[1],
         )
-        self.iterations[validation_id].append(run)
+        self.iterations[evaluation_id].append(run)
         return run
 
-    def get_latest_results(self) -> List[ValidationRun]:
+    def get_latest_results(self) -> List[EvaluationRun]:
         return [runs[-1] for runs in self.iterations.values() if runs]

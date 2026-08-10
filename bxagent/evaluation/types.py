@@ -4,38 +4,38 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple, Callable, TypedDict, Unpack
 
 
-class ValidationMetadata(TypedDict):
+class EvaluationMetadata(TypedDict):
     success: bool
 
 
 @dataclass
-class ValidationResult:
+class EvaluationResult:
     content: str
-    metadata: Unpack[ValidationMetadata] = field(
+    metadata: Unpack[EvaluationMetadata] = field(
         default_factory=lambda: {"success": True}
     )
 
 
 @dataclass
-class ValidationError:
+class EvaluationError:
     message: str
     type: str
     details: Optional[Dict[str, Any]] = None
 
 
 @dataclass
-class ValidationRun:
+class EvaluationRun:
     started_at: datetime
     execution_time_ms: int
     iteration: int
-    results: List[ValidationResult]
-    errors: List[ValidationError]
+    results: List[EvaluationResult]
+    errors: List[EvaluationError]
 
 
-StateToValidationMapper = Callable[[Dict[str, Any]], Dict[str, Any]]
+StateToEvaluationMapper = Callable[[Dict[str, Any]], Dict[str, Any]]
 
 
-class Validation(ABC):
+class Evaluation(ABC):
     @abstractmethod
     async def setup(self) -> None:
         pass
@@ -43,5 +43,5 @@ class Validation(ABC):
     @abstractmethod
     async def run(
         self, **kwargs
-    ) -> Tuple[List[ValidationResult], List[ValidationError]]:
+    ) -> Tuple[List[EvaluationResult], List[EvaluationError]]:
         pass

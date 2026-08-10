@@ -14,7 +14,7 @@ from bxagent.agents.workflow.transformation_iteration_control import (
     IterationRoute,
     create_check_transformation_iteration_function,
 )
-from bxagent.evaluation.types import ValidationError, ValidationResult, ValidationRun
+from bxagent.evaluation.types import EvaluationError, EvaluationResult, EvaluationRun
 
 
 class TestTransformationIterationControl(TestCase):
@@ -36,7 +36,7 @@ class TestTransformationIterationControl(TestCase):
             "transformation_source_model_description": "A model that needs to be transformed.",
             "transformation_target_model_description": "The desired model after transformation.",
             "iteration": 3,
-            "latest_validation_runs": [],
+            "latest_evaluation_runs": [],
         }
         result = self.check_transformation_iteration(state, max_iterations)
         self.assertEqual(result, "stop")
@@ -47,20 +47,20 @@ class TestTransformationIterationControl(TestCase):
             "transformation_source_model_description": "A model that needs to be transformed.",
             "transformation_target_model_description": "The desired model after transformation.",
             "iteration": 2,
-            "latest_validation_runs": [
-                ValidationRun(
+            "latest_evaluation_runs": [
+                EvaluationRun(
                     started_at=datetime.now() - timedelta(minutes=5),
                     execution_time_ms=200,
                     iteration=1,
                     results=[
-                        ValidationResult(
-                            content="Validation result content",
+                        EvaluationResult(
+                            content="Evaluation result content",
                         )
                     ],
                     errors=[
-                        ValidationError(
-                            message="An error occurred during the validation.",
-                            type="ValidationError",
+                        EvaluationError(
+                            message="An error occurred during the evaluation.",
+                            type="EvaluationError",
                             details={
                                 "error_code": "AUDIT_ERROR",
                                 "severity": "high",
@@ -79,22 +79,22 @@ class TestTransformationIterationControl(TestCase):
             "transformation_source_model_description": "A model that needs to be transformed.",
             "transformation_target_model_description": "The desired model after transformation.",
             "iteration": 2,
-            "latest_validation_runs": [
-                ValidationRun(
+            "latest_evaluation_runs": [
+                EvaluationRun(
                     started_at=datetime.now() - timedelta(minutes=5),
                     execution_time_ms=200,
                     iteration=1,
                     results=[
-                        ValidationResult(
-                            content="Validation result content",
+                        EvaluationResult(
+                            content="Evaluation result content",
                             metadata={"include_in_report": True, "success": True},
                         ),
-                        ValidationResult(
-                            content="Another validation result content",
+                        EvaluationResult(
+                            content="Another evaluation result content",
                             metadata={"include_in_report": False, "success": True},
                         ),
-                        ValidationResult(
-                            content="Validation result with error",
+                        EvaluationResult(
+                            content="Evaluation result with error",
                             metadata={"include_in_report": True, "success": False},
                         ),
                     ],
@@ -110,6 +110,6 @@ class TestTransformationIterationControl(TestCase):
 
         human_message = called_args[1]
         self.assertIsInstance(human_message, HumanMessage)
-        self.assertNotIn("Validation result content", human_message.content)
-        self.assertNotIn("Another validation result content", human_message.content)
-        self.assertIn("Validation result with error", human_message.content)
+        self.assertNotIn("Evaluation result content", human_message.content)
+        self.assertNotIn("Another evaluation result content", human_message.content)
+        self.assertIn("Evaluation result with error", human_message.content)

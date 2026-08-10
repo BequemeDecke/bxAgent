@@ -3,22 +3,22 @@ from unittest import TestCase
 from unittest.mock import patch
 
 from bxagent.evaluation.implementations.command_installed import (
-    CommandInstalledValidation,
+    CommandInstalledEvaluation,
 )
 
 
 class CommandInstalled(TestCase):
     def test_setup__do_nothing(self):
         self.assertTrue(
-            hasattr(CommandInstalledValidation, "setup"),
-            "CommandInstalledValidation should have a 'setup' method.",
+            hasattr(CommandInstalledEvaluation, "setup"),
+            "CommandInstalledEvaluation should have a 'setup' method.",
         )
 
-        command_installed_validation = CommandInstalledValidation()
+        command_installed_evaluation = CommandInstalledEvaluation()
 
         self.assertIsNone(
-            asyncio.run(command_installed_validation.setup()),
-            "CommandInstalledValidation's 'setup' method should return None.",
+            asyncio.run(command_installed_evaluation.setup()),
+            "CommandInstalledEvaluation's 'setup' method should return None.",
         )
 
     @patch("shutil.which")
@@ -26,21 +26,21 @@ class CommandInstalled(TestCase):
         mock_which.side_effect = lambda command: (
             "/usr/bin/python" if command == "python" else None
         )
-        command_installed_validation = CommandInstalledValidation()
+        command_installed_evaluation = CommandInstalledEvaluation()
 
         results, errors = asyncio.run(
-            command_installed_validation.run(commands=["python", "nonexistentcommand"])
+            command_installed_evaluation.run(commands=["python", "nonexistentcommand"])
         )
 
         self.assertEqual(
             len(results),
             2,
-            "There should be two results for the validation.",
+            "There should be two results for the evaluation.",
         )
         self.assertEqual(
             len(errors),
             0,
-            "There should be no errors occurred during validation.",
+            "There should be no errors occurred during evaluation.",
         )
         self.assertIn(
             "Command 'python' is installed on the system.",
@@ -66,10 +66,10 @@ class CommandInstalled(TestCase):
     @patch("shutil.which")
     def test_run__exception_in_which(self, mock_which):
         mock_which.side_effect = Exception("Unexpected error in shutil.which")
-        command_installed_validation = CommandInstalledValidation()
+        command_installed_evaluation = CommandInstalledEvaluation()
 
         results, errors = asyncio.run(
-            command_installed_validation.run(commands=["python"])
+            command_installed_evaluation.run(commands=["python"])
         )
 
         self.assertEqual(

@@ -14,10 +14,10 @@ class TestWorkflowToWorkspaceMapping(TestCase):
             workspace_path=Path("/path/to/workspace"),
             transformation_package_path="com.example.transformation",
         )
-        validation_params = map_workflow_to_workspace(state)
-        self.assertIn("workspace_path", validation_params)
-        self.assertEqual(validation_params["workspace_path"], state["workspace_path"])
-        self.assertIn("package_path", validation_params)
+        evaluation_params = map_workflow_to_workspace(state)
+        self.assertIn("workspace_path", evaluation_params)
+        self.assertEqual(evaluation_params["workspace_path"], state["workspace_path"])
+        self.assertIn("package_path", evaluation_params)
         self.assertEqual(
-            validation_params["package_path"], state["transformation_package_path"]
+            evaluation_params["package_path"], state["transformation_package_path"]
         )

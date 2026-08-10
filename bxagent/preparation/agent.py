@@ -1,9 +1,9 @@
 from langgraph.graph import StateGraph, START, END
 from bxagent.evaluation import (
-    ValidationExecutor,
+    EvaluationExecutor,
 )
-from bxagent.agents.workflow.nodes.validation_node import (
-    create_validation_node,
+from bxagent.agents.workflow.nodes.evaluation_node import (
+    create_evaluation_node,
 )
 
 from .benchmarx import create_download_benchmarx_node
@@ -13,9 +13,9 @@ from .state import PreparationState
 from .prepare_workspace import create_prepare_workspace_node
 
 
-def build_preparation_graph(validation_executor: ValidationExecutor) -> StateGraph:
-    validate_preparation_node = create_validation_node(
-        validation_executor=validation_executor,
+def build_preparation_graph(evaluation_executor: EvaluationExecutor) -> StateGraph:
+    validate_preparation_node = create_evaluation_node(
+        evaluation_executor=evaluation_executor,
         mapper={
             "workspace_operability": lambda state: {
                 "workspace_path": state.get("workspace_path"),

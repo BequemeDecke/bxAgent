@@ -1,64 +1,64 @@
 from typing import Any, Dict, Callable, Literal
 
-from bxagent.evaluation import ValidationExecutor
-from bxagent.evaluation.types import StateToValidationMapper
+from bxagent.evaluation import EvaluationExecutor
+from bxagent.evaluation.types import StateToEvaluationMapper
 
 
-def create_validation_node(
-    validation_executor: ValidationExecutor,
-    mapper: Dict[str, StateToValidationMapper],
+def create_evaluation_node(
+    evaluation_executor: EvaluationExecutor,
+    mapper: Dict[str, StateToEvaluationMapper],
     execution_mode: Literal["all", "specific"] = "all",
 ) -> Callable[[Dict[str, Any]], Dict[str, Any]]:
     """
-    Creates an validation agent work function that takes a workflow state and returns the updated state with the latest validation results.
+    Creates an evaluation agent work function that takes a workflow state and returns the updated state with the latest evaluation results.
     """
     if execution_mode == "all":
 
-        async def validation_node(state: Dict[str, Any]) -> Dict[str, Any]:
+        async def evaluation_node(state: Dict[str, Any]) -> Dict[str, Any]:
             """
-            Calls the validation core which will execute all validation implementations and update the state with the latest results.
+            Calls the evaluation core which will execute all evaluation implementations and update the state with the latest results.
             """
-            # Map the workflow state to validation parameters
+            # Map the workflow state to evaluation parameters
             input_parameters = {}
-            for validation_name, map_state in mapper.items():
+            for evaluation_name, map_state in mapper.items():
                 mapped_parameters = map_state(state)
-                input_parameters[validation_name] = mapped_parameters
+                input_parameters[evaluation_name] = mapped_parameters
 
-            # Execute all validations with the mapped parameters
-            latest_results = await validation_executor.execute_all(
+            # Execute all evaluations with the mapped parameters
+            latest_results = await evaluation_executor.execute_all(
                 input=input_parameters
             )
 
-            return {"latest_validation_runs": latest_results}
+            return {"latest_evaluation_runs": latest_results}
 
-        return validation_node
+        return evaluation_node
 
     elif execution_mode == "specific":
 
-        async def validation_node(state: Dict[str, Any]) -> Dict[str, Any]:
+        async def evaluation_node(state: Dict[str, Any]) -> Dict[str, Any]:
             """
-            Calls the validation core which will execute specific validation implementations based on the state and update the state with the latest results.
+            Calls the evaluation core which will execute specific evaluation implementations based on the state and update the state with the latest results.
             """
-            # Map the workflow state to validation parameters
+            # Map the workflow state to evaluation parameters
             input_parameters = {}
-            for validation_name, map_state in mapper.items():
+            for evaluation_name, map_state in mapper.items():
                 mapped_parameters = map_state(state)
-                input_parameters[validation_name] = mapped_parameters
+                input_parameters[evaluation_name] = mapped_parameters
 
-            # Execute only the validations related to transformation implementation with the mapped parameters
+            # Execute only the evaluations related to transformation implementation with the mapped parameters
             latest_results = {}
-            for validation_name in mapper.keys():
-                validation_run = await validation_executor.execute_specific(
-                    validation_id=validation_name,
-                    input=input_parameters[validation_name],
+            for evaluation_name in mapper.keys():
+                evaluation_run = await evaluation_executor.execute_specific(
+                    evaluation_id=evaluation_name,
+                    input=input_parameters[evaluation_name],
                 )
-                latest_results[validation_name] = validation_run
+                latest_results[evaluation_name] = evaluation_run
 
-            return {"latest_validation_runs": latest_results}
+            return {"latest_evaluation_runs": latest_results}
 
-        return validation_node
+        return evaluation_node
 
     else:
         raise NotImplementedError(
-            f"Execution mode {execution_mode} is not implemented for the validation agent work function."
+            f"Execution mode {execution_mode} is not implemented for the evaluation agent work function."
         )
