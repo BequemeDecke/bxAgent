@@ -3,7 +3,7 @@ import tempfile
 
 from pathlib import Path
 from unittest import TestCase
-from bxagent.validation.implementations.workspace_operability import (
+from bxagent.evaluation.implementations.workspace_operability import (
     WorkspaceOperabilityValidation,
 )
 

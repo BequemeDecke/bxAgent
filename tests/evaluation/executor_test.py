@@ -6,8 +6,8 @@ from typing import List
 
 from pydantic import BaseModel
 
-from bxagent.validation.executor import LinkedValidation, ValidationExecutor
-from bxagent.validation.types import (
+from bxagent.evaluation.executor import LinkedValidation, ValidationExecutor
+from bxagent.evaluation.types import (
     Validation,
     ValidationError,
     ValidationResult,

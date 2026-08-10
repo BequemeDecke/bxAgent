@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Dict, TypedDict, Optional
 
 from bxagent.comprehension.plan import TransformationPlan
-from bxagent.validation.types import ValidationRun
+from bxagent.evaluation.types import ValidationRun
 
 
 class ModelImplementation(TypedDict):

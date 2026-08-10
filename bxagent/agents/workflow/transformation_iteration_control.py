@@ -5,8 +5,8 @@ from pydantic import BaseModel, Field
 
 from .state import WorkflowState
 from bxagent.config import Config
-from bxagent.validation import ValidationPipe
-from bxagent.validation.filter import IsErrorFilter, IsReportCandidateFilter
+from bxagent.evaluation import ValidationPipe
+from bxagent.evaluation.filter import IsErrorFilter, IsReportCandidateFilter
 
 config = Config.get_instance()
 

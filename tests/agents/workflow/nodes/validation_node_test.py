@@ -15,8 +15,8 @@ from bxagent.agents.workflow.nodes.validation_node import (
     create_validation_node,
 )
 from bxagent.agents.workflow.state import WorkflowState
-from bxagent.validation import ValidationExecutor
-from bxagent.validation.types import Validation, ValidationError, ValidationResult
+from bxagent.evaluation import ValidationExecutor
+from bxagent.evaluation.types import Validation, ValidationError, ValidationResult
 
 
 class MockedSchema(BaseModel):

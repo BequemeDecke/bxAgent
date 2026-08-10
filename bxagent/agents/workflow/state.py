@@ -1,7 +1,7 @@
 from typing import TypedDict, Optional
 from pathlib import Path
 
-from bxagent.validation.types import ValidationRun
+from bxagent.evaluation.types import ValidationRun
 from bxagent.comprehension.plan import TransformationPlan
 
 

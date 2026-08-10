@@ -14,7 +14,7 @@ from bxagent.agents.workflow.transformation_iteration_control import (
     IterationRoute,
     create_check_transformation_iteration_function,
 )
-from bxagent.validation.types import ValidationError, ValidationResult, ValidationRun
+from bxagent.evaluation.types import ValidationError, ValidationResult, ValidationRun
 
 
 class TestTransformationIterationControl(TestCase):

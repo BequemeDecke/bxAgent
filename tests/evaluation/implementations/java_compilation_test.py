@@ -5,12 +5,12 @@ from typing import List
 from unittest import TestCase
 from unittest.mock import patch
 
-from bxagent.validation.implementations.java_compilation import (
+from bxagent.evaluation.implementations.java_compilation import (
     JavaCompilationValidation,
     ValidationError,
     parse_javac_output,
 )
-from bxagent.validation.types import ValidationResult
+from bxagent.evaluation.types import ValidationResult
 
 ERROR_BLOCK_1 = """
     ublic static void main(String[] args) {

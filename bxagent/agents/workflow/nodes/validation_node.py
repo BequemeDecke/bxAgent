@@ -1,7 +1,7 @@
 from typing import Any, Dict, Callable, Literal
 
-from bxagent.validation import ValidationExecutor
-from bxagent.validation.types import StateToValidationMapper
+from bxagent.evaluation import ValidationExecutor
+from bxagent.evaluation.types import StateToValidationMapper
 
 
 def create_validation_node(

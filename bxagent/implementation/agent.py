@@ -10,7 +10,7 @@ from bxagent.comprehension.plan import (
 )
 from bxagent.mapping import map_coding_to_file
 from bxagent.models import build_base_model
-from bxagent.validation.executor import ValidationExecutor
+from bxagent.evaluation.executor import ValidationExecutor
 
 from .evaluate_transformation_implementation import (
     create_evaluate_transformation_implementation,

@@ -11,7 +11,7 @@ from langgraph.types import GraphOutput
 
 from bxagent.preparation.agent import build_preparation_graph
 from bxagent.preparation.state import ModelImplementation, PreparationState
-from bxagent.validation import ValidationExecutor, implementations
+from bxagent.evaluation import ValidationExecutor, implementations
 
 
 def create_test_model_package(temp_dir: Path, package_name: str):

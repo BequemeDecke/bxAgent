@@ -1,5 +1,5 @@
 from langgraph.graph import StateGraph, START, END
-from bxagent.validation import (
+from bxagent.evaluation import (
     ValidationExecutor,
 )
 from bxagent.agents.workflow.nodes.validation_node import (

@@ -1,4 +1,4 @@
-import bxagent.validation.implementations as implementations
+import bxagent.evaluation.implementations as implementations
 
 from .executor import ValidationExecutor
 from .pipefilter import ValidationFilter, ValidationPipe

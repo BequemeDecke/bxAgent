@@ -12,7 +12,7 @@ from bxagent.mapping import (
 )
 from bxagent.models import build_base_model
 from bxagent.preparation import build_preparation_graph
-from bxagent.validation import ValidationExecutor, implementations
+from bxagent.evaluation import ValidationExecutor, implementations
 
 from .nodes.comprehension_node import create_comprehension_node
 from .nodes.implementation_node import create_implementation_node

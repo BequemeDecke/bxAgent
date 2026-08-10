@@ -1,8 +1,8 @@
 from unittest import TestCase
 from unittest.mock import MagicMock
 
-from bxagent.validation import ValidationResult
-from bxagent.validation.pipefilter import ValidationPipe, ValidationFilter
+from bxagent.evaluation import ValidationResult
+from bxagent.evaluation.pipefilter import ValidationPipe, ValidationFilter
 
 
 class TestPipefilter(TestCase):

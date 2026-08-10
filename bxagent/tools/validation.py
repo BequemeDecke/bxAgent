@@ -1,7 +1,7 @@
 from typing import Dict, List
 
 from langchain.tools import BaseTool, tool
-from bxagent.validation import ValidationExecutor, Validation, ValidationRun
+from bxagent.evaluation import ValidationExecutor, Validation, ValidationRun
 
 def create_validation_tools(validations: Dict[str, Validation]) -> List[BaseTool]:
     """

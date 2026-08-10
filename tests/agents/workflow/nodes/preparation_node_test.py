@@ -14,7 +14,7 @@ from bxagent.agents.workflow.nodes.preparation_node import (
 )
 from bxagent.agents.workflow.state import WorkflowState
 from bxagent.preparation import build_preparation_graph
-from bxagent.validation import ValidationExecutor, implementations
+from bxagent.evaluation import ValidationExecutor, implementations
 
 
 def create_test_model_package(temp_dir: Path, package_name: str):
