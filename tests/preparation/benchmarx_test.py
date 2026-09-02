@@ -4,8 +4,8 @@ import tempfile
 from unittest import TestCase
 from unittest.mock import Mock, patch
 
-from mdagent.preparation.benchmarx import create_download_benchmarx_node
-from mdagent.preparation.state import PreparationState
+from mdeagent.preparation.benchmarx import create_download_benchmarx_node
+from mdeagent.preparation.state import PreparationState
 
 
 class TestBenchmarx(TestCase):

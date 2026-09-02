@@ -2,11 +2,11 @@ import tempfile
 from unittest import TestCase
 from pathlib import Path
 
-from mdagent.preparation.explore_models import (
+from mdeagent.preparation.explore_models import (
     create_explore_models_node,
     read_generated_emf_implementations,
 )
-from mdagent.preparation.state import PreparationState, ModelImplementation
+from mdeagent.preparation.state import PreparationState, ModelImplementation
 
 
 def create_test_model_package(temp_dir: Path, package_name: str):

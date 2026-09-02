@@ -1,7 +1,7 @@
 from unittest import TestCase
 
-from mdagent.agents.workflow.state import WorkflowState
-from mdagent.mapping import map_workflow_to_file
+from mdeagent.agents.workflow.state import WorkflowState
+from mdeagent.mapping import map_workflow_to_file
 
 class TestWorkflowToFileMapping(TestCase):
     def test_mapping(self):

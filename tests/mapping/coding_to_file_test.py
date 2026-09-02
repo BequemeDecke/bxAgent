@@ -1,7 +1,7 @@
 from unittest import TestCase
 
-from mdagent.implementation.state import ImplementationState
-from mdagent.mapping import map_coding_to_file
+from mdeagent.implementation.state import ImplementationState
+from mdeagent.mapping import map_coding_to_file
 
 
 class TestCodingToFileMapping(TestCase):

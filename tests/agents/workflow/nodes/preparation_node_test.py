@@ -9,12 +9,12 @@ import tempfile
 from pathlib import Path
 from unittest import TestCase
 
-from mdagent.agents.workflow.nodes.preparation_node import (
+from mdeagent.agents.workflow.nodes.preparation_node import (
     create_preparation_node,
 )
-from mdagent.agents.workflow.state import WorkflowState
-from mdagent.preparation import build_preparation_graph
-from mdagent.evaluation import EvaluationExecutor, implementations
+from mdeagent.agents.workflow.state import WorkflowState
+from mdeagent.preparation import build_preparation_graph
+from mdeagent.evaluation import EvaluationExecutor, implementations
 
 
 def create_test_model_package(temp_dir: Path, package_name: str):

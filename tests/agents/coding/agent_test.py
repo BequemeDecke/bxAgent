@@ -5,8 +5,8 @@ from langchain.chat_models import BaseChatModel
 from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
 from langgraph.graph.state import CompiledStateGraph
 
-from mdagent.config import Config, VariablesConfig, WorkspaceConfig
-from mdagent.agents.coding.agent import build_coding_deep_agent
+from mdeagent.config import Config, VariablesConfig, WorkspaceConfig
+from mdeagent.agents.coding.agent import build_coding_deep_agent
 
 
 class TestCodingAgent(TestCase):

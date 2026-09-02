@@ -4,7 +4,7 @@ from unittest import TestCase
 from unittest.mock import patch
 from pathlib import Path
 
-from mdagent.evaluation.implementations.file_existence import FileExistenceEvaluation
+from mdeagent.evaluation.implementations.file_existence import FileExistenceEvaluation
 
 
 class TestFileExistence(TestCase):

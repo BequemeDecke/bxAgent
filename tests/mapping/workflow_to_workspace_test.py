@@ -1,11 +1,11 @@
 from unittest import TestCase
 from pathlib import Path
 
-from mdagent.implementation.state import (
+from mdeagent.implementation.state import (
     ImplementationState,
 )  # Fix cyclic import from __init__ files
-from mdagent.agents.workflow.state import WorkflowState
-from mdagent.mapping import map_workflow_to_workspace
+from mdeagent.agents.workflow.state import WorkflowState
+from mdeagent.mapping import map_workflow_to_workspace
 
 
 class TestWorkflowToWorkspaceMapping(TestCase):

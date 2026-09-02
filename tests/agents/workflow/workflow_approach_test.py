@@ -10,10 +10,10 @@ import logging
 from pathlib import Path
 from unittest import TestCase
 
-from mdagent.agents.workflow.agent import build_workflow_agent
-from mdagent.agents.workflow.state import WorkflowState
-from mdagent.comprehension.plan import FileTransformationPlanParser, TransformationPlan
-from mdagent.monitoring import build_langfuse_client
+from mdeagent.agents.workflow.agent import build_workflow_agent
+from mdeagent.agents.workflow.state import WorkflowState
+from mdeagent.comprehension.plan import FileTransformationPlanParser, TransformationPlan
+from mdeagent.monitoring import build_langfuse_client
 
 TEST_ENVIRONMENT = Path(".mdagent-tests")
 

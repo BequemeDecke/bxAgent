@@ -3,7 +3,7 @@ import tempfile
 
 from pathlib import Path
 from unittest import TestCase
-from mdagent.evaluation.implementations.workspace_operability import (
+from mdeagent.evaluation.implementations.workspace_operability import (
     WorkspaceOperabilityEvaluation,
 )
 

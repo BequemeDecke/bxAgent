@@ -9,10 +9,10 @@ from unittest import TestCase
 from unittest.mock import MagicMock
 from langgraph.graph import StateGraph, START
 
-from mdagent.agents.workflow.nodes.comprehension_node import (
+from mdeagent.agents.workflow.nodes.comprehension_node import (
     create_comprehension_node,
 )
-from mdagent.comprehension.plan import (
+from mdeagent.comprehension.plan import (
     TransformationPlan,
     TransformationPlanData,
     TransformationPlanParser,

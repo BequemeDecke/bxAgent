@@ -5,7 +5,7 @@ from typing import List
 from unittest import TestCase
 from unittest.mock import Mock, patch
 
-from mdagent.preparation.pom import (
+from mdeagent.preparation.pom import (
     Dependency,
     add_dependencies_to_pom,
     add_module_to_pom,

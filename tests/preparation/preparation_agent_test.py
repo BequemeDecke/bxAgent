@@ -9,9 +9,9 @@ from unittest import TestCase
 from langgraph.graph.state import CompiledStateGraph
 from langgraph.types import GraphOutput
 
-from mdagent.preparation.agent import build_preparation_graph
-from mdagent.preparation.state import ModelImplementation, PreparationState
-from mdagent.evaluation import EvaluationExecutor, implementations
+from mdeagent.preparation.agent import build_preparation_graph
+from mdeagent.preparation.state import ModelImplementation, PreparationState
+from mdeagent.evaluation import EvaluationExecutor, implementations
 
 
 def create_test_model_package(temp_dir: Path, package_name: str):

@@ -12,7 +12,7 @@ from typing import Dict, Callable
 from pathlib import Path
 from jinja2 import Template, Environment, FileSystemLoader
 
-from mdagent.comprehension.plan import (
+from mdeagent.comprehension.plan import (
     SerializedTransformationPlan,
     SerializedTransformationPlanParser,
     TransformationPlan,

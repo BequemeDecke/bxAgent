@@ -9,12 +9,12 @@ from unittest.mock import Mock
 from langchain.chat_models import BaseChatModel
 from langchain.messages import SystemMessage, HumanMessage
 
-from mdagent.agents.workflow.state import WorkflowState
-from mdagent.agents.workflow.transformation_iteration_control import (
+from mdeagent.agents.workflow.state import WorkflowState
+from mdeagent.agents.workflow.transformation_iteration_control import (
     IterationRoute,
     create_check_transformation_iteration_function,
 )
-from mdagent.evaluation.types import EvaluationError, EvaluationResult, EvaluationRun
+from mdeagent.evaluation.types import EvaluationError, EvaluationResult, EvaluationRun
 
 
 class TestTransformationIterationControl(TestCase):

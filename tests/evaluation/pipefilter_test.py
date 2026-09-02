@@ -1,8 +1,8 @@
 from unittest import TestCase
 from unittest.mock import MagicMock
 
-from mdagent.evaluation import EvaluationResult
-from mdagent.evaluation.pipefilter import EvaluationPipe, EvaluationFilter
+from mdeagent.evaluation import EvaluationResult
+from mdeagent.evaluation.pipefilter import EvaluationPipe, EvaluationFilter
 
 
 class TestPipefilter(TestCase):

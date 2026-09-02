@@ -5,7 +5,7 @@ from unittest.mock import Mock, patch
 
 from jinja2 import Environment, FileSystemLoader
 
-from mdagent.implementation.bxtool import BxToolForEMF, BxToolTemplateResolver
+from mdeagent.implementation.bxtool import BxToolForEMF, BxToolTemplateResolver
 
 
 class TestBxToolTemplateResolver(TestCase):

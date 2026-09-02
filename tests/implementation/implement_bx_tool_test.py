@@ -11,11 +11,11 @@ from unittest.mock import Mock, patch
 from langchain.chat_models import BaseChatModel
 from pathlib import Path
 
-from mdagent.implementation.implement_bx_tool import (
+from mdeagent.implementation.implement_bx_tool import (
     create_implement_bx_tool_node,
 )
-from mdagent.implementation.state import ImplementationState
-from mdagent.implementation.bxtool import BxToolForEMF
+from mdeagent.implementation.state import ImplementationState
+from mdeagent.implementation.bxtool import BxToolForEMF
 
 
 class TestImplementBxTool(TestCase):
@@ -95,9 +95,9 @@ class TestImplementBxTool(TestCase):
 
     @patch("pathlib.Path.write_text")
     @patch(
-        "mdagent.implementation.bxtool.BxToolTemplateResolver.get_raw_template"
+        "mdeagent.implementation.bxtool.BxToolTemplateResolver.get_raw_template"
     )
-    @patch("mdagent.implementation.bxtool.BxToolTemplateResolver.render_template")
+    @patch("mdeagent.implementation.bxtool.BxToolTemplateResolver.render_template")
     def test_implement_bx_tool__write_bxtool_implementation(
         self,
         mock_render_template: Mock,

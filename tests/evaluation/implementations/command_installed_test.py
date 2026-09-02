@@ -2,7 +2,7 @@ import asyncio
 from unittest import TestCase
 from unittest.mock import patch
 
-from mdagent.evaluation.implementations.command_installed import (
+from mdeagent.evaluation.implementations.command_installed import (
     CommandInstalledEvaluation,
 )
 

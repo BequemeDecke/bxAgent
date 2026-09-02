@@ -5,12 +5,12 @@ from typing import List
 from unittest import TestCase
 from unittest.mock import patch
 
-from mdagent.evaluation.implementations.java_compilation import (
+from mdeagent.evaluation.implementations.java_compilation import (
     JavaCompilationEvaluation,
     EvaluationError,
     parse_javac_output,
 )
-from mdagent.evaluation.types import EvaluationResult
+from mdeagent.evaluation.types import EvaluationResult
 
 ERROR_BLOCK_1 = """
     ublic static void main(String[] args) {

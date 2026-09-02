@@ -17,12 +17,12 @@ from unittest.mock import Mock, patch
 from langgraph.graph.state import CompiledStateGraph
 from langgraph.types import GraphOutput
 
-from mdagent.implementation.implement_transformation import (
+from mdeagent.implementation.implement_transformation import (
     create_input_prompt,
     create_implement_transformation_node,
 )
-from mdagent.implementation.state import ImplementationState
-from mdagent.comprehension.plan import TransformationPlan, TransformationPlanParser
+from mdeagent.implementation.state import ImplementationState
+from mdeagent.comprehension.plan import TransformationPlan, TransformationPlanParser
 
 
 class TestCreateInputPrompt(TestCase):
@@ -41,7 +41,7 @@ class TestCreateInputPrompt(TestCase):
 
 
 class TestImplementTransformation(TestCase):
-    @patch("mdagent.comprehension.plan.TransformationPlan.__str__")
+    @patch("mdeagent.comprehension.plan.TransformationPlan.__str__")
     def test_implement_transformation__return_compiled_code(self, mocked_str):
         mocked_agent = Mock(spec=CompiledStateGraph)
         mocked_parser = Mock(spec=TransformationPlanParser)
