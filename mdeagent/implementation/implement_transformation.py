@@ -1,68 +1,102 @@
-from langchain.messages import HumanMessage
-from langgraph.graph.state import CompiledStateGraph
-from typing import Callable
+from pathlib import Path
 
-from mdeagent.comprehension.plan import TransformationPlan
+from langchain.chat_models import BaseChatModel
+
+from .generator import (
+    TransformationClassSpec,
+    TransformationClassTemplateResolver,
+)
 from .state import ImplementationState
 
-PROMPT_TEMPLATE = """
-Implement the specific task required for the transformation based on the transformation plan provided below.
+PROMPT_TEMPLATE_WITH_PLAN = """
+You are a Java transformation code generator for EMF-based model transformations.
+Generate a concrete implementation of the AgentTransformationForEMF interface based on the task specification and the provided template.
 
 --- BEGIN TASK SPECIFICATION ---
 {task_specification}
 --- END TASK SPECIFICATION ---
 
-Guidelines:
-- Follow the implementation steps outlined in `# 4. Implementation Steps` of the transformation plan. 
-- If there are any difficulties mentioned in `# 3. Identified Difficulties`, make sure to address them in your implementation. 
-
 --- BEGIN TRANSFORMATION PLAN ---
-{transformation_specification}
+{transformation_plan}
 --- END TRANSFORMATION PLAN ---
+
+--- BEGIN TEMPLATE ---
+{template}
+--- END TEMPLATE ---
+
+Return a valid structured result matching the required Java class structure.
+The implementation must use the EMF interface methods and the Java generic types for source, target, and decisions.
 """
 
 
 def create_input_prompt(
-    task_specification: str, transformation_plan: TransformationPlan
+    task_specification: str, transformation_plan: str, template: str
 ) -> str:
-    transformation_specification = str(transformation_plan)
-    return PROMPT_TEMPLATE.format(
+    return PROMPT_TEMPLATE_WITH_PLAN.format(
         task_specification=task_specification,
-        transformation_specification=transformation_specification,
+        transformation_plan=transformation_plan,
+        template=template,
     )
 
 
 def create_implement_transformation_node(
-    coding_agent: CompiledStateGraph,
-    optional_plan_factory: Callable[[], TransformationPlan],
+    llm: BaseChatModel,
+    workspace: Path,
+    optional_plan_factory: callable,
+    template_path: Path = Path.cwd() / "templates",
 ):
-    def implement_transformation(agent_state: ImplementationState) -> ImplementationState:
-        # 1. Read the transformation plan from the TRANSFORMATION.md file
-        transformation_plan = (
-            agent_state.get("transformation_md") or optional_plan_factory()
+    """
+    Creates the implement_transformation node for the implementation graph.
+
+    This node uses a structured LLM approach to generate the transformation class.
+    It reads the transformation plan and includes it in the prompt sent to the LLM.
+
+    Args:
+        llm: The base chat model to use for generation.
+        workspace: The workspace path where files will be written.
+        optional_plan_factory: A factory function to create a transformation plan if none exists.
+        template_path: The path to the templates directory.
+
+    Returns:
+        A node function that generates the transformation class and updates the state.
+    """
+    structured_llm = llm.with_structured_output(TransformationClassSpec)
+    resolver = TransformationClassTemplateResolver(template_path=template_path)
+
+    def implement_transformation(state: ImplementationState) -> ImplementationState:
+        # 1. Read the transformation plan from the state or create one
+        transformation_plan = state.get("transformation_md") or optional_plan_factory()
+
+        # 2. Build the prompt for the LLM based on the transformation plan and task specification
+        task_specification = state.get("task_specification")
+        raw_template = resolver.get_raw_template()
+        input_prompt = create_input_prompt(
+            task_specification=task_specification,
+            transformation_plan=str(transformation_plan),
+            template=raw_template,
         )
 
-        # 2. Build the prompt for the coding agent based on the transformation plan and task specification
-        task_specification = agent_state.get("task_specification")
-        input_prompt = create_input_prompt(task_specification, transformation_plan)
+        # 3. Invoke the structured LLM to generate the transformation class
+        response: TransformationClassSpec = structured_llm.invoke(input=input_prompt)
 
-        # 3. Invoke the coding deep agent with the created prompt
-        written_java_files = agent_state.get("written_java_files", []) # If there are already some files in previous iterations
-        response = coding_agent.invoke(
-            input={
-                "messages": [HumanMessage(content=input_prompt)],
-                "written_files": written_java_files,
-            },
-            version="v2",
-        )
+        # 4. Render the template with the generated specification
+        rendered_code = resolver.render_template(response)
 
-        # 4. Retrieve the state of the agent to get the written_java_files
-        written_java_files = response.value["written_files"]
+        # 5. Write the generated code to a file
+        file_name = response.class_name + ".java"
+        file_path = workspace / file_name
+        if not file_path.parent.exists():
+            file_path.parent.mkdir(parents=True)
+        file_path.write_text(rendered_code)
+
+        # 6. Retrieve the written files from the state and add the new one
+        written_java_files = state.get("written_java_files", []) + [file_path]
 
         return {
             "transformation_md": transformation_plan,
             "written_java_files": written_java_files,
             "task_specification": task_specification,
+            "transformation_implementation": rendered_code,
         }
 
     return implement_transformation

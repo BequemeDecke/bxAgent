@@ -1,10 +1,4 @@
 from .agent import build_implementation_graph
-from .evaluate_transformation_implementation import (
-    create_evaluate_transformation_implementation,
-)
-from .implement_bx_tool import create_implement_bx_tool_node
-from .implement_transformation import create_implement_transformation_node
-from .state import ImplementationState
 from .bxtool import (
     BxToolForEMF,
     BxToolTemplateResolver,
@@ -14,18 +8,30 @@ from .bxtool import (
     TransformationImplementation,
     TransformationModel,
 )
+from .evaluate_transformation_implementation import (
+    create_evaluate_transformation_implementation,
+)
+from .generator import (
+    TransformationClassSpec,
+    TransformationClassTemplateResolver,
+)
+from .implement_bx_tool import create_implement_bx_tool_node
+from .implement_transformation import create_implement_transformation_node
+from .state import ImplementationState
 
 __all__ = [
-    "build_implementation_graph",
-    "create_implement_transformation_node",
-    "create_evaluate_transformation_implementation",
-    "create_implement_bx_tool_node",
-    "ImplementationState",
     "BxToolForEMF",
     "BxToolTemplateResolver",
     "Class",
     "Decisions",
+    "ImplementationState",
     "InitiationDialogue",
+    "TransformationClassSpec",
+    "TransformationClassTemplateResolver",
     "TransformationImplementation",
     "TransformationModel",
+    "build_implementation_graph",
+    "create_evaluate_transformation_implementation",
+    "create_implement_bx_tool_node",
+    "create_implement_transformation_node",
 ]
