@@ -1,0 +1,77 @@
+package {{ package_name | default('com.example') }};
+
+import {{ transformation_package | default('com.example') }}.AgentTransformationForEMF;
+
+public class {{ class_name | default('DefaultTransformation') }}
+        implements AgentTransformationForEMF<
+                {{ source_type | default('Object') }},
+                {{ target_type | default('Object') }},
+                {{ decision_type | default('Object') }}> {
+    {% if fields %}
+    {% for field in fields %}
+    private {{ field.type }} {{ field.name }};
+    {% endfor %}
+    {% endif %}
+
+    {% if constructor %}
+    public {{ class_name | default('DefaultTransformation') }}({{ constructor.parameters | default('') }}) {
+        {% for assignment in constructor.assignments %}
+        this.{{ assignment.target }} = {{ assignment.value }};
+        {% endfor %}
+    }
+    {% endif %}
+
+    @Override
+    public void forward({{ source_type | default('Object') }} source,
+                        {{ target_type | default('Object') }} target,
+                        {{ decision_type | default('Object') }} decisions) {
+        {% if forward_body %}
+        {{ forward_body }}
+        {% else %}
+        // TODO: implement forward transformation
+        {% endif %}
+    }
+
+    @Override
+    public void backward({{ target_type | default('Object') }} target,
+                         {{ source_type | default('Object') }} source,
+                         {{ decision_type | default('Object') }} decisions) {
+        {% if backward_body %}
+        {{ backward_body }}
+        {% else %}
+        // TODO: implement backward transformation
+        {% endif %}
+    }
+
+    @Override
+    public void synch({{ source_type | default('Object') }} source,
+                      {{ target_type | default('Object') }} target) {
+        {% if synch_body %}
+        {{ synch_body }}
+        {% else %}
+        // TODO: implement synchronization
+        {% endif %}
+    }
+
+    @Override
+    public void transformSourceToTarget({{ source_type | default('Object') }} source,
+                                       {{ target_type | default('Object') }} target,
+                                       {{ decision_type | default('Object') }} decisions) {
+        {% if transform_source_to_target_body %}
+        {{ transform_source_to_target_body }}
+        {% else %}
+        forward(source, target, decisions);
+        {% endif %}
+    }
+
+    @Override
+    public void transformTargetToSource({{ target_type | default('Object') }} target,
+                                       {{ source_type | default('Object') }} source,
+                                       {{ decision_type | default('Object') }} decisions) {
+        {% if transform_target_to_source_body %}
+        {{ transform_target_to_source_body }}
+        {% else %}
+        backward(target, source, decisions);
+        {% endif %}
+    }
+}
