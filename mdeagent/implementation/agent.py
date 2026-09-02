@@ -1,7 +1,6 @@
 from pathlib import Path
 
 from langgraph.graph import END, START, StateGraph
-from langgraph.graph.state import CompiledStateGraph
 
 from mdeagent.agents.workflow.nodes.evaluation_node import create_evaluation_node
 from mdeagent.comprehension.plan import (
@@ -22,7 +21,6 @@ from .state import ImplementationState
 
 def build_implementation_graph(
     evaluation_executor: EvaluationExecutor,
-    coding_deep_agent: CompiledStateGraph,
     workspace_path: Path,
 ) -> StateGraph:
 
@@ -33,7 +31,8 @@ def build_implementation_graph(
 
     # Create implementations
     implement_transformation = create_implement_transformation_node(
-        coding_agent=coding_deep_agent,
+        llm=base_model,
+        workspace=workspace_path,
         optional_plan_factory=lambda: (
             TransformationPlan(  # Create a new transformation plan if none exists
                 parser=FileTransformationPlanParser(),

@@ -2,7 +2,6 @@ from pathlib import Path
 
 from langgraph.graph import END, START, StateGraph
 
-from mdeagent.agents.coding.agent import build_coding_deep_agent
 from mdeagent.agents.comprehension import build_comprehension_agent
 from mdeagent.implementation import build_implementation_graph
 from mdeagent.mapping import (
@@ -63,10 +62,8 @@ def build_workflow_agent(workspace_path: Path) -> StateGraph[WorkflowState]:
         evaluation_executor=evaluation_executor
     ).compile()
     call_preparation_node = create_preparation_node(preparation_agent)
-    coding_deep_agent = build_coding_deep_agent(workspace_path=workspace_path)
     implementation_agent = build_implementation_graph(
         evaluation_executor=evaluation_executor,
-        coding_deep_agent=coding_deep_agent,
         workspace_path=workspace_path,
     ).compile()
     call_implementation_node = create_implementation_node(implementation_agent)
