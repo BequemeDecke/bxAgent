@@ -1,12 +1,12 @@
 # --- BxAgent ---
 agent_data/
 exclude/
-.mdagent-workspace/
+.mdeagent-workspace/
 
 notebooks/*/test_results/
 notebooks/*/templates/
 
-.mdagent-tests/test-executions/
+.mdeagent-tests/test-executions/
 
 .DS_Store
 

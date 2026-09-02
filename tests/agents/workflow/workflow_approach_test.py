@@ -15,7 +15,7 @@ from mdeagent.agents.workflow.state import WorkflowState
 from mdeagent.comprehension.plan import FileTransformationPlanParser, TransformationPlan
 from mdeagent.monitoring import build_langfuse_client
 
-TEST_ENVIRONMENT = Path(".mdagent-tests")
+TEST_ENVIRONMENT = Path(".mdeagent-tests")
 
 
 class TestWorkflowApproach(TestCase):
