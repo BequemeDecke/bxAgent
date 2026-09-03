@@ -1,8 +1,9 @@
-import shutil
 import os
+import shutil
 
 from ..prepare_workspace import StructureFixStrategy
 from ..state import PreparationState
+
 
 class ClearWorkspaceStrategy(StructureFixStrategy):
     """
@@ -10,7 +11,7 @@ class ClearWorkspaceStrategy(StructureFixStrategy):
     """
 
     def fix_structure(self, state: PreparationState) -> PreparationState:
-        workspace_path = state.get("workspace_path") # This is a safe operation        
+        workspace_path = state.get("workspace_path")  # This is a safe operation
 
         # Clear the workspace by removing all files and directories
         for root, dirs, files in os.walk(workspace_path):
@@ -20,5 +21,5 @@ class ClearWorkspaceStrategy(StructureFixStrategy):
             for dir in dirs:
                 dir_path = os.path.join(root, dir)
                 shutil.rmtree(dir_path)
-            
+
         return {}

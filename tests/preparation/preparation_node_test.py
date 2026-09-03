@@ -9,12 +9,12 @@ import tempfile
 from pathlib import Path
 from unittest import TestCase
 
+from mdeagent.evaluation import EvaluationExecutor, implementations
+from mdeagent.preparation import build_preparation_graph
 from mdeagent.preparation.node import (
     create_preparation_node,
 )
-from mdeagent.state import WorkflowState
-from mdeagent.preparation import build_preparation_graph
-from mdeagent.evaluation import EvaluationExecutor, implementations
+from mdeagent.state import MDEAgentState
 
 
 def create_test_model_package(temp_dir: Path, package_name: str):
@@ -70,7 +70,9 @@ class TestPreparationNodeIntegration(TestCase):
             group_id = "de.example"
             artifact_id = "mdagent"
             package_path = f"{group_id}.{artifact_id}"
-            transformation_plan_path = workspace_path / artifact_id / "TRANSFORMATION.md"
+            transformation_plan_path = (
+                workspace_path / artifact_id / "TRANSFORMATION.md"
+            )
 
             (
                 (source_model_path, source_file, *_),
@@ -80,7 +82,7 @@ class TestPreparationNodeIntegration(TestCase):
                 create_test_model_package(models_path, "Target"),
             )
 
-            initial_state = WorkflowState(
+            initial_state = MDEAgentState(
                 transformation_plan=None,
                 workspace_path=workspace_path,
                 group_id=group_id,
@@ -90,7 +92,7 @@ class TestPreparationNodeIntegration(TestCase):
                 required_commands=["mvn", "git"],
             )
 
-            output: WorkflowState = asyncio.run(
+            output: MDEAgentState = asyncio.run(
                 self.call_preparation_node(initial_state)
             )
             logging.debug(f"Output state: {output}")

@@ -1,17 +1,16 @@
 import asyncio
 import logging
-import tempfile
 import shutil
-
+import tempfile
 from pathlib import Path
 from unittest import TestCase
 
 from langgraph.graph.state import CompiledStateGraph
 from langgraph.types import GraphOutput
 
+from mdeagent.evaluation import EvaluationExecutor, implementations
 from mdeagent.preparation.agent import build_preparation_graph
 from mdeagent.preparation.state import ModelImplementation, PreparationState
-from mdeagent.evaluation import EvaluationExecutor, implementations
 
 
 def create_test_model_package(temp_dir: Path, package_name: str):
@@ -73,12 +72,8 @@ class TestPreparationAgentIntegration(TestCase):
             group_id = "de.example"
             artifact_id = "mdagent"
 
-            (source_model_path, *_) = create_test_model_package(
-                models_path, "Source"
-            )
-            (target_model_path, *_) = create_test_model_package(
-                models_path, "Target"
-            )
+            (source_model_path, *_) = create_test_model_package(models_path, "Source")
+            (target_model_path, *_) = create_test_model_package(models_path, "Target")
 
             agent = build_preparation_graph(
                 evaluation_executor=self.evaluation_executor

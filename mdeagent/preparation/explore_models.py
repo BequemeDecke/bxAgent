@@ -1,17 +1,16 @@
 from pathlib import Path
-from typing import Dict
 
 from .state import ModelImplementation, PreparationState
 
 
-def read_generated_emf_implementations(package_path: Path) -> Dict[Path, str]:
+def read_generated_emf_implementations(package_path: Path) -> dict[Path, str]:
     """Reads the generated EMF implementations from the given package path.
 
     Args:
         package_path (Path): The path to the package containing the generated EMF implementations.
 
     Returns:
-        Dict[Path, str]: A dictionary mapping each Java file path to its content.
+        dict[Path, str]: A dictionary mapping each Java file path to its content.
     """
     result = {}
     for java_file in package_path.glob("*.java"):
@@ -33,7 +32,9 @@ def create_explore_models_node():
         elif not source_model_path.exists():
             raise ValueError(f"Source model path '{source_model_path}' does not exist.")
         elif not source_model_path.is_dir():
-            raise ValueError(f"Source model path '{source_model_path}' is not a directory.")
+            raise ValueError(
+                f"Source model path '{source_model_path}' is not a directory."
+            )
 
         target_model: ModelImplementation = state.get("target_model")
         if target_model is None:
@@ -44,7 +45,9 @@ def create_explore_models_node():
         elif not target_model_path.exists():
             raise ValueError(f"Target model path '{target_model_path}' does not exist.")
         elif not target_model_path.is_dir():
-            raise ValueError(f"Target model path '{target_model_path}' is not a directory.")
+            raise ValueError(
+                f"Target model path '{target_model_path}' is not a directory."
+            )
 
         src_impls = read_generated_emf_implementations(source_model_path)
         if len(src_impls) == 0:

@@ -1,7 +1,6 @@
 import logging
 import tempfile
 from pathlib import Path
-from typing import List
 from unittest import TestCase
 from unittest.mock import Mock, patch
 
@@ -113,7 +112,7 @@ class TestAddDependencies(TestCase):
             pom_path = Path(temp_dir, "pom.xml")
             pom_path.write_text(INITIAL_POM)
 
-            dependencies: List[Dependency] = [
+            dependencies: list[Dependency] = [
                 {
                     "group_id": "org.springframework",
                     "artifact_id": "spring-core",
@@ -155,7 +154,7 @@ class TestAddDependencies(TestCase):
             pom_path = Path(temp_dir, "pom.xml")
             pom_path.write_text(INITIAL_POM_WITH_DEPENDENCIES)
 
-            dependencies: List[Dependency] = [
+            dependencies: list[Dependency] = [
                 {
                     "group_id": "org.springframework",
                     "artifact_id": "spring-core",

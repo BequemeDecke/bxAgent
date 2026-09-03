@@ -1,6 +1,6 @@
-from pathlib import Path
 import shutil
 import tempfile
+from pathlib import Path
 from unittest import TestCase
 from unittest.mock import Mock, patch
 
@@ -39,6 +39,7 @@ class TestBenchmarx(TestCase):
 
         actual_state = self.download_benchmarx(input_state)
         self.assertIsNone(actual_state)  # Should return None when skipping installation
+
 
 class TestBenchmarxIntegration(TestCase):
     def setUp(self):
