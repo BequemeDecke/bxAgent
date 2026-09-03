@@ -3,10 +3,8 @@ from langchain.chat_models import BaseChatModel
 from langchain.messages import SystemMessage
 
 from mdeagent.models import build_base_model
-from mdeagent.comprehension import (
-    TransformationPlan,
-)
 from mdeagent.tools.comprehension import transformation_plan_tools
+
 from .state import ComprehensionAgentState
 
 COMPREHENSION_SYSTEM_PROMPT = """
