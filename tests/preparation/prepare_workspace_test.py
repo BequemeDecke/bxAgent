@@ -8,8 +8,8 @@ from unittest.mock import Mock, patch
 from mdeagent.comprehension import TransformationPlanData
 from mdeagent.comprehension.plan import TransformationPlan
 from mdeagent.preparation.prepare_workspace import (
-    create_prepare_workspace_node,
     StructureFixStrategy,
+    create_prepare_workspace_node,
 )
 from mdeagent.preparation.state import PreparationState
 from mdeagent.util import copy_workspace, log_workspace_structure
@@ -34,12 +34,16 @@ class TestPrepareWorkspace(TestCase):
         self.template_path = Path.cwd() / "templates"
 
     @patch(
-            "mdeagent.preparation.pom.install_dependencies",
-            return_value=None,
+        "mdeagent.preparation.pom.install_dependencies",
+        return_value=None,
     )
     @patch(
-            "mdeagent.preparation.pom.add_dependencies_to_pom",
-            return_value=None,
+        "mdeagent.preparation.pom.add_plugin_to_pom",
+        return_value=None,
+    )
+    @patch(
+        "mdeagent.preparation.pom.add_dependencies_to_pom",
+        return_value=None,
     )
     @patch(
         "subprocess.run",
@@ -47,7 +51,13 @@ class TestPrepareWorkspace(TestCase):
             args=["mvn", "archetype:generate"], returncode=0
         ),
     )
-    def test_prepare_workspace__given_folder_does_not_exist(self, mock_run: Mock, mock_add_dependencies: Mock, mock_install_dependencies: Mock):
+    def test_prepare_workspace__given_folder_does_not_exist(
+        self,
+        mock_run: Mock,
+        mock_add_dependencies: Mock,
+        mock_add_plugin: Mock,
+        mock_install_dependencies: Mock,
+    ):
         """
         This test checks if the workspace is created successfully if the given workspace folder does not exist
         """
@@ -79,7 +89,8 @@ class TestPrepareWorkspace(TestCase):
 
             # Check if maven was called to create the project structure
             mock_run.assert_called_once()
-            mock_add_dependencies.assert_called_once() 
+            mock_add_dependencies.assert_called_once()
+            mock_add_plugin.assert_called_once()
             mock_install_dependencies.assert_called_once()
 
             # Check indirect output
@@ -96,12 +107,16 @@ class TestPrepareWorkspace(TestCase):
             )
 
     @patch(
-            "mdeagent.preparation.pom.install_dependencies",
-            return_value=None,
+        "mdeagent.preparation.pom.install_dependencies",
+        return_value=None,
     )
     @patch(
-            "mdeagent.preparation.pom.add_dependencies_to_pom",
-            return_value=None,
+        "mdeagent.preparation.pom.add_plugin_to_pom",
+        return_value=None,
+    )
+    @patch(
+        "mdeagent.preparation.pom.add_dependencies_to_pom",
+        return_value=None,
     )
     @patch(
         "subprocess.run",
@@ -109,7 +124,13 @@ class TestPrepareWorkspace(TestCase):
             args=["mvn", "archetype:generate"], returncode=0
         ),
     )
-    def test_prepare_workspace__given_folder_exists(self, mock_run: Mock, mock_add_dependencies: Mock, mock_install_dependencies: Mock):
+    def test_prepare_workspace__given_folder_exists(
+        self,
+        mock_run: Mock,
+        mock_add_dependencies: Mock,
+        mock_add_plugin: Mock,
+        mock_install_dependencies: Mock,
+    ):
         """
         This test checks if the workspace is created successfully if the given workspace folder exists
         """
@@ -139,6 +160,7 @@ class TestPrepareWorkspace(TestCase):
             # Check if maven was called to create the project structure
             mock_run.assert_called_once()
             mock_add_dependencies.assert_called_once()
+            mock_add_plugin.assert_called_once()
             mock_install_dependencies.assert_called_once()
 
             # Check indirect output
@@ -155,14 +177,23 @@ class TestPrepareWorkspace(TestCase):
             )
 
     @patch(
-            "mdeagent.preparation.pom.install_dependencies",
-            return_value=None,
+        "mdeagent.preparation.pom.install_dependencies",
+        return_value=None,
     )
     @patch(
-            "mdeagent.preparation.pom.add_dependencies_to_pom",
-            return_value=None,
+        "mdeagent.preparation.pom.add_plugin_to_pom",
+        return_value=None,
     )
-    def test_prepare_workspace__content_exists_structure_incorrect(self, mock_add_dependencies: Mock, mock_install_dependencies: Mock):
+    @patch(
+        "mdeagent.preparation.pom.add_dependencies_to_pom",
+        return_value=None,
+    )
+    def test_prepare_workspace__content_exists_structure_incorrect(
+        self,
+        mock_add_dependencies: Mock,
+        mock_add_plugin: Mock,
+        mock_install_dependencies: Mock,
+    ):
         """
         This test checks if the StructureFixStrategy is invoked if the workspace folder exists but the structure is incorrect.
         Some strategies would be:
@@ -199,15 +230,20 @@ class TestPrepareWorkspace(TestCase):
             self.fix_strategy.fix_structure.assert_called_once_with(input_state)
 
             mock_add_dependencies.assert_called_once()
+            mock_add_plugin.assert_called_once()
             mock_install_dependencies.assert_called_once()
 
     @patch(
-            "mdeagent.preparation.pom.install_dependencies",
-            return_value=None,
+        "mdeagent.preparation.pom.install_dependencies",
+        return_value=None,
     )
     @patch(
-            "mdeagent.preparation.pom.add_dependencies_to_pom",
-            return_value=None,
+        "mdeagent.preparation.pom.add_plugin_to_pom",
+        return_value=None,
+    )
+    @patch(
+        "mdeagent.preparation.pom.add_dependencies_to_pom",
+        return_value=None,
     )
     @patch(
         "subprocess.run",
@@ -215,7 +251,13 @@ class TestPrepareWorkspace(TestCase):
             args=["mvn", "archetype:generate"], returncode=0
         ),
     )
-    def test_prepare_workspace__transformation_plan_exists(self, mock_run: Mock, mock_add_dependencies: Mock, mock_install_dependencies: Mock):
+    def test_prepare_workspace__transformation_plan_exists(
+        self,
+        mock_run: Mock,
+        mock_add_dependencies: Mock,
+        mock_add_plugin: Mock,
+        mock_install_dependencies: Mock,
+    ):
         with tempfile.TemporaryDirectory() as temp_dir:
             # Create a fake transformation plan in the workspace
             tp_path = Path(temp_dir) / "mdeagent" / "TRANSFORMATION.md"
@@ -260,6 +302,7 @@ class TestPrepareWorkspace(TestCase):
 
             mock_run.assert_called_once()
             mock_add_dependencies.assert_called_once()
+            mock_add_plugin.assert_called_once()
             mock_install_dependencies.assert_called_once()
 
     def test_prepare_workspace__state_properties_missing(self):
@@ -309,14 +352,19 @@ class TestMavenIntegration(TestCase):
                 artifact_id="mdeagent",
             )
 
-            try: 
-                create_prepare_workspace_node(fix_strategy=Mock(spec=StructureFixStrategy))(
-                    input_state
-                )
+            try:
+                create_prepare_workspace_node(
+                    fix_strategy=Mock(spec=StructureFixStrategy)
+                )(input_state)
             except Exception as e:
                 log_workspace_structure(Path(temp_dir))
-                copy_workspace(Path(temp_dir), Path.cwd() / ".mdeagent-workspace/prepare_workspace_test")
-                self.fail(f"prepare_workspace_node raised an exception unexpectedly: {e}")
+                copy_workspace(
+                    Path(temp_dir),
+                    Path.cwd() / ".mdeagent-workspace/prepare_workspace_test",
+                )
+                self.fail(
+                    f"prepare_workspace_node raised an exception unexpectedly: {e}"
+                )
 
             # Check for the correct structure
             self.assertTrue(

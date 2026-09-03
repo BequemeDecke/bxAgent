@@ -1,16 +1,14 @@
-from abc import ABC, abstractmethod
 import subprocess
-
+from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import List
-
-from mdeagent.comprehension import TransformationPlan, FileTransformationPlanParser
 
 import mdeagent.preparation.pom as pom_utils
+from mdeagent.comprehension import FileTransformationPlanParser, TransformationPlan
+from mdeagent.preparation.pom import Plugin
+
 from .state import PreparationState
 
-
-EMF_DEPENDENCIES: List[pom_utils.Dependency] = [
+EMF_DEPENDENCIES: list[pom_utils.Dependency] = [
     {
         "group_id": "org.eclipse.emf",
         "artifact_id": "org.eclipse.emf.ecore",
@@ -25,8 +23,15 @@ EMF_DEPENDENCIES: List[pom_utils.Dependency] = [
         "group_id": "org.eclipse.emf",
         "artifact_id": "org.eclipse.emf.ecore.xmi",
         "version": "2.30.0",
-    }
+    },
 ]
+
+SPOTLESS_PLUGIN: Plugin = {
+    "group_id": "com.diffplug.maven",
+    "artifact_id": "spotless-maven-plugin",
+    "version": "2.x.x",
+    "configuration": "<java><googleJavaFormat/></java>",
+}
 
 
 class StructureFixStrategy(ABC):
@@ -57,7 +62,8 @@ def create_maven_project(group_id: str, artifact_id: str, workspace: Path):
         raise RuntimeError(
             f"Failed to create Maven project. Return code: {cp_process.returncode}"
         )
-    
+
+
 BASE_POM_XML = """<?xml version="1.0" encoding="UTF-8"?>
 
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -89,10 +95,14 @@ def create_parent_project(workspace: Path, group_id: str):
     This assumes that the directory has been created and is empty!
     """
     pom_xml_path = workspace / "pom.xml"
-    pom_xml_path.write_text(BASE_POM_XML.format(group_id=group_id, artifact_id="workspace"))
+    pom_xml_path.write_text(
+        BASE_POM_XML.format(group_id=group_id, artifact_id="workspace")
+    )
 
 
-def is_workspace_structure_correct(workspace: Path, group_id: str, artifact_id: str) -> bool:
+def is_workspace_structure_correct(
+    workspace: Path, group_id: str, artifact_id: str
+) -> bool:
     """
     Check if the workspace structure is valid.
     Returns True if the structure is valid, False otherwise.
@@ -111,7 +121,7 @@ def is_workspace_structure_correct(workspace: Path, group_id: str, artifact_id: 
     transformation_md_path = transformation_module_path / "TRANSFORMATION.md"
     if not transformation_md_path.exists():
         return False
-    
+
     return True
 
 
@@ -133,8 +143,10 @@ def create_prepare_workspace_node(fix_strategy: StructureFixStrategy):
         workspace.mkdir(parents=True, exist_ok=True)
 
         # Check if the folder is empty => Create the Parent project, else execute the strategy
-        fixed_state = {} # State to overwrite
-        if any(workspace.iterdir()) and not is_workspace_structure_correct(workspace, group_id, artifact_id):
+        fixed_state = {}  # State to overwrite
+        if any(workspace.iterdir()) and not is_workspace_structure_correct(
+            workspace, group_id, artifact_id
+        ):
             fixed_state = fix_strategy.fix_structure(state)
         else:
             create_parent_project(workspace, group_id)
@@ -173,9 +185,10 @@ def create_prepare_workspace_node(fix_strategy: StructureFixStrategy):
         if app_java_path.exists():
             app_java_path.unlink()
 
-        # Add EMF dependencies to the pom.xml of the transformation module  
+        # Add EMF dependencies to the pom.xml of the transformation module
         pom_path = workspace / artifact_id / "pom.xml"
         pom_utils.add_dependencies_to_pom(pom_path, EMF_DEPENDENCIES)
+        pom_utils.add_plugin_to_pom(pom_path, SPOTLESS_PLUGIN)
         pom_utils.install_dependencies(workspace / artifact_id)
 
         # Update the state with the new paths and transformation plan
