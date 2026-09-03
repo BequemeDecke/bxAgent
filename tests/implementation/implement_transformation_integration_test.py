@@ -70,7 +70,7 @@ class TestImplementTransformationIntegration(TestCase):
         Creates a factory function that returns a TransformationPlan for Families2Persons.
 
         Returns:
-            A callable that returns a TransformationPlan instance.
+            A Callable that returns a TransformationPlan instance.
         """
 
         def plan_factory():

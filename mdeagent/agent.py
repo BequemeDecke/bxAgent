@@ -2,9 +2,25 @@ from pathlib import Path
 
 from langgraph.graph import END, START, StateGraph
 
-from mdeagent.agents.comprehension import build_comprehension_agent
-from mdeagent.evaluation import EvaluationExecutor, implementations
-from mdeagent.implementation import build_implementation_graph
+from mdeagent.agents import build_comprehension_agent
+from mdeagent.comprehension.node import create_comprehension_node
+from mdeagent.evaluation import (
+    CommandInstalledEvaluation,
+    CommandInstalledEvaluationConfig,
+    EvaluationExecutor,
+    FileExistenceEvaluation,
+    FileExistenceEvaluationConfig,
+    JavaCompilationEvaluation,
+    JavaCompilationEvaluationConfig,
+    WorkspaceOperabilityEvaluation,
+    WorkspaceOperabilityEvaluationConfig,
+)
+from mdeagent.evaluation.node import create_evaluation_node
+from mdeagent.guardrails.transformation_iteration_control import (
+    create_check_transformation_iteration_function,
+)
+from mdeagent.implementation.agent import build_implementation_graph
+from mdeagent.implementation.node import create_implementation_node
 from mdeagent.mapping import (
     map_workflow_to_commands,
     map_workflow_to_file,
@@ -12,15 +28,8 @@ from mdeagent.mapping import (
 )
 from mdeagent.models import build_base_model
 from mdeagent.preparation import build_preparation_graph
-
-from .comprehension.node import create_comprehension_node
-from .evaluation.node import create_evaluation_node
-from .guardrails.transformation_iteration_control import (
-    create_check_transformation_iteration_function,
-)
-from .implementation.node import create_implementation_node
-from .preparation.node import create_preparation_node
-from .state import MDEAgentState
+from mdeagent.preparation.node import create_preparation_node
+from mdeagent.state import MDEAgentState
 
 
 def build_mdeagent(workspace_path: Path) -> StateGraph[MDEAgentState]:
@@ -32,20 +41,20 @@ def build_mdeagent(workspace_path: Path) -> StateGraph[MDEAgentState]:
     evaluation_executor = EvaluationExecutor(
         evaluations={
             "workspace_operability": {
-                "evaluation": implementations.WorkspaceOperabilityEvaluation(),
-                "evaluation_schema": implementations.WorkspaceOperabilityEvaluationConfig,
+                "evaluation": WorkspaceOperabilityEvaluation(),
+                "evaluation_schema": WorkspaceOperabilityEvaluationConfig,
             },
             "commands_installed": {
-                "evaluation": implementations.CommandInstalledEvaluation(),
-                "evaluation_schema": implementations.CommandInstalledEvaluationConfig,
+                "evaluation": CommandInstalledEvaluation(),
+                "evaluation_schema": CommandInstalledEvaluationConfig,
             },
             "file_existence": {
-                "evaluation": implementations.FileExistenceEvaluation(),
-                "evaluation_schema": implementations.FileExistenceEvaluationConfig,
+                "evaluation": FileExistenceEvaluation(),
+                "evaluation_schema": FileExistenceEvaluationConfig,
             },
             "java_compilation": {
-                "evaluation": implementations.JavaCompilationEvaluation(),
-                "evaluation_schema": implementations.JavaCompilationEvaluationConfig,
+                "evaluation": JavaCompilationEvaluation(),
+                "evaluation_schema": JavaCompilationEvaluationConfig,
             },
         }
     )

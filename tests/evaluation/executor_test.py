@@ -2,11 +2,10 @@ import asyncio
 import datetime
 import unittest
 from dataclasses import asdict
-from typing import List
 
 from pydantic import BaseModel
 
-from mdeagent.evaluation.executor import LinkedEvaluation, EvaluationExecutor
+from mdeagent.evaluation.executor import EvaluationExecutor, LinkedEvaluation
 from mdeagent.evaluation.types import (
     Evaluation,
     EvaluationError,
@@ -18,8 +17,8 @@ from mdeagent.evaluation.types import (
 class MockedEvaluationCaseImplementation(Evaluation):
     def __init__(
         self,
-        results: List[EvaluationResult] = None,
-        errors: List[EvaluationError] = None,
+        results: list[EvaluationResult] | None = None,
+        errors: list[EvaluationError] | None = None,
     ):
         self.results = results or []
         self.errors = errors or []
@@ -237,7 +236,7 @@ class TestEvaluationExecutor__execute_all(unittest.TestCase):
             ),
         ]
 
-        actual: List[EvaluationRun] = asyncio.run(
+        actual: list[EvaluationRun] = asyncio.run(
             self.executor.execute_all(
                 input={
                     "evaluation1": {"param1": "value1"},

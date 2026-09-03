@@ -1,8 +1,7 @@
 import asyncio
-
+from pathlib import Path
 from unittest import TestCase
 from unittest.mock import patch
-from pathlib import Path
 
 from mdeagent.evaluation.implementations.file_existence import FileExistenceEvaluation
 
@@ -77,7 +76,9 @@ class TestFileExistence(TestCase):
         results, errors = asyncio.run(file_existence_evaluation.run(files=files))
 
         self.assertEqual(
-            len(results), 2, "There should be two results when files have mixed existence."
+            len(results),
+            2,
+            "There should be two results when files have mixed existence.",
         )
         self.assertEqual(
             len(errors), 0, "There should be no errors when files have mixed existence."

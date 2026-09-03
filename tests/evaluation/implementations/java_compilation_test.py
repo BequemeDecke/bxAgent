@@ -1,13 +1,11 @@
 import asyncio
 import subprocess
 from pathlib import Path
-from typing import List
 from unittest import TestCase
 from unittest.mock import patch
 
 from mdeagent.evaluation.implementations.java_compilation import (
     JavaCompilationEvaluation,
-    EvaluationError,
     parse_javac_output,
 )
 from mdeagent.evaluation.types import EvaluationResult
@@ -209,7 +207,7 @@ class TestJavaCompilationEvaluation__parse_javac_output(TestCase):
             "There should be three EvaluationResult objects for the provided javac error output.",
         )
 
-        expected_errors: List[EvaluationResult] = [
+        expected_errors: list[EvaluationResult] = [
             EvaluationResult(
                 content="Fehler: <ID> erwartet",
                 metadata={

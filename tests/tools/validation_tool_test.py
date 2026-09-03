@@ -8,7 +8,7 @@ class TestEvaluationToolFactory(unittest.TestCase):
     def test_create_evaluation_tools__defined(self):
         self.assertTrue(
             hasattr(create_evaluation_tools, "__call__"),
-            "create_evaluation_tools should be a callable function.",
+            "create_evaluation_tools should be a Callable function.",
         )
 
     def test_create_evaluation_tools__returns_langchain_tool(self):

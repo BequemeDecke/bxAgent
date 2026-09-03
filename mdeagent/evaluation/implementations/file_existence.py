@@ -1,12 +1,12 @@
-from typing import List, Tuple
 from pathlib import Path
+
 from pydantic import BaseModel
 
-from ..types import Evaluation, EvaluationResult, EvaluationError
+from ..types import Evaluation, EvaluationError, EvaluationResult
 
 
 class FileExistenceEvaluationConfig(BaseModel):
-    files: List[Path]
+    files: list[Path]
 
 
 class FileExistenceEvaluation(Evaluation):
@@ -15,7 +15,7 @@ class FileExistenceEvaluation(Evaluation):
 
     async def run(
         self, **kwargs
-    ) -> Tuple[List[EvaluationResult], List[EvaluationError]]:
+    ) -> tuple[list[EvaluationResult], list[EvaluationError]]:
         config = FileExistenceEvaluationConfig(**kwargs)
         files = config.files
 

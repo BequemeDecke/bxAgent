@@ -2,7 +2,7 @@ from unittest import TestCase
 from unittest.mock import MagicMock
 
 from mdeagent.evaluation import EvaluationResult
-from mdeagent.evaluation.pipefilter import EvaluationPipe, EvaluationFilter
+from mdeagent.evaluation.pipefilter import EvaluationFilter, EvaluationPipe
 
 
 class TestPipefilter(TestCase):
@@ -33,12 +33,18 @@ class TestPipefilter(TestCase):
         ]
 
     def test_filter_results__execute_all_filters(self):
-        filter1 = MagicMock(spec=EvaluationFilter, return_value=[
-            self.fake_results[0], self.fake_results[1], self.fake_results[2]
-        ])
-        filter2 = MagicMock(spec=EvaluationFilter, return_value=[
-            self.fake_results[0], self.fake_results[1]
-        ])
+        filter1 = MagicMock(
+            spec=EvaluationFilter,
+            return_value=[
+                self.fake_results[0],
+                self.fake_results[1],
+                self.fake_results[2],
+            ],
+        )
+        filter2 = MagicMock(
+            spec=EvaluationFilter,
+            return_value=[self.fake_results[0], self.fake_results[1]],
+        )
         pipe = EvaluationPipe() | filter1 | filter2
 
         results = pipe.filter_results(self.fake_results)

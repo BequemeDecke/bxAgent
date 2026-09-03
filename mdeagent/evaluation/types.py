@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple, Callable, TypedDict, Unpack
+from typing import Any, Callable, TypedDict, Unpack
 
 
 class EvaluationMetadata(TypedDict):
@@ -20,7 +20,7 @@ class EvaluationResult:
 class EvaluationError:
     message: str
     type: str
-    details: Optional[Dict[str, Any]] = None
+    details: dict[str, Any] | None = None
 
 
 @dataclass
@@ -28,11 +28,11 @@ class EvaluationRun:
     started_at: datetime
     execution_time_ms: int
     iteration: int
-    results: List[EvaluationResult]
-    errors: List[EvaluationError]
+    results: list[EvaluationResult]
+    errors: list[EvaluationError]
 
 
-StateToEvaluationMapper = Callable[[Dict[str, Any]], Dict[str, Any]]
+StateToEvaluationMapper = Callable[[dict[str, Any]], dict[str, Any]]
 
 
 class Evaluation(ABC):
@@ -43,5 +43,5 @@ class Evaluation(ABC):
     @abstractmethod
     async def run(
         self, **kwargs
-    ) -> Tuple[List[EvaluationResult], List[EvaluationError]]:
+    ) -> tuple[list[EvaluationResult], list[EvaluationError]]:
         pass

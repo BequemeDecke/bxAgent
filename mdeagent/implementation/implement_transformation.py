@@ -42,7 +42,7 @@ def create_input_prompt(
 def create_implement_transformation_node(
     llm: BaseChatModel,
     workspace: Path,
-    optional_plan_factory: callable,
+    optional_plan_factory: Callable,
     template_path: Path = Path.cwd() / "templates",
 ):
     """

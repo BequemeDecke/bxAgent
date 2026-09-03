@@ -1,17 +1,16 @@
-import shutil
 import logging
 import re
+import shutil
 import subprocess
-
-from typing import List, Tuple
-from pydantic import BaseModel
 from pathlib import Path
 
-from ..types import EvaluationResult, EvaluationError, Evaluation
+from pydantic import BaseModel
+
+from ..types import Evaluation, EvaluationError, EvaluationResult
 
 
 class JavaCompilationEvaluationConfig(BaseModel):
-    files: List[Path]
+    files: list[Path]
 
 
 class JavaCompilationEvaluation(Evaluation):
@@ -35,17 +34,17 @@ class JavaCompilationEvaluation(Evaluation):
 
     async def run(
         self, **kwargs
-    ) -> Tuple[List[EvaluationResult], List[EvaluationError]]:
+    ) -> tuple[list[EvaluationResult], list[EvaluationError]]:
         """Attempt to compile the provided Java files using `javac`. If there are compilation errors, parse the output and return them as EvaluationErrors.
 
         Returns:
-            Tuple[List[EvaluationResult], List[EvaluationError]]: A tuple containing a list of successful evaluation results and a list of evaluation errors.
+            tuple[list[EvaluationResult], list[EvaluationError]]: A tuple containing a list of successful evaluation results and a list of evaluation errors.
         """
         config = JavaCompilationEvaluationConfig(**kwargs)
         files = config.files
 
-        results: List[EvaluationResult] = []
-        errors: List[EvaluationError] = []
+        results: list[EvaluationResult] = []
+        errors: list[EvaluationError] = []
 
         for file in files:
             try:
@@ -66,7 +65,11 @@ class JavaCompilationEvaluation(Evaluation):
                     results.append(
                         EvaluationResult(
                             content=f"Compilation succeeded for {file}",
-                            metadata={"file": file, "success": True, "include_in_report": False},
+                            metadata={
+                                "file": file,
+                                "success": True,
+                                "include_in_report": False,
+                            },
                         )
                     )
             except Exception as e:
@@ -82,7 +85,7 @@ class JavaCompilationEvaluation(Evaluation):
         return results, errors
 
 
-def parse_javac_output(output: str) -> List[EvaluationResult]:
+def parse_javac_output(output: str) -> list[EvaluationResult]:
     """
     Parse the output of the `javac` command to extract compilation errors. It uses regular expressions to identify error messages and their associated file, line number, and code block. The extracted information is then used to create a list of EvaluationError objects.
 
@@ -90,7 +93,7 @@ def parse_javac_output(output: str) -> List[EvaluationResult]:
         output (str): The output from the `javac` command.
 
     Returns:
-        List[EvaluationResult]: A list of EvaluationResult objects representing the compilation errors.
+        list[EvaluationResult]: A list of EvaluationResult objects representing the compilation errors.
     """
     errors = []
     error_pattern = re.compile(r"^(.*\.java):(\d+): (.*)$", re.MULTILINE)

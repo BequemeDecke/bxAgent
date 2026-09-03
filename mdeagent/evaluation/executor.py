@@ -1,10 +1,10 @@
 import asyncio
 import datetime
+from typing import Any, TypedDict
 
-from typing import List, Dict, Tuple, TypedDict, Any
 from pydantic import BaseModel
 
-from .types import Evaluation, EvaluationResult, EvaluationRun, EvaluationError
+from .types import Evaluation, EvaluationError, EvaluationResult, EvaluationRun
 
 
 class EvaluationInit(TypedDict):
@@ -21,14 +21,14 @@ class LinkedEvaluation(Evaluation):
 
     async def run(
         self, **kwargs
-    ) -> Tuple[List[EvaluationResult], List[EvaluationError]]:
+    ) -> tuple[list[EvaluationResult], list[EvaluationError]]:
         return await self.evaluation.run(**kwargs)
 
 
 class EvaluationExecutor:
-    def __init__(self, evaluations: Dict[str, EvaluationInit]):
+    def __init__(self, evaluations: dict[str, EvaluationInit]):
         self.evaluations = evaluations
-        self.iterations: Dict[str, List[EvaluationRun]] = {
+        self.iterations: dict[str, list[EvaluationRun]] = {
             evaluation_id: [] for evaluation_id in evaluations
         }
 
@@ -53,8 +53,8 @@ class EvaluationExecutor:
         self.iterations[new_evaluation_id] = []
 
     async def execute_all(
-        self, input: Dict[str, Dict[str, Any]]
-    ) -> List[EvaluationRun]:
+        self, input: dict[str, dict[str, Any]]
+    ) -> list[EvaluationRun]:
         results = []
         tasks = [
             self.execute_specific(evaluation_id, input=input[evaluation_id])
@@ -64,7 +64,7 @@ class EvaluationExecutor:
         return results
 
     async def execute_specific(
-        self, evaluation_id: str, input: Dict[str, Any]
+        self, evaluation_id: str, input: dict[str, Any]
     ) -> EvaluationRun:
         if evaluation_id not in self.evaluations:
             raise ValueError(f"Evaluation with id {evaluation_id} not found.")
@@ -109,5 +109,5 @@ class EvaluationExecutor:
         self.iterations[evaluation_id].append(run)
         return run
 
-    def get_latest_results(self) -> List[EvaluationRun]:
+    def get_latest_results(self) -> list[EvaluationRun]:
         return [runs[-1] for runs in self.iterations.values() if runs]

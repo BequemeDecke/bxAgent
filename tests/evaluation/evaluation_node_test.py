@@ -5,18 +5,18 @@ It is more of an integration test that checks the interaction between the evalua
 """
 
 import asyncio
-from typing import Any, Dict
+from typing import Any
 from unittest import TestCase
 from unittest.mock import Mock
 
 from pydantic import BaseModel
 
+from mdeagent.evaluation import EvaluationExecutor
 from mdeagent.evaluation.node import (
     create_evaluation_node,
 )
-from mdeagent.state import MDEAgentState
-from mdeagent.evaluation import EvaluationExecutor
 from mdeagent.evaluation.types import Evaluation, EvaluationError, EvaluationResult
+from mdeagent.state import MDEAgentState
 
 
 class MockedSchema(BaseModel):
@@ -25,7 +25,7 @@ class MockedSchema(BaseModel):
 
 class TestEvaluationNode__ExecutionModeAll(TestCase):
     def test_evaluation_node__updates_state_with_latest_results(self):
-        def mocked_mapper(state: MDEAgentState) -> Dict[str, Any]:
+        def mocked_mapper(state: MDEAgentState) -> dict[str, Any]:
             return {"some_field": "some_value"}
 
         mocked_evaluation = Mock(spec=Evaluation)
@@ -118,7 +118,7 @@ class TestEvaluationNode__ExecutionModeAll(TestCase):
 
 class TestEvaluationNode__ExecutionModeSpecific(TestCase):
     def test_evaluation_node__updates_state_with_latest_results_specific(self):
-        def mocked_mapper(state: MDEAgentState) -> Dict[str, Any]:
+        def mocked_mapper(state: MDEAgentState) -> dict[str, Any]:
             return {"some_field": "some_value"}
 
         mocked_evaluation = Mock(spec=Evaluation)

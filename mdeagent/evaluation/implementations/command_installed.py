@@ -1,12 +1,12 @@
 import shutil
-from typing import List, Tuple
+
 from pydantic import BaseModel
 
-from ..types import Evaluation, EvaluationResult, EvaluationError
+from ..types import Evaluation, EvaluationError, EvaluationResult
 
 
 class CommandInstalledEvaluationConfig(BaseModel):
-    commands: List[str]
+    commands: list[str]
 
 
 class CommandInstalledEvaluation(Evaluation):
@@ -15,7 +15,7 @@ class CommandInstalledEvaluation(Evaluation):
 
     async def run(
         self, **kwargs
-    ) -> Tuple[List[EvaluationResult], List[EvaluationError]]:
+    ) -> tuple[list[EvaluationResult], list[EvaluationError]]:
         """
         This evaluation checks whether the specified commands are installed on the machine.
         """

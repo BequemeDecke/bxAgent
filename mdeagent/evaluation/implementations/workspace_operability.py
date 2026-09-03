@@ -1,5 +1,4 @@
 from pathlib import Path
-from typing import List, Tuple
 
 from pydantic import BaseModel
 
@@ -17,9 +16,9 @@ class WorkspaceOperabilityEvaluation(Evaluation):
 
     async def run(
         self, **kwargs
-    ) -> Tuple[List[EvaluationResult], List[EvaluationError]]:
-        results: List[EvaluationResult] = []
-        errors: List[EvaluationError] = []
+    ) -> tuple[list[EvaluationResult], list[EvaluationError]]:
+        results: list[EvaluationResult] = []
+        errors: list[EvaluationError] = []
 
         # Check if the workspace path exists and is a directory
         workspace_path: Path = kwargs.get("workspace_path")

@@ -1,4 +1,4 @@
-from typing import Any, Dict, Callable, Literal
+from typing import Any, Callable, Literal
 
 from mdeagent.evaluation import EvaluationExecutor
 from mdeagent.evaluation.types import StateToEvaluationMapper
@@ -6,15 +6,15 @@ from mdeagent.evaluation.types import StateToEvaluationMapper
 
 def create_evaluation_node(
     evaluation_executor: EvaluationExecutor,
-    mapper: Dict[str, StateToEvaluationMapper],
+    mapper: dict[str, StateToEvaluationMapper],
     execution_mode: Literal["all", "specific"] = "all",
-) -> Callable[[Dict[str, Any]], Dict[str, Any]]:
+) -> Callable[[dict[str, Any]], dict[str, Any]]:
     """
     Creates an evaluation agent work function that takes a workflow state and returns the updated state with the latest evaluation results.
     """
     if execution_mode == "all":
 
-        async def evaluation_node(state: Dict[str, Any]) -> Dict[str, Any]:
+        async def evaluation_node(state: dict[str, Any]) -> dict[str, Any]:
             """
             Calls the evaluation core which will execute all evaluation implementations and update the state with the latest results.
             """
@@ -35,7 +35,7 @@ def create_evaluation_node(
 
     elif execution_mode == "specific":
 
-        async def evaluation_node(state: Dict[str, Any]) -> Dict[str, Any]:
+        async def evaluation_node(state: dict[str, Any]) -> dict[str, Any]:
             """
             Calls the evaluation core which will execute specific evaluation implementations based on the state and update the state with the latest results.
             """

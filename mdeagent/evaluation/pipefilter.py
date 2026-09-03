@@ -1,19 +1,17 @@
-from abc import ABC, abstractmethod
-from typing import List, Callable
+from typing import Callable
 
 from .types import EvaluationResult
 
-
-EvaluationFilter = Callable[[List[EvaluationResult]], List[EvaluationResult]]
+EvaluationFilter = Callable[[list[EvaluationResult]], list[EvaluationResult]]
 
 
 class EvaluationPipe:
-    filters: List[EvaluationFilter]
+    filters: list[EvaluationFilter]
 
     def __init__(self):
         self.filters = []
 
-    def filter_results(self, results: List[EvaluationResult]) -> List[EvaluationResult]:
+    def filter_results(self, results: list[EvaluationResult]) -> list[EvaluationResult]:
         for filter in self.filters:
             results = filter(results)
         return results
