@@ -12,7 +12,7 @@ from mdeagent.implementation.node import (
 )
 from mdeagent.comprehension.plan import FileTransformationPlanParser, TransformationPlan
 from mdeagent.implementation.state import ImplementationState
-from mdeagent.state import WorkflowState
+from mdeagent.state import MDEAgentState
 
 
 class TestImplementationNode(TestCase):
@@ -42,7 +42,7 @@ class TestImplementationNode(TestCase):
             tp_file = workspace / "TRANSFORMATION.md"
             tp_file.touch()
 
-            input_state = WorkflowState(
+            input_state = MDEAgentState(
                 transformation_plan=TransformationPlan.parse(
                     FileTransformationPlanParser(tp_file)
                 ),
@@ -50,7 +50,7 @@ class TestImplementationNode(TestCase):
                 written_files=[workspace / "existing_file.java"],
             )
 
-            output_state: WorkflowState = asyncio.run(
+            output_state: MDEAgentState = asyncio.run(
                 self.call_implementation(input_state)
             )
             logging.debug(f"Output state: {output_state}")

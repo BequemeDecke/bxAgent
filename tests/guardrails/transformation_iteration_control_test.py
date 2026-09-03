@@ -9,7 +9,7 @@ from unittest.mock import Mock
 from langchain.chat_models import BaseChatModel
 from langchain.messages import SystemMessage, HumanMessage
 
-from mdeagent.state import WorkflowState
+from mdeagent.state import MDEAgentState
 from mdeagent.guardrails.transformation_iteration_control import (
     IterationRoute,
     create_check_transformation_iteration_function,
@@ -32,7 +32,7 @@ class TestTransformationIterationControl(TestCase):
 
     def test_transformation_iteration_control__stop_on_max_iterations(self):
         max_iterations = 3
-        state: WorkflowState = {
+        state: MDEAgentState = {
             "transformation_source_model_description": "A model that needs to be transformed.",
             "transformation_target_model_description": "The desired model after transformation.",
             "iteration": 3,
@@ -43,7 +43,7 @@ class TestTransformationIterationControl(TestCase):
 
     def test_transformation_iteration_control__run_results_have_errors(self):
         max_iterations = 3
-        state: WorkflowState = {
+        state: MDEAgentState = {
             "transformation_source_model_description": "A model that needs to be transformed.",
             "transformation_target_model_description": "The desired model after transformation.",
             "iteration": 2,
@@ -75,7 +75,7 @@ class TestTransformationIterationControl(TestCase):
 
     def test_transformation_iteration_control__run_results_no_errors(self):
         max_iterations = 3
-        state: WorkflowState = {
+        state: MDEAgentState = {
             "transformation_source_model_description": "A model that needs to be transformed.",
             "transformation_target_model_description": "The desired model after transformation.",
             "iteration": 2,

@@ -3,12 +3,12 @@ from langgraph.types import GraphOutput
 
 from mdeagent.preparation.state import ModelImplementation, PreparationState
 
-from ..state import WorkflowState
+from ..state import MDEAgentState
 
 
 def create_preparation_node(agent: CompiledStateGraph):
 
-    async def preparation_node(state: WorkflowState) -> WorkflowState:
+    async def preparation_node(state: MDEAgentState) -> MDEAgentState:
         workspace_path = state.get("workspace_path")
         if workspace_path is None:
             raise ValueError("Workspace path is required for the preparation agent.")

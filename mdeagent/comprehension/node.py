@@ -1,7 +1,7 @@
 from langgraph.graph.state import CompiledStateGraph
 from langchain.messages import HumanMessage
 
-from ..state import WorkflowState
+from ..state import MDEAgentState
 
 PROMPT_TEMPLATE = """
 --- BEGIN TRANSFORMATION PLAN ---
@@ -17,7 +17,7 @@ Use the following results to check if the transformation plan is complete and co
 
 
 def create_comprehension_node(comprehension_agent: CompiledStateGraph):
-    def comprehension_node(state: WorkflowState) -> WorkflowState:
+    def comprehension_node(state: MDEAgentState) -> MDEAgentState:
         """
         Calls the comprehension agent with the current workflow state.
 

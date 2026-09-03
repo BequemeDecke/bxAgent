@@ -14,7 +14,7 @@ from pydantic import BaseModel
 from mdeagent.evaluation.node import (
     create_evaluation_node,
 )
-from mdeagent.state import WorkflowState
+from mdeagent.state import MDEAgentState
 from mdeagent.evaluation import EvaluationExecutor
 from mdeagent.evaluation.types import Evaluation, EvaluationError, EvaluationResult
 
@@ -25,7 +25,7 @@ class MockedSchema(BaseModel):
 
 class TestEvaluationNode__ExecutionModeAll(TestCase):
     def test_evaluation_node__updates_state_with_latest_results(self):
-        def mocked_mapper(state: WorkflowState) -> Dict[str, Any]:
+        def mocked_mapper(state: MDEAgentState) -> Dict[str, Any]:
             return {"some_field": "some_value"}
 
         mocked_evaluation = Mock(spec=Evaluation)
@@ -50,7 +50,7 @@ class TestEvaluationNode__ExecutionModeAll(TestCase):
             execution_mode="all",
         )
 
-        result = asyncio.run(evaluation_agent_work(WorkflowState()))
+        result = asyncio.run(evaluation_agent_work(MDEAgentState()))
 
         self.assertEqual(
             len(result["latest_evaluation_runs"]),
@@ -113,12 +113,12 @@ class TestEvaluationNode__ExecutionModeAll(TestCase):
             KeyError,
             msg="A KeyError should be raised when no mapper is provided for the evaluation.",
         ):
-            asyncio.run(evaluation_agent_work(WorkflowState()))
+            asyncio.run(evaluation_agent_work(MDEAgentState()))
 
 
 class TestEvaluationNode__ExecutionModeSpecific(TestCase):
     def test_evaluation_node__updates_state_with_latest_results_specific(self):
-        def mocked_mapper(state: WorkflowState) -> Dict[str, Any]:
+        def mocked_mapper(state: MDEAgentState) -> Dict[str, Any]:
             return {"some_field": "some_value"}
 
         mocked_evaluation = Mock(spec=Evaluation)
@@ -143,7 +143,7 @@ class TestEvaluationNode__ExecutionModeSpecific(TestCase):
             execution_mode="specific",
         )
 
-        result = asyncio.run(evaluation_agent_work(WorkflowState()))
+        result = asyncio.run(evaluation_agent_work(MDEAgentState()))
 
         self.assertIn(
             evaluation_id,
@@ -203,7 +203,7 @@ class TestEvaluationNode__ExecutionModeSpecific(TestCase):
         )
 
         self.assertEqual(
-            asyncio.run(evaluation_agent_work(WorkflowState())),
+            asyncio.run(evaluation_agent_work(MDEAgentState())),
             {"latest_evaluation_runs": {}},
             "When no mapper is provided for specific execution mode, the latest evaluation runs should be empty.",
         )

@@ -3,7 +3,7 @@ from langchain.chat_models import BaseChatModel
 from langchain.messages import SystemMessage, HumanMessage
 from pydantic import BaseModel, Field
 
-from ..state import WorkflowState
+from ..state import MDEAgentState
 from mdeagent.config import Config
 from mdeagent.evaluation import EvaluationPipe
 from mdeagent.evaluation.filter import IsErrorFilter, IsReportCandidateFilter
@@ -26,7 +26,7 @@ def create_check_transformation_iteration_function(llm: BaseChatModel):
     )  # This will help to check the action after the llm call
 
     def check_transformation_iteration(
-        state: WorkflowState, max_iterations: int = WORKFLOW_MAX_ITERATIONS
+        state: MDEAgentState, max_iterations: int = WORKFLOW_MAX_ITERATIONS
     ) -> Literal["stop", "continue", "error"]:
         """
         Gate function to check if the transformation needs another iteration or not.

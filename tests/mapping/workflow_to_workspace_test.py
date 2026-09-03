@@ -4,13 +4,13 @@ from pathlib import Path
 from mdeagent.implementation.state import (
     ImplementationState,
 )  # Fix cyclic import from __init__ files
-from mdeagent.state import WorkflowState
+from mdeagent.state import MDEAgentState
 from mdeagent.mapping import map_workflow_to_workspace
 
 
 class TestWorkflowToWorkspaceMapping(TestCase):
     def test_mapping(self):
-        state = WorkflowState(
+        state = MDEAgentState(
             workspace_path=Path("/path/to/workspace"),
             transformation_package_path="com.example.transformation",
         )

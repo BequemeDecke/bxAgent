@@ -20,10 +20,10 @@ from .guardrails.transformation_iteration_control import (
 )
 from .implementation.node import create_implementation_node
 from .preparation.node import create_preparation_node
-from .state import WorkflowState
+from .state import MDEAgentState
 
 
-def build_mdeagent(workspace_path: Path) -> StateGraph[WorkflowState]:
+def build_mdeagent(workspace_path: Path) -> StateGraph[MDEAgentState]:
     llm = build_base_model()
     check_transformation_iteration = create_check_transformation_iteration_function(llm)
     call_comprehension_node = create_comprehension_node(
@@ -68,7 +68,7 @@ def build_mdeagent(workspace_path: Path) -> StateGraph[WorkflowState]:
     ).compile()
     call_implementation_node = create_implementation_node(implementation_agent)
 
-    builder = StateGraph(WorkflowState)
+    builder = StateGraph(MDEAgentState)
     builder.add_node("preparation", call_preparation_node)
     builder.add_node("comprehension", call_comprehension_node)
     builder.add_node("implementation", call_implementation_node)

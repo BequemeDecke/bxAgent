@@ -11,7 +11,7 @@ from pathlib import Path
 from unittest import TestCase
 
 from mdeagent.agent import build_mdeagent
-from mdeagent.state import WorkflowState
+from mdeagent.state import MDEAgentState
 from mdeagent.comprehension.plan import FileTransformationPlanParser, TransformationPlan
 from mdeagent.monitoring import build_langfuse_client
 
@@ -59,7 +59,7 @@ class TestWorkflowApproach(TestCase):
 
     def test_workflow_execution(self):
         """Test the execution of the workflow."""
-        input_state = WorkflowState(
+        input_state = MDEAgentState(
             required_commands=["javac"],
             workspace_path=self.workspace_path,
             transformation_package_path=self.transformation_package_path,

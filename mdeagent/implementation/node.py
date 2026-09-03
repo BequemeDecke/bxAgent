@@ -3,7 +3,7 @@ from langgraph.types import GraphOutput
 
 from mdeagent.implementation.state import ImplementationState
 
-from ..state import WorkflowState
+from ..state import MDEAgentState
 
 PROMPT_TEMPLATE = "I"
 
@@ -17,7 +17,7 @@ def create_implementation_node(agent: CompiledStateGraph):
         agent (CompiledStateGraph): _description_
     """
 
-    async def implementation_node(state: WorkflowState) -> WorkflowState:
+    async def implementation_node(state: MDEAgentState) -> MDEAgentState:
         transformation_md = state.get("transformation_plan")
         if transformation_md is None:
             raise ValueError(
