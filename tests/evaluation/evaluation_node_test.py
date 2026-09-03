@@ -11,10 +11,10 @@ from unittest.mock import Mock
 
 from pydantic import BaseModel
 
-from mdeagent.agents.workflow.nodes.evaluation_node import (
+from mdeagent.evaluation.node import (
     create_evaluation_node,
 )
-from mdeagent.agents.workflow.state import WorkflowState
+from mdeagent.state import WorkflowState
 from mdeagent.evaluation import EvaluationExecutor
 from mdeagent.evaluation.types import Evaluation, EvaluationError, EvaluationResult
 

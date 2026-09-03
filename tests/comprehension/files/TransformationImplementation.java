@@ -7,7 +7,6 @@ import java.util.function.Supplier;
 
 import org.benchmarx.config.Configurator;
 import org.benchmarx.edit.IEdit;
-import org.benchmarx.config.Configurator;
 import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.resource.Resource;

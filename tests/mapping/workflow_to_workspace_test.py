@@ -4,7 +4,7 @@ from pathlib import Path
 from mdeagent.implementation.state import (
     ImplementationState,
 )  # Fix cyclic import from __init__ files
-from mdeagent.agents.workflow.state import WorkflowState
+from mdeagent.state import WorkflowState
 from mdeagent.mapping import map_workflow_to_workspace
 
 

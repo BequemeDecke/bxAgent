@@ -2,7 +2,7 @@ from langgraph.graph import StateGraph, START, END
 from mdeagent.evaluation import (
     EvaluationExecutor,
 )
-from mdeagent.agents.workflow.nodes.evaluation_node import (
+from mdeagent.evaluation.node import (
     create_evaluation_node,
 )
 

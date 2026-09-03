@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from mdeagent.agents.workflow.state import WorkflowState
+from mdeagent.state import WorkflowState
 from mdeagent.mapping import map_workflow_to_file
 
 class TestWorkflowToFileMapping(TestCase):

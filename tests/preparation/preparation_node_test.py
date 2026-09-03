@@ -9,10 +9,10 @@ import tempfile
 from pathlib import Path
 from unittest import TestCase
 
-from mdeagent.agents.workflow.nodes.preparation_node import (
+from mdeagent.preparation.node import (
     create_preparation_node,
 )
-from mdeagent.agents.workflow.state import WorkflowState
+from mdeagent.state import WorkflowState
 from mdeagent.preparation import build_preparation_graph
 from mdeagent.evaluation import EvaluationExecutor, implementations
 

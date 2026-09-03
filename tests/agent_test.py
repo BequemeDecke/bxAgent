@@ -10,8 +10,8 @@ import logging
 from pathlib import Path
 from unittest import TestCase
 
-from mdeagent.agents.workflow.agent import build_workflow_agent
-from mdeagent.agents.workflow.state import WorkflowState
+from mdeagent.agent import build_workflow_agent
+from mdeagent.state import WorkflowState
 from mdeagent.comprehension.plan import FileTransformationPlanParser, TransformationPlan
 from mdeagent.monitoring import build_langfuse_client
 

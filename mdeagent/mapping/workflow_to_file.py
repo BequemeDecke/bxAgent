@@ -1,4 +1,4 @@
-from mdeagent.agents.workflow.state import WorkflowState
+from mdeagent.state import WorkflowState
 from typing import Dict, Any
 
 

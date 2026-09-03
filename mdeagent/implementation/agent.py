@@ -2,7 +2,7 @@ from pathlib import Path
 
 from langgraph.graph import END, START, StateGraph
 
-from mdeagent.agents.workflow.nodes.evaluation_node import create_evaluation_node
+from mdeagent.evaluation.node import create_evaluation_node
 from mdeagent.comprehension.plan import (
     FileTransformationPlanParser,
     TransformationPlan,

@@ -7,12 +7,12 @@ from langgraph.types import GraphOutput
 from unittest import TestCase
 from unittest.mock import MagicMock
 
-from mdeagent.agents.workflow.nodes.implementation_node import (
+from mdeagent.implementation.node import (
     create_implementation_node,
 )
 from mdeagent.comprehension.plan import FileTransformationPlanParser, TransformationPlan
 from mdeagent.implementation.state import ImplementationState
-from mdeagent.agents.workflow.state import WorkflowState
+from mdeagent.state import WorkflowState
 
 
 class TestImplementationNode(TestCase):

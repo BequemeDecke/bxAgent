@@ -3,7 +3,7 @@ from langchain.chat_models import BaseChatModel
 from langchain.messages import SystemMessage, HumanMessage
 from pydantic import BaseModel, Field
 
-from .state import WorkflowState
+from ..state import WorkflowState
 from mdeagent.config import Config
 from mdeagent.evaluation import EvaluationPipe
 from mdeagent.evaluation.filter import IsErrorFilter, IsReportCandidateFilter
