@@ -1,8 +1,8 @@
 public interface AgentTransformationForEMF<S, T, A> {
-    void forward(source: S, target: T, decisions: A);
-    void backward(target: T, source: S, decisions: A);
-    void synch(source: S, target: T);
+    void forward(S source, T target, A decisions);
+    void backward(T target, S source, A decisions);
+    void synch(S source, T target);
 
-    void transformSourceToTarget(source: S, target: T, decisions: A);
-    void transformTargetToSource(target: T, source: S, decisions: A);
+    void transformSourceToTarget(S source, T target, A decisions);
+    void transformTargetToSource(T target, S source, A decisions);
 }

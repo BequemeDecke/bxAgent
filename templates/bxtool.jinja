@@ -7,7 +7,6 @@ import java.util.function.Supplier;
 
 import org.benchmarx.config.Configurator;
 import org.benchmarx.edit.IEdit;
-import org.benchmarx.config.Configurator;
 import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.resource.Resource;
@@ -20,9 +19,9 @@ import {{transformation_implementation.decisions.import_path}};
 import {{source_model.comparator.import_path}};
 import {{target_model.comparator.import_path}};
 import {{source_model.factory.import_path}};
-import {{source_model.register.import_path}};
+import {{source_model.registration.import_path}};
 import {{target_model.factory.import_path}};
-import {{target_model.register.import_path}};
+import {{target_model.registration.import_path}};
 import {{transformation_implementation.import_path}};
 
 {% for additional_import in additional_imports -%}
@@ -30,7 +29,7 @@ import {{transformation_implementation.import_path}};
 {% endif -%}
 {%- endfor %}
 
-public class {{transformation_implementation.class_name}} extends BXToolForEMF<{{source_model.register.class_name}}, {{target_model.register.class_name}}, Decisions> {
+public class {{transformation_implementation.class_name}} extends BXToolForEMF<{{source_model.registration.class_name}}, {{target_model.registration.class_name}}, Decisions> {
 	private ResourceSet set = new ResourceSetImpl();
 	private Resource source;
 	private Resource target;
@@ -38,8 +37,8 @@ public class {{transformation_implementation.class_name}} extends BXToolForEMF<{
 	private {{transformation_implementation.class_name}} javaTrans;
 	private Configurator<Decisions> conf;
 	private Configurator<Decisions> defaultConf;
-	private {{source_model.register.class_name}} {{source_model.register.instance_name}};
-	private {{target_model.register.class_name}} {{target_model.register.instance_name}};
+	private {{source_model.registration.class_name}} {{source_model.registration.instance_name}};
+	private {{target_model.registration.class_name}} {{target_model.registration.instance_name}};
 
 	private static final String RESULTPATH = "results/Java";
 
@@ -66,10 +65,10 @@ public class {{transformation_implementation.class_name}} extends BXToolForEMF<{
 		target = set.createResource(URI.createURI("targetModel.{{target_model.name}}"));
 		corr = set.createResource(URI.createURI("corrModel.corr"));
         
-		{{source_model.register.instance_name}} = {{source_model.factory.class_name}}.eINSTANCE.create{{source_model.register.class_name}}();
-		{{target_model.register.instance_name}} = {{target_model.factory.class_name}}.eINSTANCE.create{{target_model.register.class_name}}();
-		source.getContents().add({{source_model.register.instance_name}});
-		target.getContents().add({{target_model.register.instance_name}});
+		{{source_model.registration.instance_name}} = {{source_model.factory.class_name}}.eINSTANCE.create{{source_model.registration.class_name}}();
+		{{target_model.registration.instance_name}} = {{target_model.factory.class_name}}.eINSTANCE.create{{target_model.registration.class_name}}();
+		source.getContents().add({{source_model.registration.instance_name}});
+		target.getContents().add({{target_model.registration.instance_name}});
 
 		{{transformation_implementation.initiation_dialogue.initiate_dialogue}}
 	}
@@ -81,7 +80,7 @@ public class {{transformation_implementation.class_name}} extends BXToolForEMF<{
 	 * @param edit : the source edit delta
 	 */
 	@Override
-	public void performAndPropagateTargetEdit(Supplier<IEdit<{{target_model.register.class_name}}>> edit) {
+	public void performAndPropagateTargetEdit(Supplier<IEdit<{{target_model.registration.class_name}}>> edit) {
 		edit.get();
 		{{transformation_implementation.perform_and_propagate_target_edit}}
 	}
@@ -93,14 +92,14 @@ public class {{transformation_implementation.class_name}} extends BXToolForEMF<{
 	 * @param edit : the source edit delta
 	 */
 	@Override
-	public void performAndPropagateSourceEdit(Supplier<IEdit<{{source_model.register.class_name}}>> edit) {
+	public void performAndPropagateSourceEdit(Supplier<IEdit<{{source_model.registration.class_name}}>> edit) {
 		edit.get();		
 		{{transformation_implementation.perform_and_propagate_source_edit}}
 	}	
 
 	@Override
-	public void performAndPropagateEdit(Supplier<IEdit<{{source_model.register.class_name}}>> sourceEdit,
-			Supplier<IEdit<{{target_model.register.class_name}}>> targetEdit) {
+	public void performAndPropagateEdit(Supplier<IEdit<{{source_model.registration.class_name}}>> sourceEdit,
+			Supplier<IEdit<{{target_model.registration.class_name}}>> targetEdit) {
 		// TODO Auto-generated method stub
 		//fail("Concurrent edits not supported.");
 		sourceEdit.get();
@@ -116,13 +115,13 @@ public class {{transformation_implementation.class_name}} extends BXToolForEMF<{
 	}
 
 	@Override
-	public {{source_model.register.class_name}} getSourceModel() {
-		return {{source_model.register.instance_name}};
+	public {{source_model.registration.class_name}} getSourceModel() {
+		return {{source_model.registration.instance_name}};
 	}
 
 	@Override
-	public {{target_model.register.class_name}} getTargetModel() {
-		return {{target_model.register.instance_name}};
+	public {{target_model.registration.class_name}} getTargetModel() {
+		return {{target_model.registration.instance_name}};
 	}
 
 	@Override

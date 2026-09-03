@@ -50,7 +50,7 @@ class TransformationImplementation(Class):
 class TransformationModel(BaseModel):
     name: str = Field(description="The name of the model (e.g. Family, Person).")
     factory: Class = Field(description="The factory class details for the model.")
-    register: Class = Field(description="The registration class details for the model.")
+    registration: Class = Field(description="The registration class details for the model.")
     comparator: Class = Field(description="The comparator class details for the model.")
 
 

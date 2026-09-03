@@ -45,7 +45,7 @@ class TestImplementBxTool(TestCase):
                     "class_name": "SourceFactory",
                     "instance_name": "sourceFactoryInstance",
                 },
-                "register": {
+                "registration": {
                     "import_path": "com.example.source.Register",
                     "class_name": "SourceRegister",
                     "instance_name": "sourceRegisterInstance",
@@ -63,7 +63,7 @@ class TestImplementBxTool(TestCase):
                     "class_name": "TargetFactory",
                     "instance_name": "targetFactoryInstance",
                 },
-                "register": {
+                "registration": {
                     "import_path": "com.example.target.Register",
                     "class_name": "TargetRegister",
                     "instance_name": "targetRegisterInstance",
