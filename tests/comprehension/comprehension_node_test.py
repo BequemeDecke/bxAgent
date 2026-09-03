@@ -7,7 +7,8 @@ from pathlib import Path
 from typing import TypedDict
 from unittest import TestCase
 from unittest.mock import MagicMock
-from langgraph.graph import StateGraph, START
+
+from langgraph.graph import START, StateGraph
 
 from mdeagent.comprehension.node import (
     create_comprehension_node,

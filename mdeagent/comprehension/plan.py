@@ -1,9 +1,9 @@
 import re
-
 from abc import ABC, abstractmethod
-from jinja2 import Environment, FileSystemLoader, Template
 from pathlib import Path
-from typing import Any, Dict, Literal, TypedDict
+from typing import Any, Literal, TypedDict
+
+from jinja2 import Environment, FileSystemLoader, Template
 
 
 class TransformationPlanData(TypedDict):
@@ -19,7 +19,7 @@ class TransformationPlanData(TypedDict):
 
 class SerializedTransformationPlanParser(TypedDict):
     type: str
-    args: Dict[str, Any]
+    args: dict[str, Any]
 
 
 class SerializedTransformationPlan(TypedDict):
