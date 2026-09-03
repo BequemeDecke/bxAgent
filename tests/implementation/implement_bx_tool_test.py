@@ -6,16 +6,17 @@ Two types of tests should be implemented:
 2. Agent Evaluation: This will be an end-to-end test where the node is tested as part of the entire agent, ensuring that the generated bx tool works correctly within the agent
 """
 
+from pathlib import Path
 from unittest import TestCase
 from unittest.mock import Mock, patch
-from langchain.chat_models import BaseChatModel
-from pathlib import Path
 
+from langchain.chat_models import BaseChatModel
+
+from mdeagent.implementation.bxtool import BxToolForEMF
 from mdeagent.implementation.implement_bx_tool import (
     create_implement_bx_tool_node,
 )
 from mdeagent.implementation.state import ImplementationState
-from mdeagent.implementation.bxtool import BxToolForEMF
 
 
 class TestImplementBxTool(TestCase):
@@ -94,9 +95,7 @@ class TestImplementBxTool(TestCase):
         )
 
     @patch("pathlib.Path.write_text")
-    @patch(
-        "mdeagent.implementation.bxtool.BxToolTemplateResolver.get_raw_template"
-    )
+    @patch("mdeagent.implementation.bxtool.BxToolTemplateResolver.get_raw_template")
     @patch("mdeagent.implementation.bxtool.BxToolTemplateResolver.render_template")
     def test_implement_bx_tool__write_bxtool_implementation(
         self,

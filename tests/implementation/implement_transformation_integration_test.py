@@ -1,6 +1,5 @@
 import datetime
 import logging
-import shutil
 from pathlib import Path
 from unittest import TestCase
 
@@ -17,7 +16,7 @@ TEST_ENVIRONMENT = Path(".mdeagent-tests")
 class TestImplementTransformationIntegration(TestCase):
     """
     Integration test for create_implement_transformation_node using real BaseChatModels.
-    
+
     This test verifies that:
     1. The node generates exactly one transformation class file
     2. The output state contains all required fields with correct values
@@ -30,17 +29,17 @@ class TestImplementTransformationIntegration(TestCase):
         setup_files = TEST_ENVIRONMENT / "setup-files"
         source_model_path = setup_files / "Families"
         target_model_path = setup_files / "Persons"
-        
+
         if not source_model_path.exists() or not target_model_path.exists():
             raise FileNotFoundError(
                 f"Setup files not found. Please ensure that {source_model_path} and {target_model_path} exist."
             )
-        
+
         if len(list(source_model_path.glob("*.java"))) != 4:
             raise FileNotFoundError(
                 f"Expected 4 source model files in {source_model_path}, but found {len(list(source_model_path.glob('*.java')))}."
             )
-        
+
         if len(list(target_model_path.glob("*.java"))) != 3:
             raise FileNotFoundError(
                 f"Expected 3 target model files in {target_model_path}, but found {len(list(target_model_path.glob('*.java')))}."
@@ -62,17 +61,18 @@ class TestImplementTransformationIntegration(TestCase):
         self.setup_files = TEST_ENVIRONMENT / "setup-files"
         self.source_model_path = self.setup_files / "Families"
         self.target_model_path = self.setup_files / "Persons"
-        
+
         # Initialize the coding model
         self.llm = build_coding_model()
 
     def _create_transformation_plan_factory(self):
         """
         Creates a factory function that returns a TransformationPlan for Families2Persons.
-        
+
         Returns:
             A callable that returns a TransformationPlan instance.
         """
+
         def plan_factory():
             # Create a temporary transformation plan file
             plan_file = self.workspace_path / "TRANSFORMATION.md"
@@ -116,17 +116,17 @@ Backward: Group Persons into Families based on relationships.
 --- END IMPLEMENTATION STEPS ---
 """
             plan_file.write_text(plan_content)
-            
+
             parser = FileTransformationPlanParser(plan_file)
             transformation_plan = TransformationPlan.parse(parser)
             return transformation_plan
-        
+
         return plan_factory
 
     def test_implement_transformation__generates_single_transformation_class(self):
         """
         Test that the implement_transformation node generates exactly one transformation class.
-        
+
         Verifies:
         - Only one .java file is created in the workspace
         - The file is a valid Java transformation class implementing AgentTransformationForEMF
@@ -176,32 +176,31 @@ Requirements:
         self.assertEqual(
             len(java_files_in_workspace),
             1,
-            f"Expected exactly 1 Java file in workspace, but found {len(java_files_in_workspace)}: {[f.name for f in java_files_in_workspace]}"
+            f"Expected exactly 1 Java file in workspace, but found {len(java_files_in_workspace)}: {[f.name for f in java_files_in_workspace]}",
         )
 
         # Verify: The file is listed in written_java_files
         self.assertEqual(
             len(output_state["written_java_files"]),
             1,
-            f"Expected written_java_files to contain exactly 1 file, but found {len(output_state['written_java_files'])}"
+            f"Expected written_java_files to contain exactly 1 file, but found {len(output_state['written_java_files'])}",
         )
-        
+
         # Verify: The file path matches
         generated_file = output_state["written_java_files"][0]
         self.assertTrue(
-            generated_file.exists(),
-            f"Generated file {generated_file} does not exist"
+            generated_file.exists(), f"Generated file {generated_file} does not exist"
         )
         self.assertEqual(
             generated_file.name,
             java_files_in_workspace[0].name,
-            "File in written_java_files doesn't match actual file in workspace"
+            "File in written_java_files doesn't match actual file in workspace",
         )
 
     def test_implement_transformation__output_state_contains_required_fields(self):
         """
         Test that the output state contains all required fields with correct values.
-        
+
         Verifies:
         - transformation_md: Contains the transformation plan
         - written_java_files: Contains exactly one file path
@@ -237,52 +236,60 @@ Focus on extracting FamilyMembers as Person instances in the forward direction.
 
         # Verify: transformation_md is set (either from state or created by factory)
         self.assertIsNotNone(
-            output_state["transformation_md"],
-            "transformation_md should not be None"
+            output_state["transformation_md"], "transformation_md should not be None"
         )
         self.assertIn(
             "data",
             output_state["transformation_md"].__dict__,
-            "transformation_md should have a 'data' attribute"
+            "transformation_md should have a 'data' attribute",
         )
 
         # Verify: written_java_files contains exactly one file
         self.assertEqual(
             len(output_state["written_java_files"]),
             1,
-            "written_java_files should contain exactly one file"
+            "written_java_files should contain exactly one file",
         )
         self.assertIsInstance(
             output_state["written_java_files"][0],
             Path,
-            "written_java_files should contain Path objects"
+            "written_java_files should contain Path objects",
         )
 
         # Verify: task_specification is preserved
         self.assertEqual(
             output_state["task_specification"],
             task_spec,
-            "task_specification should be preserved from input state"
+            "task_specification should be preserved from input state",
         )
 
         # Verify: transformation_implementation contains generated code
         self.assertIsNotNone(
             output_state["transformation_implementation"],
-            "transformation_implementation should not be None"
+            "transformation_implementation should not be None",
         )
         self.assertGreater(
             len(output_state["transformation_implementation"]),
             100,
-            "transformation_implementation should contain substantial Java code"
+            "transformation_implementation should contain substantial Java code",
         )
 
         # Verify: Generated code contains expected Java class structure
         impl_code = output_state["transformation_implementation"]
-        self.assertIn("class", impl_code, "Generated code should contain a class definition")
-        self.assertIn("AgentTransformationForEMF", impl_code, 
-                     "Generated code should implement AgentTransformationForEMF interface")
-        self.assertIn("forward(", impl_code, "Generated code should contain forward method")
-        self.assertIn("backward(", impl_code, "Generated code should contain backward method")
+        self.assertIn(
+            "class", impl_code, "Generated code should contain a class definition"
+        )
+        self.assertIn(
+            "AgentTransformationForEMF",
+            impl_code,
+            "Generated code should implement AgentTransformationForEMF interface",
+        )
+        self.assertIn(
+            "forward(", impl_code, "Generated code should contain forward method"
+        )
+        self.assertIn(
+            "backward(", impl_code, "Generated code should contain backward method"
+        )
         self.assertIn("synch(", impl_code, "Generated code should contain synch method")
 
         # Verify: The generated file content matches transformation_implementation
@@ -291,5 +298,5 @@ Focus on extracting FamilyMembers as Person instances in the forward direction.
         self.assertEqual(
             file_content,
             output_state["transformation_implementation"],
-            "File content should match transformation_implementation in state"
+            "File content should match transformation_implementation in state",
         )

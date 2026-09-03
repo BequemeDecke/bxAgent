@@ -1,14 +1,13 @@
 from unittest import TestCase
 
+from mdeagent.evaluation.types import EvaluationError, EvaluationRun
 from mdeagent.implementation.evaluate_transformation_implementation import (
     create_evaluate_transformation_implementation,
 )
-from mdeagent.evaluation.types import EvaluationRun, EvaluationError
 from mdeagent.implementation.state import ImplementationState
 
 
 class TestEvaluateTransformationImplementation(TestCase):
-
     def test_evaluate_transformation_implementation__max_iteration_reached(self):
         """
         Test that the evaluation correctly identifies when the maximum number of iterations has been reached.
@@ -59,7 +58,11 @@ class TestEvaluateTransformationImplementation(TestCase):
                     execution_time_ms=100,
                     iteration=1,
                     results=[],
-                    errors=[EvaluationError(message="Error in implementation", type="EvaluationError")],
+                    errors=[
+                        EvaluationError(
+                            message="Error in implementation", type="EvaluationError"
+                        )
+                    ],
                 ),
                 "integration_compilation": EvaluationRun(
                     started_at=None,
@@ -103,7 +106,11 @@ class TestEvaluateTransformationImplementation(TestCase):
                     execution_time_ms=100,
                     iteration=1,
                     results=[],
-                    errors=[EvaluationError(message="Error in integration", type="EvaluationError")],
+                    errors=[
+                        EvaluationError(
+                            message="Error in integration", type="EvaluationError"
+                        )
+                    ],
                 )
             },
         )
