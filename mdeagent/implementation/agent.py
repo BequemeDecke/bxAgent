@@ -14,6 +14,7 @@ from mdeagent.models import build_base_model
 from .evaluate_transformation_implementation import (
     create_evaluate_transformation_implementation,
 )
+from .format_code import create_format_code_node
 from .implement_bx_tool import create_implement_bx_tool_node
 from .implement_transformation import create_implement_transformation_node
 from .state import ImplementationState
@@ -43,6 +44,9 @@ def build_implementation_graph(
         llm=base_model,
         workspace=workspace_path,
     )
+    format_code = create_format_code_node(
+        workspace=workspace_path,
+    )
     evaluation_agentic_work = create_evaluation_node(
         evaluation_executor=evaluation_executor,
         mapper={
@@ -59,12 +63,14 @@ def build_implementation_graph(
     graph = StateGraph(ImplementationState)
     graph.add_node("implement_transformation", implement_transformation, initial=True)
     graph.add_node("implement_bx_tool", implement_bx_tool)
+    graph.add_node("format_code", format_code)
     graph.add_node("evaluation_agentic_work", evaluation_agentic_work)
 
     # Add edges between the nodes to define the workflow
     graph.add_edge(START, "implement_transformation")
     graph.add_edge("implement_transformation", "implement_bx_tool")
-    graph.add_edge("implement_bx_tool", "evaluation_agentic_work")
+    graph.add_edge("implement_bx_tool", "format_code")
+    graph.add_edge("format_code", "evaluation_agentic_work")
     graph.add_conditional_edges(
         "evaluation_agentic_work",
         evaluate_transformation_implementation,

@@ -134,3 +134,19 @@ def add_plugin_to_pom(pom_path: Path, plugin: Plugin):
 
     # Write the modified XML back to the pom.xml file
     tree.write(pom_path, encoding="utf-8", xml_declaration=True)
+
+
+def format_java_files(workspace: Path):
+    """
+    Run mvn spotless:apply to format all Java files in the workspace.
+    Raises RuntimeError if the formatting fails.
+    """
+    cp_process = subprocess.run(
+        ["mvn", "spotless:apply"], cwd=workspace, capture_output=True, text=True
+    )
+    if cp_process.returncode != 0:
+        raise RuntimeError(
+            f"Failed to format Java files. Return code: {cp_process.returncode}\n"
+            f"stdout: {cp_process.stdout}\n"
+            f"stderr: {cp_process.stderr}"
+        )
