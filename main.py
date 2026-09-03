@@ -1,11 +1,11 @@
 import logging
 import uuid
-
 from argparse import ArgumentParser
 from pathlib import Path
+
 from langchain.messages import HumanMessage
 
-from mdeagent.agents import build_bx_agent
+from mdeagent.agent import build_mdeagent
 
 
 def parse_arguments():
@@ -13,10 +13,18 @@ def parse_arguments():
         description="Run the BxAgent with specified workspace and prompt."
     )
     parser.add_argument(
-        "--workspace-dir", "-w", type=str, help="Directory for the agent's workspace.", required=True
+        "--workspace-dir",
+        "-w",
+        type=str,
+        help="Directory for the agent's workspace.",
+        required=True,
     )
     parser.add_argument(
-        "--prompt", "-p", type=str, help="The prompt to send to the BxAgent.", required=True
+        "--prompt",
+        "-p",
+        type=str,
+        help="The prompt to send to the BxAgent.",
+        required=True,
     )
     parser.add_argument(
         "--log-level",
@@ -37,7 +45,7 @@ def parse_arguments():
 # --- Main Execution ---
 def main():
     args = parse_arguments()
-    
+
     logging.basicConfig(
         level=getattr(logging, args.log_level),
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
@@ -45,34 +53,34 @@ def main():
 
     workspace_dir = Path(args.workspace_dir)
     logging.debug(f"Using workspace directory: {workspace_dir}")
-    
+
     input_prompt = args.prompt
     logging.debug(f"Using input prompt: {input_prompt}")
 
-    bx_agent = build_bx_agent(workspace_dir=workspace_dir)
-    logging.debug(f"BxAgent initialized successfully.")
-    
+    mde_agent = build_mdeagent(workspace_dir=workspace_dir)
+    logging.debug(f"MDEAgent initialized successfully.")
+
     config = {
-            "configurable": {
-                "thread_id": str(
-                    uuid.uuid4()
-                ),  # Maybe there are better ways to do that
-            },
-        }
-    
+        "configurable": {
+            "thread_id": str(uuid.uuid4()),  # Maybe there are better ways to do that
+        },
+    }
+
     if args.use_langfuse:
-        from mdeagent.monitoring import build_langfuse_client # Dynamic import to avoid unnecessary dependency if not using Langfuse
-        
+        from mdeagent.monitoring import (
+            build_langfuse_client,  # Dynamic import to avoid unnecessary dependency if not using Langfuse
+        )
+
         langfuse_client, langfuse_handler = build_langfuse_client()
         config["callbacks"] = [langfuse_handler]
         logging.debug("Langfuse client and handler initialized successfully.")
 
-    response = bx_agent.invoke(
+    response = mde_agent.invoke(
         {"messages": [HumanMessage(content=input_prompt)]},
         config,
     )
-    logging.info(f"Received response from mdagent: {response}")
-    
+    logging.info(f"Received response from mdeagent: {response}")
+
     if args.use_langfuse:
         langfuse_client.flush()  # Ensure all events are sent to Langfuse
 

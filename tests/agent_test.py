@@ -10,7 +10,7 @@ import logging
 from pathlib import Path
 from unittest import TestCase
 
-from mdeagent.agent import build_workflow_agent
+from mdeagent.agent import build_mdeagent
 from mdeagent.state import WorkflowState
 from mdeagent.comprehension.plan import FileTransformationPlanParser, TransformationPlan
 from mdeagent.monitoring import build_langfuse_client
@@ -55,7 +55,7 @@ class TestWorkflowApproach(TestCase):
         self.langfuse_client, self.langfuse_handler = build_langfuse_client()
 
         # Build the workflow agent
-        self.agent = build_workflow_agent(self.workspace_path).compile()
+        self.agent = build_mdeagent(self.workspace_path).compile()
 
     def test_workflow_execution(self):
         """Test the execution of the workflow."""

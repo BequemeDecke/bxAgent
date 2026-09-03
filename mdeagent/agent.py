@@ -15,15 +15,15 @@ from mdeagent.preparation import build_preparation_graph
 
 from .comprehension.node import create_comprehension_node
 from .evaluation.node import create_evaluation_node
-from .implementation.node import create_implementation_node
-from .preparation.node import create_preparation_node
-from .state import WorkflowState
 from .guardrails.transformation_iteration_control import (
     create_check_transformation_iteration_function,
 )
+from .implementation.node import create_implementation_node
+from .preparation.node import create_preparation_node
+from .state import WorkflowState
 
 
-def build_workflow_agent(workspace_path: Path) -> StateGraph[WorkflowState]:
+def build_mdeagent(workspace_path: Path) -> StateGraph[WorkflowState]:
     llm = build_base_model()
     check_transformation_iteration = create_check_transformation_iteration_function(llm)
     call_comprehension_node = create_comprehension_node(
