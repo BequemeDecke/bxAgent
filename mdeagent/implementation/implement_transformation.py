@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Callable
 
 from langchain.chat_models import BaseChatModel
 

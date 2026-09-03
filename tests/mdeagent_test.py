@@ -11,14 +11,14 @@ from pathlib import Path
 from unittest import TestCase
 
 from mdeagent.agent import build_mdeagent
-from mdeagent.state import MDEAgentState
 from mdeagent.comprehension.plan import FileTransformationPlanParser, TransformationPlan
 from mdeagent.monitoring import build_langfuse_client
+from mdeagent.state import MDEAgentState
 
 TEST_ENVIRONMENT = Path(".mdeagent-tests")
 
 
-class TestWorkflowApproach(TestCase):
+class TestMDEAgent(TestCase):
     """Test case for the workflow architecture approach."""
 
     def setUp(self):

@@ -27,7 +27,7 @@ from mdeagent.mapping import (
     map_workflow_to_workspace,
 )
 from mdeagent.models import build_base_model
-from mdeagent.preparation import build_preparation_graph
+from mdeagent.preparation.agent import build_preparation_graph
 from mdeagent.preparation.node import create_preparation_node
 from mdeagent.state import MDEAgentState
 
