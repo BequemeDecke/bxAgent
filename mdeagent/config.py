@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 from pydantic import BaseModel, Field, SecretStr
 
 
-class MDEAgentConfig(BaseModel):
+class ModelConfig(BaseModel):
     """Configuration class for BxAgent."""
 
     API_KEY: SecretStr = Field()
@@ -40,7 +40,7 @@ class WorkflowApproachConfig(BaseModel):
 class Config(BaseModel):
     """Main configuration class that holds all configurations for the application."""
 
-    BX_AGENT: MDEAgentConfig
+    MODEL: ModelConfig
     LANGFUSE: LangFuseConfig
     VARIABLES: VariablesConfig
     WORKFLOW_APPROACH: WorkflowApproachConfig
@@ -59,7 +59,7 @@ def load_config(env_path: Path) -> BaseModel:
     assert has_env_loaded, f"Failed to load environment variables from {env_path}"
 
     # Save the loaded environment variables to a config class for easy access
-    agent_config = MDEAgentConfig(
+    agent_config = ModelConfig(
         API_KEY=os.getenv("API_KEY"),
         BASE_URL=os.getenv("BASE_URL"),
         BASE_MODEL=os.getenv("BASE_MODEL"),
@@ -82,13 +82,13 @@ def load_config(env_path: Path) -> BaseModel:
 
     # Log the loaded configurations
     logging.debug("--- Loaded Configurations ---")
-    logging.debug(f"Loaded MDEAgentConfig: {agent_config}")
+    logging.debug(f"Loaded ModelConfig: {agent_config}")
     logging.debug(f"Loaded LangFuseConfig: {langfuse_config}")
     logging.debug(f"Loaded VariablesConfig: {variables_config}")
     logging.debug(f"Loaded WorkflowApproachConfig: {workflow_approach_config}")
     logging.debug("-----------------------------")
     return Config(
-        BX_AGENT=agent_config,
+        MODEL=agent_config,
         LANGFUSE=langfuse_config,
         VARIABLES=variables_config,
         WORKFLOW_APPROACH=workflow_approach_config,
