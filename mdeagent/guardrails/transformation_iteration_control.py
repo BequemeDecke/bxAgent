@@ -10,7 +10,7 @@ from mdeagent.evaluation.filter import IsErrorFilter, IsReportCandidateFilter
 
 config = Config.get_instance()
 
-WORKFLOW_MAX_ITERATIONS = config.WORKFLOW_APPROACH.WORKFLOW_MAX_ITERATIONS
+WORKFLOW_MAX_ITERATIONS = config.AGENT_CONTROL.WORKFLOW_MAX_ITERATIONS
 
 
 class IterationRoute(BaseModel):

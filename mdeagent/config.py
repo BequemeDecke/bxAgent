@@ -28,10 +28,14 @@ class VariablesConfig(BaseModel):
         default=13,
         description="The index at which the file path starts in the tool message content for write_file tool messages.",
     )
+    TRANSFORMATION_CLASS_NAME: str = Field(
+        default="MDEAgentTransformation",
+        description="The name of the transformation class that will be generated and used in the transformation process.",
+    )
 
 
 class AgentControlConfig(BaseModel):
-    """Configuration class for the workflow approach."""
+    """Configuration class for the agent control."""
 
     WORKFLOW_MAX_ITERATIONS: int = Field(
         default=5,
@@ -45,7 +49,7 @@ class Config(BaseModel):
     MODEL: ModelConfig
     LANGFUSE: LangFuseConfig
     VARIABLES: VariablesConfig
-    WORKFLOW_APPROACH: AgentControlConfig
+    AGENT_CONTROL: AgentControlConfig
 
     @classmethod
     def get_instance(cls, env_path: Path = Path.cwd() / ".env") -> "Config":
@@ -75,7 +79,10 @@ def load_config(env_path: Path) -> BaseModel:
     )
 
     variables_config = VariablesConfig(
-        UPDATED_FILE_INDEX=int(os.getenv("UPDATED_FILE_INDEX", "13"))
+        UPDATED_FILE_INDEX=int(os.getenv("UPDATED_FILE_INDEX", "13")),
+        TRANSFORMATION_CLASS_NAME=os.getenv(
+            "TRANSFORMATION_CLASS_NAME", "MDEAgentTransformation"
+        ),
     )
 
     workflow_approach_config = AgentControlConfig(
@@ -89,9 +96,10 @@ def load_config(env_path: Path) -> BaseModel:
     logger.debug(f"Loaded VariablesConfig: {variables_config}")
     logger.debug(f"Loaded AgentControlConfig: {workflow_approach_config}")
     logger.debug("-----------------------------")
+
     return Config(
         MODEL=agent_config,
         LANGFUSE=langfuse_config,
         VARIABLES=variables_config,
-        WORKFLOW_APPROACH=workflow_approach_config,
+        AGENT_CONTROL=workflow_approach_config,
     )

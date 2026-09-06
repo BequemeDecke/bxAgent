@@ -6,7 +6,7 @@ from .state import ImplementationState
 
 config = Config.get_instance()
 
-WORKFLOW_MAX_ITERATIONS = config.WORKFLOW_APPROACH.WORKFLOW_MAX_ITERATIONS
+WORKFLOW_MAX_ITERATIONS = config.AGENT_CONTROL.WORKFLOW_MAX_ITERATIONS
 
 
 EvaluationDecision = Literal[
