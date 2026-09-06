@@ -5,9 +5,11 @@ from pathlib import Path
 from dotenv import load_dotenv
 from pydantic import BaseModel, Field, SecretStr
 
+logger = logging.getLogger(__name__)
+
 
 class ModelConfig(BaseModel):
-    """Configuration class for BxAgent."""
+    """Configuration class for used models in the agent."""
 
     API_KEY: SecretStr = Field()
     BASE_URL: str = Field()
@@ -28,7 +30,7 @@ class VariablesConfig(BaseModel):
     )
 
 
-class WorkflowApproachConfig(BaseModel):
+class AgentControlConfig(BaseModel):
     """Configuration class for the workflow approach."""
 
     WORKFLOW_MAX_ITERATIONS: int = Field(
@@ -43,7 +45,7 @@ class Config(BaseModel):
     MODEL: ModelConfig
     LANGFUSE: LangFuseConfig
     VARIABLES: VariablesConfig
-    WORKFLOW_APPROACH: WorkflowApproachConfig
+    WORKFLOW_APPROACH: AgentControlConfig
 
     @classmethod
     def get_instance(cls, env_path: Path = Path.cwd() / ".env") -> "Config":
@@ -73,20 +75,20 @@ def load_config(env_path: Path) -> BaseModel:
     )
 
     variables_config = VariablesConfig(
-        UPDATED_FILE_INDEX=int(os.getenv("UPDATED_FILE_INDEX", 13))
+        UPDATED_FILE_INDEX=int(os.getenv("UPDATED_FILE_INDEX", "13"))
     )
 
-    workflow_approach_config = WorkflowApproachConfig(
-        WORKFLOW_MAX_ITERATIONS=int(os.getenv("WORKFLOW_MAX_ITERATIONS", 5))
+    workflow_approach_config = AgentControlConfig(
+        WORKFLOW_MAX_ITERATIONS=int(os.getenv("WORKFLOW_MAX_ITERATIONS", "5"))
     )
 
     # Log the loaded configurations
-    logging.debug("--- Loaded Configurations ---")
-    logging.debug(f"Loaded ModelConfig: {agent_config}")
-    logging.debug(f"Loaded LangFuseConfig: {langfuse_config}")
-    logging.debug(f"Loaded VariablesConfig: {variables_config}")
-    logging.debug(f"Loaded WorkflowApproachConfig: {workflow_approach_config}")
-    logging.debug("-----------------------------")
+    logger.debug("--- Loaded Configurations ---")
+    logger.debug(f"Loaded ModelConfig: {agent_config}")
+    logger.debug(f"Loaded LangFuseConfig: {langfuse_config}")
+    logger.debug(f"Loaded VariablesConfig: {variables_config}")
+    logger.debug(f"Loaded AgentControlConfig: {workflow_approach_config}")
+    logger.debug("-----------------------------")
     return Config(
         MODEL=agent_config,
         LANGFUSE=langfuse_config,
