@@ -86,6 +86,11 @@ class TestPrepareWorkspace(TestCase):
                 Path,
                 "The output state should contain the bxtool path.",
             )
+            self.assertIsInstance(
+                output_state.get("transformation_class_path"),
+                Path,
+                "The output state should contain the transformation class path.",
+            )
 
             # Check if maven was called to create the project structure
             mock_run.assert_called_once()
@@ -156,7 +161,11 @@ class TestPrepareWorkspace(TestCase):
                 Path,
                 "The output state should contain the bxtool path.",
             )
-
+            self.assertIsInstance(
+                output_state.get("transformation_class_path"),
+                Path,
+                "The output state should contain the transformation class path.",
+            )
             # Check if maven was called to create the project structure
             mock_run.assert_called_once()
             mock_add_dependencies.assert_called_once()
@@ -381,7 +390,7 @@ class TestMavenIntegration(TestCase):
                 "The 'src/main/java/de/example/mdeagent' folder should be created in the workspace.",
             )
 
-            # Check if the transformation Java file is created
+            # Check if the bxtool Java file is created
             self.assertTrue(
                 (
                     Path(temp_dir)
@@ -392,9 +401,9 @@ class TestMavenIntegration(TestCase):
                     / "de"
                     / "example"
                     / "mdeagent"
-                    / "BxAgentJavaBxTool.java"
+                    / "MDEAgentTransformationBxToolAdapter.java"
                 ).exists(),
-                "The transformation Java file should be created in the package path.",
+                "The bxtool Java file should be created in the package path.",
             )
 
             # Check if the App.java file is deleted

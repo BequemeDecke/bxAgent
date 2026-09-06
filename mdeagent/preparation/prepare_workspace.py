@@ -4,6 +4,7 @@ from pathlib import Path
 
 import mdeagent.preparation.pom as pom_utils
 from mdeagent.comprehension import FileTransformationPlanParser, TransformationPlan
+from mdeagent.config import Config
 from mdeagent.preparation.pom import Plugin
 from mdeagent.preparation.state import PreparationState
 
@@ -175,7 +176,11 @@ def create_prepare_workspace_node(fix_strategy: StructureFixStrategy):
             tp.update_iteration(0)
 
         # Create the transformation Java file (bxtool)
-        bxtool_path = package_path / "BxAgentJavaBxTool.java"
+        transformation_class_name = (
+            Config.get_instance().VARIABLES.TRANSFORMATION_CLASS_NAME
+        )
+        transformation_class_path = package_path / f"{transformation_class_name}.java"
+        bxtool_path = package_path / f"{transformation_class_name}BxToolAdapter.java"
         if not bxtool_path.exists():
             bxtool_path.touch()
 
@@ -191,7 +196,11 @@ def create_prepare_workspace_node(fix_strategy: StructureFixStrategy):
         pom_utils.install_dependencies(workspace / artifact_id)
 
         # Update the state with the new paths and transformation plan
-        new_state = PreparationState(transformation_plan=tp, bxtool_path=bxtool_path)
+        new_state = PreparationState(
+            transformation_plan=tp,
+            bxtool_path=bxtool_path,
+            transformation_class_path=transformation_class_path,
+        )
         new_state.update(fixed_state)
         return new_state
 
