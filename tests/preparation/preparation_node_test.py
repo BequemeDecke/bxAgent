@@ -164,6 +164,16 @@ class TestPreparationNodeIntegration(TestCase):
                 "The transformation plan should contain the correct target model package.",
             )
 
+            # Check that the transformation_class_path is set and the file exists
+            self.assertIsNotNone(
+                output.get("transformation_class_path"),
+                "The output state should contain the path to the MDEAgentTransformation.java file.",
+            )
+            self.assertFalse(
+                output.get("transformation_class_path").exists(),
+                "The preparation node should not create a MDEAgentTransformation.java file.",
+            )
+
             # Check that the bxtool_path is set and the file exists
             self.assertIsNotNone(
                 output.get("bxtool_path"),
