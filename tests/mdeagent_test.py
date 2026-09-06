@@ -1,40 +1,50 @@
-"""This test case tests the functionality of the workflow architecture approach.
+"""
+This test file is the final test for the MDEAgent.
 
-This approach utilizes LangGraph to create a workflow where the planning agent checks the results and decides whether to continue or not.
-The test case ensures that the workflow is executed correctly and that the planning agent can effectively manage the workflow based on the results obtained from the execution agent.
+The inputs are some test files found in `./.mdeagent-tests/setup-files` and the required user input to create a maven package including the transformation class.
+It uses the provided model in the .env file.
+The output should be a functioning workspace. This should be checked by the tests.
 """
 
 import asyncio
-import datetime
 import logging
+from datetime import UTC, datetime
 from pathlib import Path
 from unittest import TestCase
+
+import pytest
 
 from mdeagent.agent import build_mdeagent
 from mdeagent.comprehension.plan import FileTransformationPlanParser, TransformationPlan
 from mdeagent.monitoring import build_langfuse_client
 from mdeagent.state import MDEAgentState
 
+logger = logging.getLogger(__name__)
+
 TEST_ENVIRONMENT = Path(".mdeagent-tests")
+TEST_SETUP_FILES = TEST_ENVIRONMENT / "setup-files"
+TEST_EXECUTION_RUNS = TEST_ENVIRONMENT / "test-executions"
+
+
+def create_workspace_folder() -> Path:
+    workspace =  TEST_EXECUTION_RUNS / datetime.now(tz=UTC).strftime("%Y%m%d%H%M%S")
+    workspace.mkdir(parents=True)
+    return workspace
 
 
 class TestMDEAgent(TestCase):
     """Test case for the workflow architecture approach."""
 
-    def setUp(self):
+    @pytest.fixture(autouse=True)
+    def _setup_langfuse(self, enable_langfuse):
+        """Set up Langfuse monitoring conditionally based on --enable-langfuse flag."""
         # Create a unique workspace for the test
-        self.workspace_path = (
-            TEST_ENVIRONMENT
-            / "test-executions"
-            / datetime.datetime.now().strftime("%Y%m%d%H%M%S")
-        )
-        self.workspace_path.mkdir(parents=True, exist_ok=True)
-        logging.info(f"Created test workspace at {self.workspace_path}")
+        self.workspace_path = create_workspace_folder()
+        logger.info(f"Created test workspace at {self.workspace_path}")
 
         # Check if the setup files exist
-        self.setup_files = TEST_ENVIRONMENT / "setup-files"
-        self.source_model_path = self.setup_files / "Families"
-        self.target_model_path = self.setup_files / "Persons"
+        self.source_model_path = TEST_SETUP_FILES / "Families"
+        self.target_model_path = TEST_SETUP_FILES / "Persons"
         if not self.source_model_path.exists() or not self.target_model_path.exists():
             self.fail(
                 f"Setup files not found. Please ensure that {self.source_model_path} and {self.target_model_path} exist."
@@ -48,74 +58,63 @@ class TestMDEAgent(TestCase):
                 f"Expected 3 target model files in {self.target_model_path}, but found {len(list(self.target_model_path.glob('*.java')))}."
             )
 
-        # Set a default transformation package path
-        self.transformation_package_path = "com.example.transformation"
-
-        # Set up Langfuse client for monitoring
-        self.langfuse_client, self.langfuse_handler = build_langfuse_client()
-
         # Build the workflow agent
         self.agent = build_mdeagent(self.workspace_path).compile()
 
-    def test_workflow_execution(self):
-        """Test the execution of the workflow."""
-        input_state = MDEAgentState(
-            required_commands=["javac"],
-            workspace_path=self.workspace_path,
-            transformation_package_path=self.transformation_package_path,
+        # Build the Langfuse client for monitoring (optional)
+        self.enable_langfuse = enable_langfuse
+        if enable_langfuse:
+            self.langfuse_client, self.langfuse_callback_handler = build_langfuse_client()
+        else:
+            self.langfuse_client = None
+            self.langfuse_callback_handler = None
+
+    def test_mdeagent_workflow(self):
+        """The test method for the MDEAgent workflow.
+        
+        Note: Only ainvoke can be used here, because some nodes are executed asynchronously and the test needs to wait for them to finish. The test will fail if the workflow is not completed successfully.
+        """
+        # 1. Create the initial state for the agent
+        initial_state = MDEAgentState(
             source_model_path=self.source_model_path,
             target_model_path=self.target_model_path,
+            group_id="de.hofuniversity",
+            artifact_id="MDEAgentFamilyToPerson",
+            required_commands=["mvn", "java", "javac", "jar"],
         )
 
-        result = asyncio.run(
-            self.agent.ainvoke(
-                input_state, version="v2", config={"callbacks": [self.langfuse_handler]}
-            )
-        )
+        # 2. Invoke the agent with the initial state
+        callbacks = [self.langfuse_callback_handler] if self.langfuse_callback_handler else []
+        output = asyncio.run(self.agent.ainvoke(initial_state, config={"callbacks": callbacks}))
+        if self.langfuse_client:
+            self.langfuse_client.flush()
 
-        # Flush the Langfuse handler to ensure all logs are sent
-        self.langfuse_client.flush()
+        # 3. Check the output state for expected values
+        self.check_output_state(output)
 
-        # Check that the workflow execution was successful and that a transformation plan was generated
-        self.check_preparation_phase()
+        # 4. Check the contents of the workspace for expected files
+        self.check_workspace_contents()
 
-    def check_preparation_phase(self):
-        tp_path = self.workspace_path / "TRANSFORMATION.md"
-        self.assertTrue(
-            tp_path.exists(),
-            "The transformation plan file should exist after the preparation phase.",
-        )
+    def check_output_state(self, output: MDEAgentState):
+        """Check the output state for expected values."""
+        # Check that the transformation class path is set
+        self.assertIsNotNone(output.get("transformation_class_path"), "Transformation class path should not be None.")
+        self.assertTrue(output["transformation_class_path"].exists(), "Transformation class file does not exist.")
 
-        tp = TransformationPlan.parse(
-            FileTransformationPlanParser(tp_path)
-        )  # This should not raise an error
-        tp_data = tp.data
+        # Check that the bxtool path is set
+        self.assertIsNotNone(output.get("bxtool_path"), "BXT tool path should not be None.")
+        self.assertTrue(output["bxtool_path"].exists(), "BXT tool file does not exist.")
 
-        self.assertTrue(
-            tp_data["source_model_package"] != "",
-            "The source model package should be defined in the transformation plan.",
-        )
-        self.assertTrue(
-            tp_data["target_model_package"] != "",
-            "The target model package should be defined in the transformation plan.",
-        )
-        self.assertTrue(
-            tp_data["transformation_direction"] != "",
-            "The transformation direction should be defined in the transformation plan.",
-        )
-        self.assertTrue(
-            tp_data["source_model_implementation"] != "",
-            "The source model implementation should be defined in the transformation plan.",
-        )
-        self.assertTrue(
-            tp_data["target_model_implementation"] != "",
-            "The target model implementation should be defined in the transformation plan.",
-        )
-        self.assertTrue(
-            tp_data["implementation_steps"] != "",
-            "The implementation steps should be defined in the transformation plan.",
-        )
-        self.assertTrue(
-            tp_data["difficulties"] != "",
-            "The difficulties should be defined in the transformation plan.",
-        )
+        # Check that the written files list is not empty
+        self.assertGreater(len(output.get("written_files", [])), 0, "No files were written by the implementation node.")
+
+        # Check that the latest evaluation runs list is not empty
+        self.assertGreater(len(output.get("latest_evaluation_runs", [])), 0, "No evaluation runs were recorded.")
+
+    def check_workspace_contents(self):
+        """Check the contents of the workspace for expected files."""
+        # Check that the workspace contains the expected files
+        expected_files = ["transformation_class.java", "bxtool.jar"]
+        for file_name in expected_files:
+            file_path = self.workspace_path / file_name
+            self.assertTrue(file_path.exists(), f"Expected file {file_name} does not exist in the workspace.")
