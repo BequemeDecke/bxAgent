@@ -3,11 +3,11 @@ from typing import Callable
 
 from langchain.chat_models import BaseChatModel
 
-from .generator import (
+from mdeagent.implementation.generator import (
     TransformationClassSpec,
     TransformationClassTemplateResolver,
 )
-from .state import ImplementationState
+from mdeagent.implementation.state import ImplementationState
 
 PROMPT_TEMPLATE_WITH_PLAN = """
 You are a Java transformation code generator for EMF-based model transformations.
@@ -42,7 +42,6 @@ def create_input_prompt(
 
 def create_implement_transformation_node(
     llm: BaseChatModel,
-    workspace: Path,
     optional_plan_factory: Callable,
     template_path: Path = Path.cwd() / "templates",
 ):
@@ -65,6 +64,12 @@ def create_implement_transformation_node(
     resolver = TransformationClassTemplateResolver(template_path=template_path)
 
     def implement_transformation(state: ImplementationState) -> ImplementationState:
+        transformation_class_path = state.get("transformation_class_path")
+        if transformation_class_path is None:
+            raise ValueError(
+                "Transformation class path is required to write the generated code."
+            )
+        
         # 1. Read the transformation plan from the state or create one
         transformation_plan = state.get("transformation_md") or optional_plan_factory()
 
@@ -84,14 +89,11 @@ def create_implement_transformation_node(
         rendered_code = resolver.render_template(response)
 
         # 5. Write the generated code to a file
-        file_name = response.class_name + ".java"
-        file_path = workspace / file_name
-        if not file_path.parent.exists():
-            file_path.parent.mkdir(parents=True)
-        file_path.write_text(rendered_code)
+        transformation_class_path.touch(exist_ok=True)
+        transformation_class_path.write_text(rendered_code, encoding="utf-8")
 
         # 6. Retrieve the written files from the state and add the new one
-        written_java_files = state.get("written_java_files", []) + [file_path]
+        written_java_files = state.get("written_java_files", []) + [transformation_class_path]
 
         return {
             "transformation_md": transformation_plan,

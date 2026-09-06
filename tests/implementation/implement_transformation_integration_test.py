@@ -135,12 +135,12 @@ Backward: Group Persons into Families based on relationships.
         plan_factory = self._create_transformation_plan_factory()
         implement_transformation = create_implement_transformation_node(
             llm=self.llm,
-            workspace=self.workspace_path,
             optional_plan_factory=plan_factory,
             template_path=Path.cwd() / "templates",
         )
 
         # Create initial state with task specification for Families2Persons
+        transformation_class_path = self.workspace_path / "Transformation.java"
         initial_state: ImplementationState = {
             "task_specification": """
 Implement a bidirectional transformation between the Families and Persons models.
@@ -163,6 +163,7 @@ Requirements:
             "transformation_md": None,  # Will be created by plan_factory
             "written_java_files": [],
             "bxtool_path": self.workspace_path,
+            "transformation_class_path": transformation_class_path,
             "transformation_implementation": "",
             "latest_evaluation_results": {},
             "implementation_iteration": 1,
@@ -211,7 +212,6 @@ Requirements:
         plan_factory = self._create_transformation_plan_factory()
         implement_transformation = create_implement_transformation_node(
             llm=self.llm,
-            workspace=self.workspace_path,
             optional_plan_factory=plan_factory,
             template_path=Path.cwd() / "templates",
         )
@@ -221,11 +221,13 @@ Requirements:
 Implement a bidirectional transformation between the Families and Persons models.
 Focus on extracting FamilyMembers as Person instances in the forward direction.
 """
+        transformation_class_path = self.workspace_path / "Transformation.java"
         initial_state: ImplementationState = {
             "task_specification": task_spec,
             "transformation_md": None,
             "written_java_files": [],
             "bxtool_path": self.workspace_path,
+            "transformation_class_path": transformation_class_path,
             "transformation_implementation": "",
             "latest_evaluation_results": {},
             "implementation_iteration": 1,

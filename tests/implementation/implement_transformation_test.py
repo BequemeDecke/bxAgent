@@ -91,6 +91,7 @@ class TestImplementTransformation(TestCase):
             **self.fake_data
         )
 
+    @patch("pathlib.Path.touch")
     @patch("pathlib.Path.write_text")
     @patch(
         "mdeagent.implementation.generator.TransformationClassTemplateResolver.get_raw_template"
@@ -103,14 +104,15 @@ class TestImplementTransformation(TestCase):
         mock_render_template: Mock,
         mock_get_raw_template: Mock,
         mock_write_text: Mock,
+        mock_touch: Mock,
     ):
+        mock_touch.return_value = None
         mock_write_text.return_value = None
         mock_get_raw_template.return_value = "Raw template content"
         mock_render_template.return_value = "Rendered transformation content"
 
         implement_transformation = create_implement_transformation_node(
             llm=self.mocked_llm,
-            workspace=Path("/tmp/workspace"),
             optional_plan_factory=lambda: None,
         )
 
@@ -119,6 +121,7 @@ class TestImplementTransformation(TestCase):
             "transformation_md": None,
             "written_java_files": [],
             "bxtool_path": Path("/tmp/workspace"),
+            "transformation_class_path": Path("/tmp/workspace/MyTransformation.java"),
             "transformation_implementation": "",
             "latest_evaluation_results": {},
             "implementation_iteration": 1,
@@ -136,6 +139,7 @@ class TestImplementTransformation(TestCase):
         mock_get_raw_template.assert_called_once()
         mock_render_template.assert_called_once()
 
+    @patch("pathlib.Path.touch")
     @patch("pathlib.Path.write_text")
     @patch(
         "mdeagent.implementation.generator.TransformationClassTemplateResolver.get_raw_template"
@@ -148,14 +152,15 @@ class TestImplementTransformation(TestCase):
         mock_render_template: Mock,
         mock_get_raw_template: Mock,
         mock_write_text: Mock,
+        mock_touch: Mock,
     ):
+        mock_touch.return_value = None
         mock_write_text.return_value = None
         mock_get_raw_template.return_value = "Raw template content"
         mock_render_template.return_value = "Rendered transformation content"
 
         implement_transformation = create_implement_transformation_node(
             llm=self.mocked_llm,
-            workspace=Path("/tmp/workspace"),
             optional_plan_factory=lambda: None,
         )
 
@@ -165,6 +170,7 @@ class TestImplementTransformation(TestCase):
             "transformation_md": None,
             "written_java_files": [existing_file],
             "bxtool_path": Path("/tmp/workspace"),
+            "transformation_class_path": Path("/tmp/workspace/MyTransformation.java"),
             "transformation_implementation": "",
             "latest_evaluation_results": {},
             "implementation_iteration": 1,
@@ -176,6 +182,8 @@ class TestImplementTransformation(TestCase):
         self.assertIn(Path("/tmp/workspace/MyTransformation.java"), actual_state["written_java_files"])
         self.assertEqual(len(actual_state["written_java_files"]), 2)
 
+    @patch("pathlib.Path.touch")
+    @patch("pathlib.Path.write_text")
     @patch(
         "mdeagent.implementation.generator.TransformationClassTemplateResolver.get_raw_template"
     )
@@ -186,7 +194,11 @@ class TestImplementTransformation(TestCase):
         self,
         mock_render_template: Mock,
         mock_get_raw_template: Mock,
+        mock_write_text: Mock,
+        mock_touch: Mock,
     ):
+        mock_touch.return_value = None
+        mock_write_text.return_value = None
         mock_get_raw_template.return_value = "Raw template content"
         mock_render_template.return_value = "Rendered transformation content"
 
@@ -196,7 +208,6 @@ class TestImplementTransformation(TestCase):
         
         implement_transformation = create_implement_transformation_node(
             llm=self.mocked_llm,
-            workspace=Path("/tmp/workspace"),
             optional_plan_factory=lambda: mocked_transformation_plan,
         )
 
@@ -205,6 +216,7 @@ class TestImplementTransformation(TestCase):
             "transformation_md": mocked_transformation_plan,
             "written_java_files": [],
             "bxtool_path": Path("/tmp/workspace"),
+            "transformation_class_path": Path("/tmp/workspace/MyTransformation.java"),
             "transformation_implementation": "",
             "latest_evaluation_results": {},
             "implementation_iteration": 1,
@@ -215,6 +227,8 @@ class TestImplementTransformation(TestCase):
         self.assertEqual(actual_state["transformation_md"], mocked_transformation_plan)
         self.assertTrue(mocked_transformation_plan.__str__.called)
 
+    @patch("pathlib.Path.touch")
+    @patch("pathlib.Path.write_text")
     @patch(
         "mdeagent.implementation.generator.TransformationClassTemplateResolver.get_raw_template"
     )
@@ -225,7 +239,11 @@ class TestImplementTransformation(TestCase):
         self,
         mock_render_template: Mock,
         mock_get_raw_template: Mock,
+        mock_write_text: Mock,
+        mock_touch: Mock,
     ):
+        mock_touch.return_value = None
+        mock_write_text.return_value = None
         mock_get_raw_template.return_value = "Raw template content"
         mock_render_template.return_value = "Rendered transformation content"
 
@@ -236,7 +254,6 @@ class TestImplementTransformation(TestCase):
         
         implement_transformation = create_implement_transformation_node(
             llm=self.mocked_llm,
-            workspace=Path("/tmp/workspace"),
             optional_plan_factory=lambda: mocked_transformation_plan,
         )
 
@@ -245,6 +262,7 @@ class TestImplementTransformation(TestCase):
             "transformation_md": mocked_transformation_plan,
             "written_java_files": [],
             "bxtool_path": Path("/tmp/workspace"),
+            "transformation_class_path": Path("/tmp/workspace/MyTransformation.java"),
             "transformation_implementation": "",
             "latest_evaluation_results": {},
             "implementation_iteration": 1,
