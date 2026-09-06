@@ -5,8 +5,7 @@ from pathlib import Path
 import mdeagent.preparation.pom as pom_utils
 from mdeagent.comprehension import FileTransformationPlanParser, TransformationPlan
 from mdeagent.preparation.pom import Plugin
-
-from .state import PreparationState
+from mdeagent.preparation.state import PreparationState
 
 EMF_DEPENDENCIES: list[pom_utils.Dependency] = [
     {

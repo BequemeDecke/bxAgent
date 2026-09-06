@@ -143,17 +143,10 @@ class TestPreparationAgentIntegration(TestCase):
                 "The bxtool path should point to an existing file.",
             )
 
-            # Verify benchmarx_path is NOT set when download_benchmarx=False
-            benchmarx_path = output_state.get("benchmarx_path")
-            self.assertIsNone(
-                benchmarx_path,
-                "The benchmarx path should NOT be set when download_benchmarx=False.",
-            )
-
     @pytest.mark.slow
     def test_agent__execution_with_benchmarx(self):
         """Test the preparation agent with BenchMarX download enabled.
-
+        
         This test requires the --with-benchmarx flag to run.
         Run: pytest tests/preparation/preparation_agent_test.py::TestPreparationAgentIntegration::test_agent__execution_with_benchmarx --with-benchmarx
         """

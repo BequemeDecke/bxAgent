@@ -1,4 +1,5 @@
 import shutil
+import subprocess
 import tempfile
 from pathlib import Path
 from unittest import TestCase
@@ -18,7 +19,6 @@ class TestBenchmarx(TestCase):
 
         input_state: PreparationState = {
             "workspace_path": Path("/path/to/workspace"),
-            "install_benchmarx": True,
         }
 
         actual_state = self.download_benchmarx(input_state)
@@ -29,17 +29,6 @@ class TestBenchmarx(TestCase):
             actual_state.get("benchmarx_path"),
             input_state["workspace_path"] / "benchmarx",
         )
-
-    @patch("subprocess.run")
-    def test_download_benchmarx_skip(self, mock_run: Mock):
-        input_state: PreparationState = {
-            "workspace_path": Path("/path/to/workspace"),
-            "install_benchmarx": False,
-        }
-
-        actual_state = self.download_benchmarx(input_state)
-        self.assertIsNone(actual_state)  # Should return None when skipping installation
-
 
 class TestBenchmarxIntegration(TestCase):
     def setUp(self):
@@ -53,7 +42,6 @@ class TestBenchmarxIntegration(TestCase):
 
             input_state: PreparationState = {
                 "workspace_path": workspace_path,
-                "install_benchmarx": True,
             }
 
             download_node = create_download_benchmarx_node()

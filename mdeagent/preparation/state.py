@@ -21,7 +21,6 @@ class PreparationState(TypedDict):
     # === Required (Set by user) ===
     group_id: str | None = None  # Maven groupId for the generated project
     artifact_id: str | None = None  # Maven artifactId for the generated project
-    install_benchmarx: bool = True  # deprecated! Whether to install the benchmarx tool in the workspace
     benchmarx_path: Path | None = None  # Path to the benchmarx tool in the workspace. If None, then BenchmarX will not executed!
 
     # === Generation ===

@@ -8,12 +8,10 @@ BENCHMARX_REPOSITORY_NAME = "benchmarx"
 def create_download_benchmarx_node(benchmarx_repo_url: str = BENCHMARX_REPOSITORY_URL):
     def download_benchmarx(state: PreparationState) -> PreparationState | None:
         """
-        Downloads the benchmarx tool into the workspace if it is not already present.
+        Downloads the benchmarx tool into the workspace.
+        This node is only added to the graph when download_benchmarx=True in build_preparation_graph.
         """
-        if not state.get("install_benchmarx", True):
-            return  # Skip installation if the flag is set to False)
-
-        workspace_path = state.get("workspace_path")  # Safe operation
+        workspace_path = state.get("workspace_path")
 
         cp = subprocess.run(
             ["git", "clone", "--depth", "1", benchmarx_repo_url, BENCHMARX_REPOSITORY_NAME],
