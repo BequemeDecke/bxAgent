@@ -11,11 +11,12 @@ class ImplementationState(TypedDict):
     # === Transformation ===
     transformation_md: TransformationPlan
 
-    # === Required (Set by user) ===
+    # === Required ===
     task_specification: str  # This field will be used by a higher component
+    transformation_class_path: Path  # This field will be used by a higher component
+    bxtool_path: Path  # This field will be used by a higher component
 
     # === Implementation ===
-    bxtool_path: Path  # This field will be used by a higher component
     written_java_files: list[Path]  # All of these files have to be compiled together
     transformation_implementation: str  # This field will be used by a higher component
 

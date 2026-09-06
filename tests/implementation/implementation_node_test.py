@@ -15,6 +15,8 @@ from mdeagent.implementation.node import (
 from mdeagent.implementation.state import ImplementationState
 from mdeagent.state import MDEAgentState
 
+logger = logging.getLogger(__name__)
+
 
 class TestImplementationNode(TestCase):
     def setUp(self):
@@ -45,14 +47,15 @@ class TestImplementationNode(TestCase):
                 transformation_plan=TransformationPlan.parse(
                     FileTransformationPlanParser(tp_file)
                 ),
-                bxtool_path=workspace / "JavaTransformation.java",
+                transformation_class_path=workspace / "TransformationClass.java",
+                bxtool_path=workspace / "TransformationClassBxToolAdapter.java",
                 written_files=[workspace / "existing_file.java"],
             )
 
             output_state: MDEAgentState = asyncio.run(
                 self.call_implementation(input_state)
             )
-            logging.debug(f"Output state: {output_state}")
+            logger.debug(f"Output state: {output_state}")
 
             self.assertIn(
                 "written_files",

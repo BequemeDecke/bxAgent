@@ -2,10 +2,7 @@ from langgraph.graph.state import CompiledStateGraph
 from langgraph.types import GraphOutput
 
 from mdeagent.implementation.state import ImplementationState
-
-from ..state import MDEAgentState
-
-PROMPT_TEMPLATE = "I"
+from mdeagent.state import MDEAgentState
 
 
 def create_implementation_node(agent: CompiledStateGraph):
@@ -23,16 +20,21 @@ def create_implementation_node(agent: CompiledStateGraph):
             raise ValueError(
                 "Transformation metadata is required for the implementation agent."
             )
-
+        transformation_class_path = state.get("transformation_class_path")
+        if transformation_class_path is None:
+            raise ValueError(
+                "Transformation class path is required for the implementation agent."
+            )
         bxtool_path = state.get("bxtool_path")
         if bxtool_path is None:
             raise ValueError(
-                "BXTTool file path is required for the implementation agent."
-            )
+                "BxTool file path is required for the implementation agent."
+            )        
 
         prep_invoke_state = ImplementationState(
             transformation_md=transformation_md,
-            task_specification="",
+            task_specification="", # TODO: This field will be used by a higher component to provide instructions for the implementation agent
+            transformation_class_path=transformation_class_path,
             bxtool_path=bxtool_path,
         )
         response: GraphOutput = await agent.ainvoke(prep_invoke_state, version="v2")
