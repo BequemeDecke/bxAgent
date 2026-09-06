@@ -11,6 +11,18 @@ class MDEAgentState(TypedDict):
 
     Important! Keep this updated and consistent all the time. This is the state that is passed between the nodes of the workflow, and it is important that all nodes can read and write to this state as needed.
     Important! Only direct nodes are allowed to manipulate this state.
+
+    Example invocation of the MDEAgent workflow:
+    ```python
+    mdeagent = build_mdeagent(workspace_path=Path("/path/to/workspace")).compile()
+
+    initial_state = MDEAgentState(
+        source_model_path=Path("/path/to/source/model"),
+        target_model_path=Path("/path/to/target/model"),
+        group_id="de.hofuniversity",
+        artifact_id="MDEAgentFamilyToPerson",
+    )
+    mdeagent.ainvoke(initial_state, version="v2")
     """
 
     # === Workspace ===

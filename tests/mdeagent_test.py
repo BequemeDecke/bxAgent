@@ -15,7 +15,6 @@ from unittest import TestCase
 import pytest
 
 from mdeagent.agent import build_mdeagent
-from mdeagent.comprehension.plan import FileTransformationPlanParser, TransformationPlan
 from mdeagent.monitoring import build_langfuse_client
 from mdeagent.state import MDEAgentState
 
@@ -27,7 +26,7 @@ TEST_EXECUTION_RUNS = TEST_ENVIRONMENT / "test-executions"
 
 
 def create_workspace_folder() -> Path:
-    workspace =  TEST_EXECUTION_RUNS / datetime.now(tz=UTC).strftime("%Y%m%d%H%M%S")
+    workspace = TEST_EXECUTION_RUNS / datetime.now(tz=UTC).strftime("%Y%m%d%H%M%S")
     workspace.mkdir(parents=True)
     return workspace
 
@@ -64,14 +63,16 @@ class TestMDEAgent(TestCase):
         # Build the Langfuse client for monitoring (optional)
         self.enable_langfuse = enable_langfuse
         if enable_langfuse:
-            self.langfuse_client, self.langfuse_callback_handler = build_langfuse_client()
+            self.langfuse_client, self.langfuse_callback_handler = (
+                build_langfuse_client()
+            )
         else:
             self.langfuse_client = None
             self.langfuse_callback_handler = None
 
     def test_mdeagent_workflow(self):
         """The test method for the MDEAgent workflow.
-        
+
         Note: Only ainvoke can be used here, because some nodes are executed asynchronously and the test needs to wait for them to finish. The test will fail if the workflow is not completed successfully.
         """
         # 1. Create the initial state for the agent
@@ -80,12 +81,23 @@ class TestMDEAgent(TestCase):
             target_model_path=self.target_model_path,
             group_id="de.hofuniversity",
             artifact_id="MDEAgentFamilyToPerson",
-            required_commands=["mvn", "java", "javac", "jar"],
+            required_commands=[
+                "mvn",
+                "java",
+                "javac",
+                "jar",
+            ],  # This should not be set by the user
         )
 
         # 2. Invoke the agent with the initial state
-        callbacks = [self.langfuse_callback_handler] if self.langfuse_callback_handler else []
-        output = asyncio.run(self.agent.ainvoke(initial_state, config={"callbacks": callbacks}))
+        callbacks = (
+            [self.langfuse_callback_handler] if self.langfuse_callback_handler else []
+        )
+        output = asyncio.run(
+            self.agent.ainvoke(
+                initial_state, config={"callbacks": callbacks}, version="v2"
+            )
+        )
         if self.langfuse_client:
             self.langfuse_client.flush()
 
@@ -98,18 +110,34 @@ class TestMDEAgent(TestCase):
     def check_output_state(self, output: MDEAgentState):
         """Check the output state for expected values."""
         # Check that the transformation class path is set
-        self.assertIsNotNone(output.get("transformation_class_path"), "Transformation class path should not be None.")
-        self.assertTrue(output["transformation_class_path"].exists(), "Transformation class file does not exist.")
+        self.assertIsNotNone(
+            output.get("transformation_class_path"),
+            "Transformation class path should not be None.",
+        )
+        self.assertTrue(
+            output["transformation_class_path"].exists(),
+            "Transformation class file does not exist.",
+        )
 
         # Check that the bxtool path is set
-        self.assertIsNotNone(output.get("bxtool_path"), "BXT tool path should not be None.")
+        self.assertIsNotNone(
+            output.get("bxtool_path"), "BXT tool path should not be None."
+        )
         self.assertTrue(output["bxtool_path"].exists(), "BXT tool file does not exist.")
 
         # Check that the written files list is not empty
-        self.assertGreater(len(output.get("written_files", [])), 0, "No files were written by the implementation node.")
+        self.assertGreater(
+            len(output.get("written_files", [])),
+            0,
+            "No files were written by the implementation node.",
+        )
 
         # Check that the latest evaluation runs list is not empty
-        self.assertGreater(len(output.get("latest_evaluation_runs", [])), 0, "No evaluation runs were recorded.")
+        self.assertGreater(
+            len(output.get("latest_evaluation_runs", [])),
+            0,
+            "No evaluation runs were recorded.",
+        )
 
     def check_workspace_contents(self):
         """Check the contents of the workspace for expected files."""
@@ -117,4 +145,7 @@ class TestMDEAgent(TestCase):
         expected_files = ["transformation_class.java", "bxtool.jar"]
         for file_name in expected_files:
             file_path = self.workspace_path / file_name
-            self.assertTrue(file_path.exists(), f"Expected file {file_name} does not exist in the workspace.")
+            self.assertTrue(
+                file_path.exists(),
+                f"Expected file {file_name} does not exist in the workspace.",
+            )

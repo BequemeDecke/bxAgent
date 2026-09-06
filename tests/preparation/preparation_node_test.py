@@ -59,8 +59,6 @@ class TestPreparationNodeIntegration(TestCase):
             )
         ).compile()
 
-        self.call_preparation_node = create_preparation_node(self.preparation_agent)
-
     def test_preparation_node__invoke_subgraph(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             workspace_path = Path(temp_dir) / "workspace"
@@ -69,10 +67,10 @@ class TestPreparationNodeIntegration(TestCase):
             models_path.mkdir()
             group_id = "de.example"
             artifact_id = "mdagent"
-            package_path = f"{group_id}.{artifact_id}"
             transformation_plan_path = (
                 workspace_path / artifact_id / "TRANSFORMATION.md"
             )
+            required_commands = ["mvn", "git"]
 
             (
                 (source_model_path, source_file, *_),
@@ -82,31 +80,57 @@ class TestPreparationNodeIntegration(TestCase):
                 create_test_model_package(models_path, "Target"),
             )
 
+            # Create the preparation node with required parameters
+            call_preparation_node = create_preparation_node(
+                self.preparation_agent, workspace_path, required_commands
+            )
+
             initial_state = MDEAgentState(
                 transformation_plan=None,
-                workspace_path=workspace_path,
                 group_id=group_id,
                 artifact_id=artifact_id,
                 source_model_path=source_model_path,
                 target_model_path=target_model_path,
-                required_commands=["mvn", "git"],
             )
 
             output: MDEAgentState = asyncio.run(
-                self.call_preparation_node(initial_state)
+                call_preparation_node(initial_state)
             )
-            logging.debug(f"Output state: {output}")
+            logger = logging.getLogger(__name__)
+            logger.debug(f"Output state: {output}")
 
+            # Check that the preparation node set workspace_path and required_commands in the output
+            self.assertIsNotNone(
+                output.get("workspace_path"),
+                "The preparation node should set workspace_path in the output state.",
+            )
+            self.assertEqual(
+                output["workspace_path"], workspace_path,
+                "The output workspace_path should match the expected workspace path.",
+            )
+            self.assertIsNotNone(
+                output.get("required_commands"),
+                "The preparation node should set required_commands in the output state.",
+            )
+            self.assertEqual(
+                output["required_commands"], required_commands,
+                "The output required_commands should match the expected commands.",
+            )
+
+            # Check that the transformation plan file was created
             self.assertTrue(
                 transformation_plan_path.exists(),
                 "The preparation node should create a TRANSFORMATION.md file in the workspace.",
             )
+            
+            # Check that the output state contains a transformation plan
             self.assertIsNotNone(
                 output.get("transformation_plan"),
                 "The output state should contain a transformation plan.",
             )
             tp_data = output["transformation_plan"].data
 
+            # Check that the transformation plan contains the model implementations
             self.assertIn(
                 source_file.read_text(),
                 tp_data["source_model_implementation"],
@@ -117,6 +141,8 @@ class TestPreparationNodeIntegration(TestCase):
                 tp_data["target_model_implementation"],
                 "The transformation plan should contain the target model implementation.",
             )
+            
+            # Check that the transformation plan contains the correct package names
             self.assertEqual(
                 tp_data["source_model_package"],
                 "Source",
@@ -128,11 +154,12 @@ class TestPreparationNodeIntegration(TestCase):
                 "The transformation plan should contain the correct target model package.",
             )
 
+            # Check that the bxtool_path is set and the file exists
             self.assertIsNotNone(
                 output.get("bxtool_path"),
                 "The output state should contain the path to the BxAgentJavaBxTool.java file.",
             )
             self.assertTrue(
                 output.get("bxtool_path").exists(),
-                "The preparation node should create a BxAgentJavaBxTool.java file in the package path.",
+                "The preparation node should create a BxAgentJavaBxTool.java file.",
             )

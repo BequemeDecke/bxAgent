@@ -33,12 +33,10 @@ from mdeagent.state import MDEAgentState
 
 
 def build_mdeagent(workspace_path: Path) -> StateGraph[MDEAgentState]:
+    # 1. Initialize the core components of the MDEAgent
     llm = build_base_model()
     check_transformation_iteration = create_check_transformation_iteration_function(llm)
-    call_comprehension_node = create_comprehension_node(
-        comprehension_agent=build_comprehension_agent()
-    )
-    evaluation_executor = EvaluationExecutor(
+    agent_evaluator = EvaluationExecutor(
         evaluations={
             "workspace_operability": {
                 "evaluation": WorkspaceOperabilityEvaluation(),
@@ -58,8 +56,23 @@ def build_mdeagent(workspace_path: Path) -> StateGraph[MDEAgentState]:
             },
         }
     )
+
+    # 2. Create the nodes of the MDEAgent workflow
+    call_comprehension_node = create_comprehension_node(
+        comprehension_agent=build_comprehension_agent()
+    )
+    call_preparation_node = create_preparation_node(
+        preparation_agent=build_preparation_graph(evaluation_executor=agent_evaluator).compile(),
+        workspace_path=workspace_path
+    )
+    call_implementation_node = create_implementation_node(
+        agent=build_implementation_graph(
+            evaluation_executor=agent_evaluator,
+            workspace_path=workspace_path,
+        ).compile()
+    )
     call_evaluation_node = create_evaluation_node(
-        evaluation_executor=evaluation_executor,
+        evaluation_executor=agent_evaluator,
         mapper={
             "file_existence": map_workflow_to_file,
             "java_compilation": map_workflow_to_file,
@@ -67,16 +80,8 @@ def build_mdeagent(workspace_path: Path) -> StateGraph[MDEAgentState]:
             "workspace_operability": map_workflow_to_workspace,
         },
     )
-    preparation_agent = build_preparation_graph(
-        evaluation_executor=evaluation_executor
-    ).compile()
-    call_preparation_node = create_preparation_node(preparation_agent)
-    implementation_agent = build_implementation_graph(
-        evaluation_executor=evaluation_executor,
-        workspace_path=workspace_path,
-    ).compile()
-    call_implementation_node = create_implementation_node(implementation_agent)
 
+    # 3. Build the StateGraph for the MDEAgent workflow
     builder = StateGraph(MDEAgentState)
     builder.add_node("preparation", call_preparation_node)
     builder.add_node("comprehension", call_comprehension_node)

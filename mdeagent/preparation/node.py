@@ -1,18 +1,17 @@
+from pathlib import Path
+
 from langgraph.graph.state import CompiledStateGraph
 from langgraph.types import GraphOutput
 
 from mdeagent.preparation.state import ModelImplementation, PreparationState
+from mdeagent.state import MDEAgentState
 
-from ..state import MDEAgentState
 
-
-def create_preparation_node(agent: CompiledStateGraph):
+def create_preparation_node(
+    preparation_agent: CompiledStateGraph, workspace_path: Path, required_commands: list[str]
+):
 
     async def preparation_node(state: MDEAgentState) -> MDEAgentState:
-        workspace_path = state.get("workspace_path")
-        if workspace_path is None:
-            raise ValueError("Workspace path is required for the preparation agent.")
-
         source_model_path = state.get("source_model_path")
         if source_model_path is None:
             raise ValueError("Source model path is required for the preparation agent.")
@@ -24,7 +23,7 @@ def create_preparation_node(agent: CompiledStateGraph):
         group_id = state.get("group_id")
         if group_id is None:
             raise ValueError("Group ID is required for the preparation agent.")
-        
+
         artifact_id = state.get("artifact_id")
         if artifact_id is None:
             raise ValueError("Artifact ID is required for the preparation agent.")
@@ -43,9 +42,11 @@ def create_preparation_node(agent: CompiledStateGraph):
             ),
             group_id=group_id,
             artifact_id=artifact_id,
-            required_commands=state.get("required_commands", []),
+            required_commands=required_commands,
         )
-        response: GraphOutput = await agent.ainvoke(prep_invoke_state, version="v2")
+        response: GraphOutput = await preparation_agent.ainvoke(
+            prep_invoke_state, version="v2"
+        )
         prep_output_state: PreparationState = response.value
 
         transformation_plan = prep_output_state.get("transformation_plan")
@@ -55,8 +56,12 @@ def create_preparation_node(agent: CompiledStateGraph):
             )
 
         transformation_plan.update_model_implementation(
-            source_model_implementation=prep_output_state["source_model"]["implementation"],
-            target_model_implementation=prep_output_state["target_model"]["implementation"],
+            source_model_implementation=prep_output_state["source_model"][
+                "implementation"
+            ],
+            target_model_implementation=prep_output_state["target_model"][
+                "implementation"
+            ],
         )
 
         transformation_plan.update_package_information(
@@ -64,9 +69,11 @@ def create_preparation_node(agent: CompiledStateGraph):
             target_model_package=prep_output_state["target_model"]["path"].stem,
         )
 
-        return {
-            "transformation_plan": prep_output_state.get("transformation_plan"),
-            "bxtool_path": prep_output_state.get("bxtool_path")
-        }
+        return MDEAgentState(
+            workspace_path=workspace_path,
+            required_commands=required_commands,
+            transformation_plan=prep_output_state.get("transformation_plan"),
+            bxtool_path=prep_output_state.get("bxtool_path"),
+        )
 
     return preparation_node
