@@ -1,7 +1,9 @@
 {
     "python.testing.pytestArgs": [
-        "tests"
+        "tests",
+        "--log-cli-level=DEBUG"
     ],
+    "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
     "python.testing.unittestEnabled": false,
     "python.testing.pytestEnabled": true
 }

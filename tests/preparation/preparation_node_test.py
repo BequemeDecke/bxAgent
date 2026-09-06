@@ -10,11 +10,13 @@ from pathlib import Path
 from unittest import TestCase
 
 from mdeagent.evaluation import EvaluationExecutor, implementations
-from mdeagent.preparation import build_preparation_graph
+from mdeagent.preparation.agent import build_preparation_graph
 from mdeagent.preparation.node import (
     create_preparation_node,
 )
 from mdeagent.state import MDEAgentState
+
+logger = logging.getLogger(__name__)
 
 
 def create_test_model_package(temp_dir: Path, package_name: str):
@@ -41,8 +43,16 @@ def create_test_model_package(temp_dir: Path, package_name: str):
 
 class TestPreparationNodeIntegration(TestCase):
     def setUp(self):
-        if shutil.which("mvn") is None:
-            self.skipTest("Maven is not installed. Skipping integration tests.")
+        mvn_path = shutil.which("mvn")
+        if mvn_path is None:
+            import os
+
+            logger.warning(
+                f"Maven is not installed or not in PATH. "
+                f"Current PATH: {os.environ.get('PATH', 'Not set')[:200]}. "
+                f"Skipping integration tests."
+            )
+            self.skipTest("Maven is not found in PATH. Skipping integration tests.")
 
         self.preparation_agent = build_preparation_graph(
             evaluation_executor=EvaluationExecutor(
@@ -93,9 +103,7 @@ class TestPreparationNodeIntegration(TestCase):
                 target_model_path=target_model_path,
             )
 
-            output: MDEAgentState = asyncio.run(
-                call_preparation_node(initial_state)
-            )
+            output: MDEAgentState = asyncio.run(call_preparation_node(initial_state))
             logger = logging.getLogger(__name__)
             logger.debug(f"Output state: {output}")
 
@@ -105,7 +113,8 @@ class TestPreparationNodeIntegration(TestCase):
                 "The preparation node should set workspace_path in the output state.",
             )
             self.assertEqual(
-                output["workspace_path"], workspace_path,
+                output["workspace_path"],
+                workspace_path,
                 "The output workspace_path should match the expected workspace path.",
             )
             self.assertIsNotNone(
@@ -113,7 +122,8 @@ class TestPreparationNodeIntegration(TestCase):
                 "The preparation node should set required_commands in the output state.",
             )
             self.assertEqual(
-                output["required_commands"], required_commands,
+                output["required_commands"],
+                required_commands,
                 "The output required_commands should match the expected commands.",
             )
 
@@ -122,7 +132,7 @@ class TestPreparationNodeIntegration(TestCase):
                 transformation_plan_path.exists(),
                 "The preparation node should create a TRANSFORMATION.md file in the workspace.",
             )
-            
+
             # Check that the output state contains a transformation plan
             self.assertIsNotNone(
                 output.get("transformation_plan"),
@@ -141,7 +151,7 @@ class TestPreparationNodeIntegration(TestCase):
                 tp_data["target_model_implementation"],
                 "The transformation plan should contain the target model implementation.",
             )
-            
+
             # Check that the transformation plan contains the correct package names
             self.assertEqual(
                 tp_data["source_model_package"],

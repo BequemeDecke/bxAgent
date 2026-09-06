@@ -1,6 +1,44 @@
 """Pytest configuration and custom fixtures."""
 
+import os
+import subprocess
+import sys
+
 import pytest
+import logging
+
+logger = logging.getLogger(__name__)
+
+
+def pytest_configure(config):
+    """Lädt die volle Shell-Umgebung für pytest"""
+
+    if sys.platform == "darwin":  # macOS
+        try:
+            # Lade die komplette Shell-Umgebung (aus .zshrc, .bashrc, etc.)
+            result = subprocess.run(
+                ["/bin/zsh", "-i", "-l", "-c", "echo $PATH"],
+                capture_output=True,
+                text=True,
+                timeout=5,
+                check=False,
+            )
+
+            if result.returncode == 0 and result.stdout.strip():
+                # Setze den kompletten PATH
+                os.environ["PATH"] = result.stdout.strip()
+
+                # Setze auch die Venv-Variable
+                venv_path = os.path.join(os.path.dirname(__file__), ".venv")
+                if os.path.exists(venv_path):
+                    os.environ["VIRTUAL_ENV"] = venv_path
+
+                logger.info(f"\n✓ pytest PATH aktualisiert")
+                logger.info(
+                    f"  Maven verfügbar: {subprocess.run(['which', 'mvn'], capture_output=True, text=True, check=False).stdout.strip()}"
+                )
+        except Exception as e:
+            logger.error(f"\n⚠ Fehler beim Laden der Shell-Umgebung: {e}")
 
 
 def pytest_addoption(parser):
