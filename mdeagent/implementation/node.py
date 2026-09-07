@@ -1,8 +1,12 @@
+import logging
+
 from langgraph.graph.state import CompiledStateGraph
 from langgraph.types import GraphOutput
 
 from mdeagent.implementation.state import ImplementationState
 from mdeagent.state import MDEAgentState
+
+logger = logging.getLogger(__name__)
 
 
 def create_implementation_node(agent: CompiledStateGraph):
@@ -15,6 +19,8 @@ def create_implementation_node(agent: CompiledStateGraph):
     """
 
     async def implementation_node(state: MDEAgentState) -> MDEAgentState:
+        logger.info("Starting implementation node ... (For State look at LangFuse)")
+
         transformation_md = state.get("transformation_plan")
         if transformation_md is None:
             raise ValueError(

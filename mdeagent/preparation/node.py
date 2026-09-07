@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 
 from langgraph.graph.state import CompiledStateGraph
@@ -6,12 +7,16 @@ from langgraph.types import GraphOutput
 from mdeagent.preparation.state import ModelImplementation, PreparationState
 from mdeagent.state import MDEAgentState
 
+logger = logging.getLogger(__name__)
+
 
 def create_preparation_node(
     preparation_agent: CompiledStateGraph, workspace_path: Path, required_commands: list[str]
 ):
 
     async def preparation_node(state: MDEAgentState) -> MDEAgentState:
+        logger.info("Starting preparation node ... (For State look at LangFuse)")
+
         source_model_path = state.get("source_model_path")
         if source_model_path is None:
             raise ValueError("Source model path is required for the preparation agent.")

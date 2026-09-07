@@ -1,7 +1,7 @@
 {
     "python.testing.pytestArgs": [
         "tests",
-        "--log-cli-level=DEBUG",
+        "--log-cli-level=INFO",
         "--enable-langfuse",
     ],
     "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",

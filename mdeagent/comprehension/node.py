@@ -1,7 +1,11 @@
+import logging
+
 from langchain.messages import HumanMessage
 from langgraph.graph.state import CompiledStateGraph
 
 from mdeagent.state import MDEAgentState
+
+logger = logging.getLogger(__name__)    
 
 PROMPT_TEMPLATE = """
 --- BEGIN TRANSFORMATION PLAN ---
@@ -24,6 +28,8 @@ def create_comprehension_node(comprehension_agent: CompiledStateGraph):
         It needs a specific schema in order to parse the output of the subagent.
         It also gets the current results of the evaluations, which can be used to inform the comprehension agent about what has been tried already and what the results were.
         """
+        logger.info("Starting comprehension node ... (For State look at LangFuse)")
+
         transformation = state.get("transformation_plan")
         if transformation is None:
             raise ValueError(

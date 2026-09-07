@@ -1,7 +1,10 @@
+import logging
 from typing import Any, Callable, Literal
 
 from mdeagent.evaluation import EvaluationExecutor
 from mdeagent.evaluation.types import StateToEvaluationMapper
+
+logger = logging.getLogger(__name__)
 
 
 def create_evaluation_node(
@@ -18,6 +21,7 @@ def create_evaluation_node(
             """
             Calls the evaluation core which will execute all evaluation implementations and update the state with the latest results.
             """
+            logger.info("Starting evaluation node with execution mode 'all' ... (For State look at LangFuse)")
             # Map the workflow state to evaluation parameters
             input_parameters = {}
             for evaluation_name, map_state in mapper.items():
@@ -39,6 +43,8 @@ def create_evaluation_node(
             """
             Calls the evaluation core which will execute specific evaluation implementations based on the state and update the state with the latest results.
             """
+            logger.info("Starting evaluation node with execution mode 'specific' ... (For State look at LangFuse)")
+
             # Map the workflow state to evaluation parameters
             input_parameters = {}
             for evaluation_name, map_state in mapper.items():
