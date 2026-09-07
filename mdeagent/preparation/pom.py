@@ -33,11 +33,24 @@ BASE_POM_XML = """<?xml version="1.0" encoding="UTF-8"?>
 """
 
 
-class Dependency(TypedDict):
-    group_id: str
-    artifact_id: str
-    version: str | None
-
+class Dependency:
+    """Represents a Maven dependency."""
+    
+    def __init__(self, group_id: str, artifact_id: str, version: str | None = None):
+        self.group_id = group_id
+        self.artifact_id = artifact_id
+        self.version = version
+    
+    def __eq__(self, other):
+        if not isinstance(other, Dependency):
+            return False
+        return (self.group_id == other.group_id and 
+                self.artifact_id == other.artifact_id and 
+                self.version == other.version)
+    
+    def __repr__(self):
+        return f"Dependency(group_id={self.group_id!r}, artifact_id={self.artifact_id!r}, version={self.version!r})"
+    
     @classmethod
     def from_etree_element(cls, element: ET.Element, namespaces: dict[str, str]) -> "Dependency":
         group_id_element = element.find("groupId", namespaces)
@@ -54,21 +67,35 @@ class Dependency(TypedDict):
     def to_etree_element(self, parent: ET.Element) -> ET.Element:
         dependency_element = ET.SubElement(parent, "dependency")
         group_id_element = ET.SubElement(dependency_element, "groupId")
-        group_id_element.text = self["group_id"]
+        group_id_element.text = self.group_id
         artifact_id_element = ET.SubElement(dependency_element, "artifactId")
-        artifact_id_element.text = self["artifact_id"]
-        if self.get("version"):
+        artifact_id_element.text = self.artifact_id
+        if self.version:
             version_element = ET.SubElement(dependency_element, "version")
-            version_element.text = self["version"]
+            version_element.text = self.version
         return dependency_element
 
 
-class Plugin(TypedDict):
-    group_id: str | None
-    artifact_id: str
-    version: str | None
-    configuration: str | None
-
+class Plugin:
+    """Represents a Maven plugin."""
+    
+    def __init__(self, group_id: str | None, artifact_id: str, version: str | None = None, configuration: str | None = None):
+        self.group_id = group_id
+        self.artifact_id = artifact_id
+        self.version = version
+        self.configuration = configuration
+    
+    def __eq__(self, other):
+        if not isinstance(other, Plugin):
+            return False
+        return (self.group_id == other.group_id and 
+                self.artifact_id == other.artifact_id and 
+                self.version == other.version and 
+                self.configuration == other.configuration)
+    
+    def __repr__(self):
+        return f"Plugin(group_id={self.group_id!r}, artifact_id={self.artifact_id!r}, version={self.version!r}, configuration={self.configuration!r})"
+    
     @classmethod
     def from_etree_element(cls, element: ET.Element, namespaces: dict[str, str]) -> "Plugin":
         artifact_id_element = element.find("artifactId", namespaces)
@@ -98,22 +125,37 @@ class Plugin(TypedDict):
 
     def to_etree_element(self, parent: ET.Element) -> ET.Element:
         plugin_element = ET.SubElement(parent, "plugin")
-        group_id_element = ET.SubElement(plugin_element, "groupId")
-        group_id_element.text = self["group_id"]
+        if self.group_id:
+            group_id_element = ET.SubElement(plugin_element, "groupId")
+            group_id_element.text = self.group_id
         artifact_id_element = ET.SubElement(plugin_element, "artifactId")
-        artifact_id_element.text = self["artifact_id"]
-        if self.get("version"):
+        artifact_id_element.text = self.artifact_id
+        if self.version:
             version_element = ET.SubElement(plugin_element, "version")
-            version_element.text = self["version"]
-        if self.get("configuration"):
-            configuration_element = ET.fromstring(self["configuration"])
-            plugin_element.append(configuration_element)
+            version_element.text = self.version
+        if self.configuration:
+            configuration_element = ET.SubElement(plugin_element, "configuration")
+            # Parse the configuration string and append children
+            config_tree = ET.fromstring(f"<config_root>{self.configuration}</config_root>")
+            for child in config_tree:
+                configuration_element.append(child)
         return plugin_element
 
 
-class Module(TypedDict):
-    artifact_id: str
-
+class Module:
+    """Represents a Maven module reference."""
+    
+    def __init__(self, artifact_id: str):
+        self.artifact_id = artifact_id
+    
+    def __eq__(self, other):
+        if not isinstance(other, Module):
+            return False
+        return self.artifact_id == other.artifact_id
+    
+    def __repr__(self):
+        return f"Module(artifact_id={self.artifact_id!r})"
+    
     @classmethod
     def from_etree_element(cls, element: ET.Element) -> "Module":
         artifact_id = element.text
@@ -123,7 +165,7 @@ class Module(TypedDict):
 
     def to_etree_element(self, parent: ET.Element) -> ET.Element:
         module_element = ET.SubElement(parent, "module")
-        module_element.text = self["artifact_id"]
+        module_element.text = self.artifact_id
         return module_element
 
 
@@ -264,10 +306,10 @@ class Pom:
         returns self without making changes.
 
         Args:
-            module (Module): A dictionary containing the module's group_id, artifact_id, and version.
+            module (Module): Module object containing the artifact_id.
 
         Returns:
-            PomProxy: Returns self to enable method chaining. If the module already
+            Pom: Returns self to enable method chaining. If the module already
                 exists, no changes are made but self is still returned.
 
         Note:
@@ -276,38 +318,29 @@ class Pom:
 
         Example:
             ```python
-            pom.add_module("com.example", "submodule-a")
-               .add_module("com.example", "submodule-b")
-               .add_module("com.example", "submodule-a")  # Ignored (duplicate)
+            pom.add_module(Module("submodule-a"))
+               .add_module(Module("submodule-b"))
+               .add_module(Module("submodule-a"))  # Ignored (duplicate)
                .save()
             ```
         """
         # Check for duplicate module (by artifact_id)
         for existing_module in self.modules:
-            if existing_module["artifact_id"] == module["artifact_id"]:
+            if existing_module.artifact_id == module.artifact_id:
                 return self  # Module already exists, skip adding
 
         # Update cache only - XML will be updated on save()
-        self.modules.append(
-            Module(
-                group_id=module["group_id"],
-                artifact_id=module["artifact_id"],
-                version=module.get("version"),
-            )
-        )
+        self.modules.append(Module(artifact_id=module.artifact_id))
         return self
 
     def add_dependency(self, dependency: Dependency) -> "Pom":
         """Add a new dependency to the pom.xml. Checks for duplicates and updates version if provided.
 
         Args:
-            dependency (Dependency): TypedDict containing dependency metadata with keys:
-                - group_id (str): Maven groupId (e.g., "org.junit.jupiter")
-                - artifact_id (str): Maven artifactId (e.g., "junit-jupiter-api")
-                - version (str | None): Optional version specification
+            dependency (Dependency): Dependency object containing group_id, artifact_id, and optional version.
 
         Returns:
-            PomProxy: Returns self to enable method chaining. If the dependency already
+            Pom: Returns self to enable method chaining. If the dependency already
                 exists, its version is updated (if provided) but no duplicate is created.
 
         Note:
@@ -316,32 +349,27 @@ class Pom:
 
         Example:
             ```python
-            pom.add_dependency({
-                "group_id": "org.junit.jupiter",
-                "artifact_id": "junit-jupiter-api",
-                "version": "5.10.0"
-            }).save()
+            pom.add_dependency(Dependency("org.junit.jupiter", "junit-jupiter-api", "5.10.0")).save()
             ```
         """
-        group_id = dependency["group_id"]
-        artifact_id = dependency["artifact_id"]
-        version = dependency.get("version")
-
         # Check for existing dependency
         for idx, existing_dep in enumerate(self.dependencies):
             if (
-                existing_dep["group_id"] == group_id
-                and existing_dep["artifact_id"] == artifact_id
+                existing_dep.group_id == dependency.group_id
+                and existing_dep.artifact_id == dependency.artifact_id
             ):
                 # Dependency exists - update version if provided
-                if version:
-                    self.dependencies[idx]["version"] = version
-                    self._modified = True
+                if dependency.version:
+                    self.dependencies[idx].version = dependency.version
                 return self
 
         # Dependency doesn't exist - add to cache (XML will be updated on save())
         self.dependencies.append(
-            Dependency(group_id=group_id, artifact_id=artifact_id, version=version)
+            Dependency(
+                group_id=dependency.group_id,
+                artifact_id=dependency.artifact_id,
+                version=dependency.version,
+            )
         )
         return self
 
@@ -349,15 +377,10 @@ class Pom:
         """Add a new plugin definition to the pom.xml. Checks for duplicates and updates version/configuration if provided.
 
         Args:
-            plugin (Plugin): TypedDict containing plugin metadata with keys:
-                - group_id (str): Maven groupId (e.g., "org.apache.maven.plugins")
-                - artifact_id (str): Maven artifactId (e.g., "maven-compiler-plugin")
-                - version (str | None): Plugin version (required for pluginManagement)
-                - configuration (str | None): Optional XML configuration fragment as string
-                    (without outer <configuration> tags)
+            plugin (Plugin): Plugin object containing group_id, artifact_id, version, and optional configuration.
 
         Returns:
-            PomProxy: Returns self to enable method chaining. If the plugin already
+            Pom: Returns self to enable method chaining. If the plugin already
                 exists, its version and configuration are updated (if provided) but
                 no duplicate is created.
 
@@ -367,39 +390,29 @@ class Pom:
 
         Example:
             ```python
-            pom.add_plugin({
-                "group_id": "com.diffplug.maven",
-                "artifact_id": "spotless-maven-plugin",
-                "version": "2.41.0",
-                "configuration": "<java><googleJavaFormat/></java>"
-            }).save()
+            pom.add_plugin(Plugin("com.diffplug.maven", "spotless-maven-plugin", "2.41.0", "<java><googleJavaFormat/></java>")).save()
             ```
         """
-        group_id = plugin["group_id"]
-        artifact_id = plugin["artifact_id"]
-        version = plugin.get("version")
-        configuration = plugin.get("configuration")
-
         # Check for existing plugin
         for idx, existing_plugin in enumerate(self.plugins):
             if (
-                existing_plugin["group_id"] == group_id
-                and existing_plugin["artifact_id"] == artifact_id
+                existing_plugin.group_id == plugin.group_id
+                and existing_plugin.artifact_id == plugin.artifact_id
             ):
                 # Plugin exists - update version/configuration if provided
-                if version:
-                    self.plugins[idx]["version"] = version
-                if configuration:
-                    self.plugins[idx]["configuration"] = configuration
+                if plugin.version:
+                    self.plugins[idx].version = plugin.version
+                if plugin.configuration:
+                    self.plugins[idx].configuration = plugin.configuration
                 return self
 
         # Plugin doesn't exist - add to cache (XML will be updated on save())
         self.plugins.append(
             Plugin(
-                group_id=group_id,
-                artifact_id=artifact_id,
-                version=version,
-                configuration=configuration,
+                group_id=plugin.group_id,
+                artifact_id=plugin.artifact_id,
+                version=plugin.version,
+                configuration=plugin.configuration,
             )
         )
         return self
@@ -438,7 +451,6 @@ class Pom:
             self._dependencies_element.remove(elem)
         for elem in list(self._plugins_element):
             self._plugins_element.remove(elem)
-        
 
         # Re-add modules
         for module in self.modules:
@@ -494,7 +506,7 @@ class Pom:
                 The pom.xml will be placed at workspace/pom.xml.
             group_id (str): Maven groupId for the project (e.g., "de.hofuniversity").
             artifact_id (str): Maven artifactId for the project (e.g., "my-project").
-            
+
         Returns:
             PomProxy: A configured PomProxy instance pointing to workspace/pom.xml.
 
@@ -511,123 +523,6 @@ class Pom:
         pom_path.write_text(pom_content, encoding="utf-8")
         return cls(pom_path)
 
-
-def add_module_to_pom(
-    pom_path: Path, group_id: str, artifact_id: str, version: str | None = None
-):
-    """
-    Add a module to the given pom.xml content.
-    Returns the modified pom.xml content as a string.
-    """
-    namespaces = get_all_namespaces(pom_path)
-    for ns in namespaces:
-        ET.register_namespace(ns, namespaces[ns])
-
-    tree = ET.parse(pom_path)
-    root = tree.getroot()
-    modules_element = root.find("modules", namespaces)
-
-    if modules_element is None:
-        modules_element = ET.SubElement(root, "modules")
-
-    module_element = ET.SubElement(modules_element, "module")
-    module_element.text = artifact_id
-
-    # Write the modified XML back to the pom.xml file
-    tree.write(pom_path, encoding="utf-8", xml_declaration=True)
-
-
-def add_dependencies_to_pom(pom_path: Path, dependencies: list[Dependency]):
-    """
-    Add dependencies to the given pom.xml content.
-    Returns the modified pom.xml content as a string.
-    """
-    namespaces = get_all_namespaces(pom_path)
-    for ns in namespaces:
-        ET.register_namespace(ns, namespaces[ns])
-
-    tree = ET.parse(pom_path)
-    root = tree.getroot()
-    dependencies_element = root.find("dependencies", namespaces)
-
-    if dependencies_element is None:
-        dependencies_element = ET.SubElement(root, "dependencies")
-
-    for dep in dependencies:
-        dependency_element = ET.SubElement(dependencies_element, "dependency")
-        group_id_element = ET.SubElement(dependency_element, "groupId")
-        group_id_element.text = dep["group_id"]
-
-        artifact_id_element = ET.SubElement(dependency_element, "artifactId")
-        artifact_id_element.text = dep["artifact_id"]
-
-        if dep.get("version"):
-            version_element = ET.SubElement(dependency_element, "version")
-            version_element.text = dep["version"]
-
-    # Write the modified XML back to the pom.xml file
-    tree.write(pom_path, encoding="utf-8", xml_declaration=True)
-
-
-def install_dependencies(workspace: Path):
-    cp_process = subprocess.run(["mvn", "validate"], cwd=workspace, check=True)
-    if cp_process.returncode != 0:
-        raise RuntimeError(
-            f"Failed to create Maven project. Return code: {cp_process.returncode}"
-        )
-
-
-# deprecated
-def add_plugin_to_pom(pom_path: Path, plugin: Plugin):
-    """
-    Add a plugin to the given pom.xml content.
-    Returns the modified pom.xml content as a string.
-    """
-    namespaces = get_all_namespaces(pom_path)
-    for ns in namespaces:
-        ET.register_namespace(ns, namespaces[ns])
-
-    tree = ET.parse(pom_path)
-    root = tree.getroot()
-    build_element = root.find("build", namespaces)
-
-    if build_element is None:
-        build_element = ET.SubElement(root, "build")
-
-    plugins_element = build_element.find("plugins", namespaces)
-
-    if plugins_element is None:
-        plugins_element = ET.SubElement(build_element, "plugins")
-
-    plugin_element = ET.SubElement(plugins_element, "plugin")
-    group_id_element = ET.SubElement(plugin_element, "groupId")
-    group_id_element.text = plugin["group_id"]
-
-    artifact_id_element = ET.SubElement(plugin_element, "artifactId")
-    artifact_id_element.text = plugin["artifact_id"]
-
-    if plugin.get("version"):
-        version_element = ET.SubElement(plugin_element, "version")
-        version_element.text = plugin["version"]
-
-    if plugin.get("configuration"):
-        configuration_element = ET.SubElement(plugin_element, "configuration")
-        # Parse the configuration XML and append it as a deep copy
-        config_tree = ET.fromstring(plugin["configuration"])
-
-        # Create a new element with the same tag and recursively copy children
-        def deep_copy_element(elem):
-            new_elem = ET.Element(elem.tag, elem.attrib)
-            new_elem.text = elem.text
-            new_elem.tail = elem.tail
-            for child in elem:
-                new_elem.append(deep_copy_element(child))
-            return new_elem
-
-        configuration_element.append(deep_copy_element(config_tree))
-
-    # Write the modified XML back to the pom.xml file
-    tree.write(pom_path, encoding="utf-8", xml_declaration=True)
 
 
 def format_java_files(workspace: Path):
