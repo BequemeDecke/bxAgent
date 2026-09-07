@@ -236,9 +236,20 @@ class TestPreparationNodeIntegration(TestCase):
 
     def check_workspace_contents(self):
         """Check the contents of the workspace for expected files and structure."""
+        # Check that the workspace directory structure is correct
+        expected_dirs = [
+            self.workspace_path / "PreparationNodeIntegrationTest/src/main/java/de/hofuniversity/PreparationNodeIntegrationTest/",
+            self.workspace_path / self.artifact_id,
+        ]
+        for dir_path in expected_dirs:
+            self.assertTrue(
+                dir_path.exists(),
+                f"Expected directory {dir_path} to exist.",
+            )
+
         # Check that the workspace contains the BXT tool file
-        bxtool_expected_name = "BxAgentJavaBxTool.java"
-        bxtool_path = self.workspace_path / bxtool_expected_name
+        bxtool_expected_name = "MDEAgentTransformationBxToolAdapter.java"
+        bxtool_path = self.workspace_path / "PreparationNodeIntegrationTest/src/main/java/de/hofuniversity/PreparationNodeIntegrationTest/" / bxtool_expected_name
         self.assertTrue(
             bxtool_path.exists(),
             f"Expected BXT tool file {bxtool_expected_name} to exist in the workspace.",
@@ -293,16 +304,6 @@ class TestPreparationNodeIntegration(TestCase):
             f"pom.xml should contain artifact ID '{self.artifact_id}'.",
         )
 
-        # Check that the workspace directory structure is correct
-        expected_dirs = [
-            self.workspace_path / "src" / "main" / "java",
-            self.workspace_path / self.artifact_id,
-        ]
-        for dir_path in expected_dirs:
-            self.assertTrue(
-                dir_path.exists(),
-                f"Expected directory {dir_path} to exist.",
-            )
 
     def tearDown(self):
         """Clean up the workspace after each test."""
