@@ -1,19 +1,19 @@
 from langchain.tools import ToolRuntime, tool
-from typing import Optional
 
 from mdeagent.comprehension import TransformationPlan
+
 
 @tool
 def update_model_implementation(
     runtime: ToolRuntime,
-    source_model_implementation: Optional[str] = None,
-    target_model_implementation: Optional[str] = None,
+    source_model_implementation: str | None = None,
+    target_model_implementation: str | None = None,
 ):
     """Update the implementation details of the source and target models in the transformation plan. You can update either one or both implementations.
 
     Args:
-        source_model_implementation (Optional[str], optional): The implementation details of the source model.
-        target_model_implementation (Optional[str], optional): The implementation details of the target model.
+        source_model_implementation (str | None, optional): The implementation details of the source model.
+        target_model_implementation (str | None, optional): The implementation details of the target model.
     """
     tp: TransformationPlan = runtime.state.get("transformation_plan")
     if tp is None:

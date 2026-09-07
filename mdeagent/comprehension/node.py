@@ -1,7 +1,7 @@
 from langchain.messages import HumanMessage
 from langgraph.graph.state import CompiledStateGraph
 
-from ..state import MDEAgentState
+from mdeagent.state import MDEAgentState
 
 PROMPT_TEMPLATE = """
 --- BEGIN TRANSFORMATION PLAN ---
@@ -42,6 +42,7 @@ def create_comprehension_node(comprehension_agent: CompiledStateGraph):
                 "messages": [HumanMessage(content=input_prompt)],
                 "transformation_plan": transformation,
             },
+            version="v2"
         )
 
         iteration = transformation.data.get("iteration", 0)
