@@ -1,6 +1,6 @@
 from langchain.tools import ToolRuntime, tool
 
-from mdeagent.comprehension import TransformationPlan
+from mdeagent.comprehension import TransformationPlan, SerializedTransformationPlan
 
 
 @tool
@@ -15,9 +15,11 @@ def update_model_implementation(
         source_model_implementation (str | None, optional): The implementation details of the source model.
         target_model_implementation (str | None, optional): The implementation details of the target model.
     """
-    tp: TransformationPlan = runtime.state.get("transformation_plan")
-    if tp is None:
+    serialized_tp: SerializedTransformationPlan = runtime.state.get("transformation_plan")
+    if serialized_tp is None:
         raise ValueError("Transformation plan not found in the runtime state.")
+
+    tp: TransformationPlan = TransformationPlan.from_dict(serialized_tp.dict())
 
     if (
         source_model_implementation is not None
@@ -47,7 +49,11 @@ def update_transformation_direction(
     Args:
         transformation_direction (str): The transformation direction to be updated in the transformation plan.
     """
-    tp: TransformationPlan = runtime.state.get("transformation_plan")
+    serialized_tp: SerializedTransformationPlan = runtime.state.get("transformation_plan")
+    if serialized_tp is None:
+        raise ValueError("Transformation plan not found in the runtime state.")
+
+    tp: TransformationPlan = TransformationPlan.from_dict(serialized_tp.dict())
     if tp is None:
         raise ValueError("Transformation plan not found in the runtime state.")
 
@@ -61,7 +67,11 @@ def update_difficulties(runtime: ToolRuntime, difficulties: str):
     Args:
         difficulties (str): The identified difficulties to be updated in the transformation plan.
     """
-    tp: TransformationPlan = runtime.state.get("transformation_plan")
+    serialized_tp: SerializedTransformationPlan = runtime.state.get("transformation_plan")
+    if serialized_tp is None:
+        raise ValueError("Transformation plan not found in the runtime state.")
+
+    tp: TransformationPlan = TransformationPlan.from_dict(serialized_tp.dict())
     if tp is None:
         raise ValueError("Transformation plan not found in the runtime state.")
 
@@ -75,7 +85,11 @@ def update_implementation_steps(runtime: ToolRuntime, implementation_steps: str)
     Args:
         implementation_steps (str): The implementation steps in markdown to be updated in the transformation plan.
     """
-    tp: TransformationPlan = runtime.state.get("transformation_plan")
+    serialized_tp: SerializedTransformationPlan = runtime.state.get("transformation_plan")
+    if serialized_tp is None:
+        raise ValueError("Transformation plan not found in the runtime state.")
+
+    tp: TransformationPlan = TransformationPlan.from_dict(serialized_tp.dict())
     if tp is None:
         raise ValueError("Transformation plan not found in the runtime state.")
 

@@ -41,6 +41,7 @@ def build_comprehension_agent(
         model=model,
         state_schema=ComprehensionAgentState,
         system_prompt=SystemMessage(system_prompt),
+        middleware=[],
         # checkpointer=InMemorySaver(
         #     serde=JsonPlusSerializer(
         #         pickle_fallback=True,

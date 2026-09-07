@@ -1,7 +1,7 @@
 from langchain.agents import AgentState
 
-from mdeagent.comprehension import TransformationPlan
+from mdeagent.comprehension import SerializedTransformationPlan
 
 
 class ComprehensionAgentState(AgentState):
-    transformation_plan: TransformationPlan
+    transformation_plan: SerializedTransformationPlan
