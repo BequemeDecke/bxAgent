@@ -70,9 +70,9 @@ class PomProxy:
     
     Attributes:
         pom_path (Path): Filesystem path to the pom.xml file being managed.
-        modules (list[Module]): Cache of module definitions from the pom.xml.
-        dependencies (list[Dependency]): Cache of dependency definitions from the pom.xml.
-        plugins (list[Plugin]): Cache of plugin definitions from the pom.xml.
+        modules (list[Module]): List of module definitions parsed from the pom.xml.
+        dependencies (list[Dependency]): List of dependency definitions parsed from the pom.xml.
+        plugins (list[Plugin]): List of plugin definitions parsed from the pom.xml.
     
     Private Attributes:
         _root (ET.Element | None): Cached reference to the root <project> element.
@@ -80,6 +80,8 @@ class PomProxy:
         _dependencies_element (ET.Element | None): Cached reference to the <dependencies> element.
         _plugins_element (ET.Element | None): Cached reference to the <plugins> element 
             within <pluginManagement>. New plugins are added here to define versions.
+        _namespaces (dict): Cached namespace mappings for XML operations.
+        _modified (bool): Flag indicating if changes have been made since last save.
     
     Example:
         ```python
@@ -97,13 +99,16 @@ class PomProxy:
     _modules_element: ET.Element | None = None
     _dependencies_element: ET.Element | None = None
     _plugins_element: ET.Element | None = None
+    _namespaces: dict[str, str] = {}
+    _modified: bool = False
 
     def __init__(self, pom_path: Path):
         """Initialize the PomProxy with an existing pom.xml file.
         
-        Parses the pom.xml at the specified path, registers XML namespaces, and caches
-        references to key structural elements. Creates missing elements (<modules>, 
-        <dependencies>, <plugins>) to ensure a valid POM structure.
+        Parses the pom.xml at the specified path, registers XML namespaces, extracts
+        existing modules/dependencies/plugins into cache lists, and caches references 
+        to key structural elements. Creates missing elements (<modules>, <dependencies>, 
+        <plugins>) to ensure a valid POM structure.
         
         Args:
             pom_path (Path): Path to the pom.xml file to manage. The file must exist.
@@ -113,40 +118,66 @@ class PomProxy:
             ET.ParseError: If the pom.xml file contains malformed XML.
         """
         self.pom_path = pom_path
+        self.modules = []
+        self.dependencies = []
+        self.plugins = []
+        self._modified = False
+        self._packaging_value: str | None = None
 
-        namespaces = get_all_namespaces(pom_path)
-        for ns in namespaces:
-            ET.register_namespace(ns, namespaces[ns])
+        # Parse namespaces and register them
+        self._namespaces = get_all_namespaces(pom_path)
+        for ns in self._namespaces:
+            ET.register_namespace(ns, self._namespaces[ns])
 
+        # Parse the pom.xml file
         tree = ET.parse(pom_path)
         self._root = tree.getroot()
 
-        # Ensure that the modules element exists
-        self._modules_element = self._root.find("modules", namespaces)
+        # Parse and cache existing modules
+        self._modules_element = self._root.find("modules", self._namespaces)
         if self._modules_element is None:
             self._modules_element = ET.SubElement(self._root, "modules")
-        # Ensure that the dependencies element exists
-        self._dependencies_element = self._root.find("dependencies", namespaces)
+        else:
+            for module_elem in self._modules_element.findall("module", self._namespaces):
+                # Modules are stored as simple text, not full Module objects
+                if module_elem.text:
+                    self.modules.append({
+                        "group_id": "",
+                        "artifact_id": module_elem.text.strip(),
+                        "version": None,
+                    })
+
+        # Parse and cache existing dependencies
+        self._dependencies_element = self._root.find("dependencies", self._namespaces)
         if self._dependencies_element is None:
             self._dependencies_element = ET.SubElement(self._root, "dependencies")
-        # Ensure that the plugins element exists
-        self._plugins_element = self._root.find("plugins", namespaces)
+        else:
+            for dep_elem in self._dependencies_element.findall("dependency", self._namespaces):
+                self.dependencies.append(Dependency.from_etree_element(dep_elem))
+
+        # Parse and cache existing plugins (from pluginManagement/plugins)
+        self._plugins_element = self._root.find("plugins", self._namespaces)
         if self._plugins_element is None:
-            build_element = self._root.find("build", namespaces)
+            build_element = self._root.find("build", self._namespaces)
             if build_element is None:
                 build_element = ET.SubElement(self._root, "build")
 
-            plugin_management_element = build_element.find("pluginManagement", namespaces)
+            plugin_management_element = build_element.find("pluginManagement", self._namespaces)
             if plugin_management_element is None:
                 plugin_management_element = ET.SubElement(build_element, "pluginManagement")
 
             self._plugins_element = ET.SubElement(plugin_management_element, "plugins")
+        else:
+            for plugin_elem in self._plugins_element.findall("plugin", self._namespaces):
+                self.plugins.append(Plugin.from_etree_element(plugin_elem))
 
     def add_module(self, group_id: str, artifact_id: str, version: str | None = None) -> 'PomProxy':
         """Add a new module reference to the pom.xml.
         
         Creates a new <module> entry within the <modules> section. This is typically 
-        used in multi-module Maven projects to declare child modules.
+        used in multi-module Maven projects to declare child modules. If a module 
+        with the same artifact_id already exists, this method does nothing and 
+        returns self without making changes.
         
         Args:
             group_id (str): The Maven groupId of the module (e.g., "com.example").
@@ -155,23 +186,43 @@ class PomProxy:
                 module references but included for completeness.
         
         Returns:
-            PomProxy: Returns self to enable method chaining.
+            PomProxy: Returns self to enable method chaining. If the module already
+                exists, no changes are made but self is still returned.
+        
+        Note:
+            Changes are buffered in memory and only written to the XML file when 
+            save() is called.
         
         Example:
             ```python
             pom.add_module("com.example", "submodule-a")
                .add_module("com.example", "submodule-b")
+               .add_module("com.example", "submodule-a")  # Ignored (duplicate)
                .save()
             ```
         """
-        pass
+        # Check for duplicate module (by artifact_id)
+        for existing_module in self.modules:
+            if existing_module["artifact_id"] == artifact_id:
+                return self  # Module already exists, skip adding
+        
+        # Update cache only - XML will be updated on save()
+        self.modules.append({
+            "group_id": group_id,
+            "artifact_id": artifact_id,
+            "version": version,
+        })
+        self._modified = True
+        return self
 
     def add_dependency(self, dependency: Dependency) -> 'PomProxy':
         """Add a new dependency to the pom.xml.
         
         Creates a new <dependency> entry within the <dependencies> section. The 
         dependency dictionary must contain at minimum group_id and artifact_id.
-        Version is optional for managed dependencies.
+        Version is optional for managed dependencies. If a dependency with the same
+        group_id and artifact_id already exists, this method updates the existing
+        dependency's version (if provided) instead of creating a duplicate.
         
         Args:
             dependency (Dependency): TypedDict containing dependency metadata with keys:
@@ -180,7 +231,12 @@ class PomProxy:
                 - version (str | None): Optional version specification
         
         Returns:
-            PomProxy: Returns self to enable method chaining.
+            PomProxy: Returns self to enable method chaining. If the dependency already
+                exists, its version is updated (if provided) but no duplicate is created.
+        
+        Note:
+            Changes are buffered in memory and only written to the XML file when 
+            save() is called.
         
         Example:
             ```python
@@ -191,7 +247,23 @@ class PomProxy:
             }).save()
             ```
         """
-        pass
+        group_id = dependency["group_id"]
+        artifact_id = dependency["artifact_id"]
+        version = dependency.get("version")
+        
+        # Check for existing dependency
+        for idx, existing_dep in enumerate(self.dependencies):
+            if existing_dep["group_id"] == group_id and existing_dep["artifact_id"] == artifact_id:
+                # Dependency exists - update version if provided
+                if version:
+                    self.dependencies[idx]["version"] = version
+                    self._modified = True
+                return self
+        
+        # Dependency doesn't exist - add to cache (XML will be updated on save())
+        self.dependencies.append(dependency)
+        self._modified = True
+        return self
 
     def add_plugin(self, plugin: Plugin) -> 'PomProxy':
         """Add a new plugin definition to the pom.xml.
@@ -199,6 +271,10 @@ class PomProxy:
         Creates a new <plugin> entry within the <plugins> section under 
         <pluginManagement>. This defines plugin versions for consistent builds 
         across modules. Actual plugin usage occurs in individual module pom.xml files.
+        
+        If a plugin with the same group_id and artifact_id already exists, this method
+        updates the existing plugin's version and configuration instead of creating
+        a duplicate.
         
         Args:
             plugin (Plugin): TypedDict containing plugin metadata with keys:
@@ -209,7 +285,13 @@ class PomProxy:
                     (without outer <configuration> tags)
         
         Returns:
-            PomProxy: Returns self to enable method chaining.
+            PomProxy: Returns self to enable method chaining. If the plugin already
+                exists, its version and configuration are updated (if provided) but 
+                no duplicate is created.
+        
+        Note:
+            Changes are buffered in memory and only written to the XML file when 
+            save() is called.
         
         Example:
             ```python
@@ -221,7 +303,30 @@ class PomProxy:
             }).save()
             ```
         """
-        pass
+        group_id = plugin["group_id"]
+        artifact_id = plugin["artifact_id"]
+        version = plugin.get("version")
+        configuration = plugin.get("configuration")
+        
+        # Check for existing plugin
+        for idx, existing_plugin in enumerate(self.plugins):
+            if existing_plugin["group_id"] == group_id and existing_plugin["artifact_id"] == artifact_id:
+                # Plugin exists - update version and/or configuration
+                updated = False
+                if version and existing_plugin.get("version") != version:
+                    self.plugins[idx]["version"] = version
+                    updated = True
+                if configuration and existing_plugin.get("configuration") != configuration:
+                    self.plugins[idx]["configuration"] = configuration
+                    updated = True
+                if updated:
+                    self._modified = True
+                return self
+        
+        # Plugin doesn't exist - add to cache (XML will be updated on save())
+        self.plugins.append(plugin)
+        self._modified = True
+        return self
 
     def set_packaging(self, packaging: str) -> 'PomProxy':
         """Set the project packaging type in the pom.xml.
@@ -235,17 +340,99 @@ class PomProxy:
         Returns:
             PomProxy: Returns self to enable method chaining.
         
+        Note:
+            Changes are buffered in memory and only written to the XML file when 
+            save() is called.
+        
         Example:
             ```python
             pom.set_packaging("pom").save()  # For parent POM
             ```
         """
-        pass
+        # Store packaging value for save() to apply
+        self._packaging_value = packaging
+        self._modified = True
+        return self
+    
+    def _apply_changes_to_xml(self) -> None:
+        """Apply all cached changes to the XML tree. Called by save()."""
+        if not self._modified or self._root is None:
+            return
+        
+        # Apply modules
+        if self._modules_element is not None:
+            # Clear existing modules
+            for child in list(self._modules_element):
+                self._modules_element.remove(child)
+            # Add all modules from cache
+            for module in self.modules:
+                module_elem = ET.SubElement(self._modules_element, "module")
+                module_elem.text = module["artifact_id"]
+        
+        # Apply dependencies
+        if self._dependencies_element is not None:
+            # Clear existing dependencies
+            for child in list(self._dependencies_element):
+                self._dependencies_element.remove(child)
+            # Add all dependencies from cache
+            for dep in self.dependencies:
+                dep_elem = ET.SubElement(self._dependencies_element, "dependency")
+                group_id_elem = ET.SubElement(dep_elem, "groupId")
+                group_id_elem.text = dep["group_id"]
+                artifact_id_elem = ET.SubElement(dep_elem, "artifactId")
+                artifact_id_elem.text = dep["artifact_id"]
+                if dep.get("version"):
+                    version_elem = ET.SubElement(dep_elem, "version")
+                    version_elem.text = dep["version"]
+        
+        # Apply plugins
+        if self._plugins_element is not None:
+            # Clear existing plugins
+            for child in list(self._plugins_element):
+                self._plugins_element.remove(child)
+            # Add all plugins from cache
+            for plugin in self.plugins:
+                plugin_elem = ET.SubElement(self._plugins_element, "plugin")
+                group_id_elem = ET.SubElement(plugin_elem, "groupId")
+                group_id_elem.text = plugin["group_id"]
+                artifact_id_elem = ET.SubElement(plugin_elem, "artifactId")
+                artifact_id_elem.text = plugin["artifact_id"]
+                if plugin.get("version"):
+                    version_elem = ET.SubElement(plugin_elem, "version")
+                    version_elem.text = plugin["version"]
+                if plugin.get("configuration"):
+                    try:
+                        config_element = ET.SubElement(plugin_elem, "configuration")
+                        wrapped_config = f"<config_root>{plugin['configuration']}</config_root>"
+                        config_tree = ET.fromstring(wrapped_config)
+                        for child in config_tree:
+                            config_element.append(child)
+                    except ET.ParseError as e:
+                        raise ValueError(
+                            f"Failed to parse plugin configuration XML: {plugin['configuration']}. "
+                            f"Error: {e}"
+                        ) from e
+        
+        # Apply packaging if set
+        if hasattr(self, '_packaging_value') and self._packaging_value:
+            packaging_element = self._root.find("packaging", self._namespaces)
+            if packaging_element is None:
+                # Create packaging element after modelVersion
+                model_version = self._root.find("modelVersion", self._namespaces)
+                if model_version is not None:
+                    packaging_element = ET.Element("packaging")
+                    packaging_element.text = self._packaging_value
+                    children = list(self._root)
+                    idx = children.index(model_version)
+                    self._root.insert(idx + 1, packaging_element)
+            else:
+                packaging_element.text = self._packaging_value
 
     def save(self) -> None:
         """Persist all pending changes to the pom.xml file.
         
-        Writes the modified XML tree back to disk. This method should be called 
+        Applies all cached modifications (modules, dependencies, plugins, packaging) 
+        to the XML tree and writes the result to disk. This method should be called 
         after completing all modifications to minimize I/O operations.
         
         Returns:
@@ -261,36 +448,138 @@ class PomProxy:
         """
         if self._root is None:
             raise ValueError("Cannot save pom.xml because the root element is None.")
-        else:
-            tree = ET.ElementTree(self._root)
-            tree.write(self.pom_path, encoding="utf-8", xml_declaration=True)
+        
+        # Apply all cached changes to the XML tree
+        self._apply_changes_to_xml()
+        
+        # Write to file
+        tree = ET.ElementTree(self._root)
+        tree.write(self.pom_path, encoding="utf-8", xml_declaration=True)
+        
+        # Reset modified flag
+        self._modified = False
 
     @classmethod
-    def base(cls) -> 'PomProxy':
+    def base(cls, pom_path: Path) -> 'PomProxy':
         """Create a minimal base pom.xml for an empty aggregator/parent module.
         
         Factory method that generates a new pom.xml with basic structure including
-        placeholder groupId/artifactId/version and empty sections for modules,
-        dependencies, and plugins. The temporary file is created in the system temp
-        directory.
+        model version declaration and empty sections for modules, dependencies, and plugins.
+        
+        Args:
+            pom_path (Path): Path where the pom.xml file will be created.
         
         Returns:
             PomProxy: A configured PomProxy instance pointing to the newly created
-                temporary pom.xml file.
-        
-        Note:
-            The created pom.xml has placeholder coordinates that should be updated
-            via direct XML manipulation before saving. This method is primarily useful
-            for testing or scaffolding scenarios.
+                pom.xml file.
         
         Example:
             ```python
-            pom = PomProxy.base()
-            # Customize the generated pom.xml
+            pom = PomProxy.base(Path("workspace/pom.xml"))
             pom.set_packaging("pom").save()
             ```
         """
-        pass
+        base_pom_content = """<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.example</groupId>
+  <artifactId>example-project</artifactId>
+  <version>1.0-SNAPSHOT</version>
+</project>
+"""
+        pom_path.parent.mkdir(parents=True, exist_ok=True)
+        pom_path.write_text(base_pom_content, encoding="utf-8")
+        return cls(pom_path)
+
+    @classmethod
+    def new(
+        cls,
+        workspace: Path,
+        group_id: str,
+        artifact_id: str,
+        version: str = "1.0-SNAPSHOT",
+        archetype: str = "maven-archetype-simple",
+        archetype_version: str = "1.5",
+    ) -> 'PomProxy':
+        """Create a new Maven project using the specified archetype.
+        
+        Factory method that invokes Maven's archetype:generate goal to create a new 
+        Maven project structure. The resulting pom.xml is then wrapped in a PomProxy 
+        instance for further manipulation.
+        
+        Args:
+            workspace (Path): Directory where the Maven project will be created.
+            group_id (str): Maven groupId for the project (e.g., "com.example").
+            artifact_id (str): Maven artifactId for the project (e.g., "my-app").
+            version (str, optional): Project version. Defaults to "1.0-SNAPSHOT".
+            archetype (str, optional): Maven archetype to use. 
+                Defaults to "maven-archetype-simple".
+            archetype_version (str, optional): Version of the archetype to use. 
+                Defaults to "1.5".
+        
+        Returns:
+            PomProxy: A configured PomProxy instance pointing to the newly created
+                project's pom.xml file.
+        
+        Raises:
+            RuntimeError: If Maven is not available or the archetype generation fails.
+        
+        Example:
+            ```python
+            # Create a simple Maven project
+            pom = PomProxy.new(
+                workspace=Path("workspace"),
+                group_id="com.example",
+                artifact_id="my-app"
+            )
+            
+            # Create with a different archetype
+            pom = PomProxy.new(
+                workspace=Path("workspace"),
+                group_id="com.example",
+                artifact_id="my-webapp",
+                archetype="maven-archetype-webapp"
+            )
+            ```
+        """
+        # Ensure workspace exists
+        workspace.mkdir(parents=True, exist_ok=True)
+        
+        # Run Maven archetype:generate
+        result = subprocess.run(
+            [
+                "mvn",
+                "archetype:generate",
+                f"-DgroupId={group_id}",
+                f"-DartifactId={artifact_id}",
+                f"-Dversion={version}",
+                f"-DarchetypeArtifactId={archetype}",
+                f"-DarchetypeVersion={archetype_version}",
+                "-DinteractiveMode=false",
+            ],
+            cwd=workspace,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        
+        if result.returncode != 0:
+            raise RuntimeError(
+                f"Failed to create Maven project using archetype '{archetype}'. "
+                f"Return code: {result.returncode}\n"
+                f"stdout: {result.stdout}\n"
+                f"stderr: {result.stderr}"
+            )
+        
+        # Return PomProxy for the created project's pom.xml
+        pom_path = workspace / artifact_id / "pom.xml"
+        if not pom_path.exists():
+            raise FileNotFoundError(
+                f"Expected pom.xml not found at {pom_path}. "
+                "Maven archetype may have failed silently."
+            )
+        
+        return cls(pom_path)
 
 
 # deprecated

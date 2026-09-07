@@ -454,6 +454,30 @@ class TestPomProxyAddModule(TestCase):
             result = proxy.add_module("com.example", "module-a")
             
             self.assertIs(result, proxy, "add_module should return self for chaining.")
+    
+    def test_add_duplicate_module_ignored(self):
+        """Test that adding a duplicate module (same artifact_id) is ignored."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            pom_path = Path(temp_dir, "pom.xml")
+            pom_path.write_text(BASE_POM_FOR_PROXY)
+            
+            proxy = PomProxy(pom_path)
+            proxy.add_module("com.example", "module-a")
+            proxy.add_module("com.example", "module-a")  # Duplicate
+            proxy.save()
+            
+            modified_pom = pom_path.read_text()
+            logging.debug(f"Modified POM:\n{modified_pom}")
+            
+            # Should only have one module entry
+            self.assertEqual(
+                modified_pom.count("<module>"),
+                1,
+                "Duplicate modules should not be added.",
+            )
+            
+            # Cache should also have only one entry
+            self.assertEqual(len(proxy.modules), 1, "Cache should not contain duplicates.")
 
 
 class TestPomProxyAddDependency(TestCase):
@@ -540,6 +564,35 @@ class TestPomProxyAddDependency(TestCase):
             result = proxy.add_dependency({"group_id": "junit", "artifact_id": "junit", "version": "4.13.2"})
             
             self.assertIs(result, proxy, "add_dependency should return self for chaining.")
+    
+    def test_add_duplicate_dependency_updates_version(self):
+        """Test that adding a duplicate dependency updates the version instead of creating a duplicate."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            pom_path = Path(temp_dir, "pom.xml")
+            pom_path.write_text(BASE_POM_FOR_PROXY)
+            
+            proxy = PomProxy(pom_path)
+            proxy.add_dependency({"group_id": "junit", "artifact_id": "junit", "version": "4.13.2"})
+            proxy.add_dependency({"group_id": "junit", "artifact_id": "junit", "version": "5.10.0"})  # Same group/artifact, different version
+            proxy.save()
+            
+            modified_pom = pom_path.read_text()
+            logging.debug(f"Modified POM:\n{modified_pom}")
+            
+            # Should only have one dependency entry
+            self.assertEqual(
+                modified_pom.count("<dependency>"),
+                1,
+                "Duplicate dependencies should not be added.",
+            )
+            
+            # Version should be updated to the new value
+            self.assertIn("<version>5.10.0</version>", modified_pom)
+            self.assertNotIn("<version>4.13.2</version>", modified_pom)
+            
+            # Cache should also have only one entry
+            self.assertEqual(len(proxy.dependencies), 1, "Cache should not contain duplicates.")
+            self.assertEqual(proxy.dependencies[0]["version"], "5.10.0", "Cache version should be updated.")
 
 
 class TestPomProxyAddPlugin(TestCase):
@@ -644,6 +697,58 @@ class TestPomProxyAddPlugin(TestCase):
             result = proxy.add_plugin(plugin)
             
             self.assertIs(result, proxy, "add_plugin should return self for chaining.")
+    
+    def test_add_duplicate_plugin_updates_version_and_config(self):
+        """Test that adding a duplicate plugin updates version and configuration instead of creating a duplicate."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            pom_path = Path(temp_dir, "pom.xml")
+            pom_path.write_text(BASE_POM_FOR_PROXY)
+            
+            proxy = PomProxy(pom_path)
+            
+            # Add plugin with initial version
+            proxy.add_plugin({
+                "group_id": "com.diffplug.maven",
+                "artifact_id": "spotless-maven-plugin",
+                "version": "2.41.0",
+                "configuration": None,
+            })
+            
+            # Add same plugin with new version and configuration
+            proxy.add_plugin({
+                "group_id": "com.diffplug.maven",
+                "artifact_id": "spotless-maven-plugin",
+                "version": "2.43.0",
+                "configuration": "<java><googleJavaFormat/></java>",
+            })
+            proxy.save()
+            
+            modified_pom = pom_path.read_text()
+            logging.debug(f"Modified POM:\n{modified_pom}")
+            
+            # Should only have one plugin entry in pluginManagement
+            pm_start = modified_pom.find("<pluginManagement>")
+            pm_end = modified_pom.find("</pluginManagement>")
+            pm_section = modified_pom[pm_start:pm_end]
+            
+            self.assertEqual(
+                pm_section.count("<plugin>"),
+                1,
+                "Duplicate plugins should not be added.",
+            )
+            
+            # Version should be updated to the new value
+            self.assertIn("<version>2.43.0</version>", modified_pom)
+            self.assertNotIn("<version>2.41.0</version>", modified_pom)
+            
+            # Configuration should be added
+            self.assertIn("<configuration>", modified_pom)
+            self.assertIn("<googleJavaFormat", modified_pom)
+            
+            # Cache should also have only one entry
+            self.assertEqual(len(proxy.plugins), 1, "Cache should not contain duplicates.")
+            self.assertEqual(proxy.plugins[0]["version"], "2.43.0", "Cache version should be updated.")
+            self.assertEqual(proxy.plugins[0]["configuration"], "<java><googleJavaFormat/></java>", "Cache configuration should be updated.")
 
 
 class TestPomProxySetPackaging(TestCase):
@@ -764,6 +869,160 @@ class TestPomProxyMethodChaining(TestCase):
             self.assertIn("<module>module-api</module>", modified_pom)
             self.assertIn("<artifactId>junit</artifactId>", modified_pom)
             self.assertIn("<artifactId>maven-compiler-plugin</artifactId>", modified_pom)
+
+
+class TestPomProxyBaseFactory(TestCase):
+    """Test cases for PomProxy.base() factory method."""
+    
+    def test_base_creates_minimal_pom(self):
+        """Test that base() creates a pom.xml with minimal content."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            pom_path = Path(temp_dir, "pom.xml")
+            
+            proxy = PomProxy.base(pom_path)
+            
+            self.assertTrue(pom_path.exists(), "pom.xml should be created.")
+            
+            content = pom_path.read_text()
+            self.assertIn("<?xml version=", content)
+            self.assertIn("<modelVersion>4.0.0</modelVersion>", content)
+            self.assertIn("<groupId>com.example</groupId>", content)
+            self.assertIn("<artifactId>example-project</artifactId>", content)
+            self.assertIn("<version>1.0-SNAPSHOT</version>", content)
+    
+    def test_base_returns_configured_proxy(self):
+        """Test that base() returns a configured PomProxy instance."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            pom_path = Path(temp_dir, "pom.xml")
+            
+            proxy = PomProxy.base(pom_path)
+            
+            self.assertIsInstance(proxy, PomProxy)
+            self.assertEqual(proxy.pom_path, pom_path)
+            self.assertIsNotNone(proxy._root)
+    
+    def test_base_allows_modifications(self):
+        """Test that the proxy returned by base() can be modified."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            pom_path = Path(temp_dir, "pom.xml")
+            
+            proxy = PomProxy.base(pom_path)
+            proxy.set_packaging("pom")
+            proxy.add_module("com.example", "module-a")
+            proxy.save()
+            
+            content = pom_path.read_text()
+            self.assertIn("<packaging>pom</packaging>", content)
+            self.assertIn("<module>module-a</module>", content)
+    
+    def test_base_creates_parent_directories(self):
+        """Test that base() creates parent directories if they don't exist."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            pom_path = Path(temp_dir) / "nested" / "path" / "pom.xml"
+            
+            proxy = PomProxy.base(pom_path)
+            
+            self.assertTrue(pom_path.exists(), "pom.xml should be created with parent dirs.")
+
+
+class TestPomProxyNewFactory(TestCase):
+    """Test cases for PomProxy.new() factory method."""
+    
+    @classmethod
+    def setUpClass(cls):
+        """Check if Maven is available before running tests."""
+        import shutil
+        cls.maven_available = shutil.which("mvn") is not None
+    
+    def setUp(self):
+        """Skip tests if Maven is not available."""
+        if not self.maven_available:
+            self.skipTest("Maven is not installed or not in PATH.")
+    
+    def test_new_creates_maven_project_with_simple_archetype(self):
+        """Test that new() creates a Maven project using the simple archetype."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            workspace = Path(temp_dir)
+            group_id = "com.example"
+            artifact_id = "test-app"
+            
+            proxy = PomProxy.new(
+                workspace=workspace,
+                group_id=group_id,
+                artifact_id=artifact_id,
+            )
+            
+            # Check that the project was created
+            project_path = workspace / artifact_id
+            pom_path = project_path / "pom.xml"
+            
+            self.assertTrue(project_path.exists(), "Project directory should be created.")
+            self.assertTrue(pom_path.exists(), "pom.xml should be created.")
+            
+            # Check that the proxy points to the correct pom.xml
+            self.assertEqual(proxy.pom_path, pom_path)
+    
+    def test_new_parses_existing_content(self):
+        """Test that new() returns a proxy that has parsed existing pom.xml content."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            workspace = Path(temp_dir)
+            group_id = "com.example"
+            artifact_id = "test-app"
+            
+            proxy = PomProxy.new(
+                workspace=workspace,
+                group_id=group_id,
+                artifact_id=artifact_id,
+            )
+            
+            # The simple archetype creates a junit dependency
+            self.assertGreater(len(proxy.dependencies), 0, "Should have parsed dependencies.")
+    
+    def test_new_with_custom_version(self):
+        """Test that new() respects custom version parameter."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            workspace = Path(temp_dir)
+            group_id = "com.example"
+            artifact_id = "test-app"
+            version = "2.0.0-RELEASE"
+            
+            proxy = PomProxy.new(
+                workspace=workspace,
+                group_id=group_id,
+                artifact_id=artifact_id,
+                version=version,
+            )
+            
+            pom_path = workspace / artifact_id / "pom.xml"
+            content = pom_path.read_text()
+            
+            self.assertIn(f"<version>{version}</version>", content)
+    
+    def test_new_allows_further_modifications(self):
+        """Test that the proxy returned by new() can be modified."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            workspace = Path(temp_dir)
+            group_id = "com.example"
+            artifact_id = "test-app"
+            
+            proxy = PomProxy.new(
+                workspace=workspace,
+                group_id=group_id,
+                artifact_id=artifact_id,
+            )
+            
+            # Add additional dependency
+            proxy.add_dependency({
+                "group_id": "org.mockito",
+                "artifact_id": "mockito-core",
+                "version": "5.5.0",
+            })
+            proxy.save()
+            
+            pom_path = workspace / artifact_id / "pom.xml"
+            content = pom_path.read_text()
+            
+            self.assertIn("<artifactId>mockito-core</artifactId>", content)
 
 
 class TestPomProxyDeprecatedFunctionsWarning(TestCase):
