@@ -15,6 +15,7 @@ class ModelConfig(BaseModel):
     BASE_URL: str = Field()
     BASE_MODEL: str = Field()
     CODING_MODEL: str = Field()
+    REQUEST_TIMEOUT: int = Field(default=15)
 
 
 class LangFuseConfig(BaseModel):
@@ -70,6 +71,7 @@ def load_config(env_path: Path) -> BaseModel:
         BASE_URL=os.getenv("BASE_URL"),
         BASE_MODEL=os.getenv("BASE_MODEL"),
         CODING_MODEL=os.getenv("CODING_MODEL"),
+        REQUEST_TIMEOUT=int(os.getenv("REQUEST_TIMEOUT", "15")),
     )
 
     langfuse_config = LangFuseConfig(

@@ -11,6 +11,7 @@ def build_base_model():
         base_url=agent_config.BASE_URL,
         api_key=agent_config.API_KEY.get_secret_value(),
         model=agent_config.BASE_MODEL,
+        request_timeout=agent_config.REQUEST_TIMEOUT,
     )
 
 
@@ -22,4 +23,5 @@ def build_coding_model():
         base_url=agent_config.BASE_URL,
         api_key=agent_config.API_KEY.get_secret_value(),
         model=agent_config.CODING_MODEL,
+        request_timeout=agent_config.REQUEST_TIMEOUT,
     )
