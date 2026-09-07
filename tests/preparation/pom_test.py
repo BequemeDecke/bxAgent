@@ -318,6 +318,30 @@ BASE_POM_FOR_PROXY = """<?xml version='1.0' encoding='utf-8'?>
   <version>1.0-SNAPSHOT</version>
 </project>"""
 
+BASE_POM_WITH_GROUP_ID = """<?xml version="1.0" encoding="UTF-8"?>
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>{group_id}</groupId>
+  <artifactId>workspace</artifactId>
+  <version>1.0</version>
+  <packaging>pom</packaging>
+
+  <name>Workspace</name>
+  <modules>
+    <!-- Module werden hier hinzugefügt -->
+  </modules>
+
+  <properties>
+    <maven.compiler.source>11</maven.compiler.source>
+    <maven.compiler.target>11</maven.compiler.target>
+  </properties>
+
+</project>
+"""
+
 POM_WITH_SECTIONS = """<?xml version='1.0' encoding='utf-8'?>
 <project xmlns="http://maven.apache.org/POM/4.0.0">
   <modelVersion>4.0.0</modelVersion>
@@ -874,55 +898,69 @@ class TestPomProxyMethodChaining(TestCase):
 class TestPomProxyBaseFactory(TestCase):
     """Test cases for PomProxy.base() factory method."""
     
-    def test_base_creates_minimal_pom(self):
-        """Test that base() creates a pom.xml with minimal content."""
+    def test_base_creates_pom_in_workspace_root(self):
+        """Test that base() creates pom.xml in the workspace root directory."""
         with tempfile.TemporaryDirectory() as temp_dir:
-            pom_path = Path(temp_dir, "pom.xml")
+            workspace = Path(temp_dir)
+            group_id = "de.hofuniversity"
             
-            proxy = PomProxy.base(pom_path)
+            proxy = PomProxy.base(workspace, group_id)
             
-            self.assertTrue(pom_path.exists(), "pom.xml should be created.")
+            # Check that pom.xml is created at workspace/pom.xml
+            pom_path = workspace / "pom.xml"
+            self.assertTrue(pom_path.exists(), "pom.xml should be created in workspace root.")
+            self.assertEqual(proxy.pom_path, pom_path, "Proxy should point to workspace/pom.xml.")
+    
+    def test_base_creates_minimal_pom_with_group_id(self):
+        """Test that base() creates a pom.xml with the specified group_id."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            workspace = Path(temp_dir)
+            group_id = "de.hofuniversity"
             
-            content = pom_path.read_text()
-            self.assertIn("<?xml version=", content)
-            self.assertIn("<modelVersion>4.0.0</modelVersion>", content)
-            self.assertIn("<groupId>com.example</groupId>", content)
-            self.assertIn("<artifactId>example-project</artifactId>", content)
-            self.assertIn("<version>1.0-SNAPSHOT</version>", content)
+            PomProxy.base(workspace, group_id)
+            
+            content = (workspace / "pom.xml").read_text()
+            self.assertIn(f"<groupId>{group_id}</groupId>", content)
+            self.assertIn("<artifactId>workspace</artifactId>", content)
+            self.assertIn("<version>1.0</version>", content)
+            self.assertIn("<packaging>pom</packaging>", content)
     
     def test_base_returns_configured_proxy(self):
         """Test that base() returns a configured PomProxy instance."""
         with tempfile.TemporaryDirectory() as temp_dir:
-            pom_path = Path(temp_dir, "pom.xml")
+            workspace = Path(temp_dir)
+            group_id = "com.example"
             
-            proxy = PomProxy.base(pom_path)
+            proxy = PomProxy.base(workspace, group_id)
             
             self.assertIsInstance(proxy, PomProxy)
-            self.assertEqual(proxy.pom_path, pom_path)
+            self.assertEqual(proxy.pom_path, workspace / "pom.xml")
             self.assertIsNotNone(proxy._root)
     
     def test_base_allows_modifications(self):
         """Test that the proxy returned by base() can be modified."""
         with tempfile.TemporaryDirectory() as temp_dir:
-            pom_path = Path(temp_dir, "pom.xml")
+            workspace = Path(temp_dir)
+            group_id = "de.hofuniversity"
             
-            proxy = PomProxy.base(pom_path)
-            proxy.set_packaging("pom")
-            proxy.add_module("com.example", "module-a")
+            proxy = PomProxy.base(workspace, group_id)
+            proxy.add_module(group_id, "module-a")
             proxy.save()
             
-            content = pom_path.read_text()
-            self.assertIn("<packaging>pom</packaging>", content)
+            content = (workspace / "pom.xml").read_text()
+            self.assertIn(f"<groupId>{group_id}</groupId>", content)
             self.assertIn("<module>module-a</module>", content)
     
-    def test_base_creates_parent_directories(self):
-        """Test that base() creates parent directories if they don't exist."""
+    def test_base_creates_workspace_directory(self):
+        """Test that base() creates the workspace directory if it doesn't exist."""
         with tempfile.TemporaryDirectory() as temp_dir:
-            pom_path = Path(temp_dir) / "nested" / "path" / "pom.xml"
+            workspace = Path(temp_dir) / "nested" / "workspace"
+            group_id = "com.example"
             
-            proxy = PomProxy.base(pom_path)
+            proxy = PomProxy.base(workspace, group_id)
             
-            self.assertTrue(pom_path.exists(), "pom.xml should be created with parent dirs.")
+            self.assertTrue(workspace.exists(), "Workspace directory should be created.")
+            self.assertTrue((workspace / "pom.xml").exists(), "pom.xml should be created.")
 
 
 class TestPomProxyNewFactory(TestCase):

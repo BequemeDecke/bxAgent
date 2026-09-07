@@ -1,9 +1,36 @@
 import subprocess
+from warnings import deprecated
 import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import TypedDict
 
 from mdeagent.util import get_all_namespaces
+
+# Base POM template for parent/aggregator projects
+# This is the same template used in prepare_workspace.py
+BASE_POM_XML = """<?xml version="1.0" encoding="UTF-8"?>
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>{group_id}</groupId>
+  <artifactId>workspace</artifactId>
+  <version>1.0</version>
+  <packaging>pom</packaging>
+
+  <name>Workspace</name>
+  <modules>
+    <!-- Module werden hier hinzugefügt -->
+  </modules>
+
+  <properties>
+    <maven.compiler.source>11</maven.compiler.source>
+    <maven.compiler.target>11</maven.compiler.target>
+  </properties>
+
+</project>
+"""
 
 
 class Dependency(TypedDict):
@@ -460,35 +487,35 @@ class PomProxy:
         self._modified = False
 
     @classmethod
-    def base(cls, pom_path: Path) -> 'PomProxy':
+    def base(cls, workspace: Path, group_id: str) -> 'PomProxy':
         """Create a minimal base pom.xml for an empty aggregator/parent module.
         
-        Factory method that generates a new pom.xml with basic structure including
-        model version declaration and empty sections for modules, dependencies, and plugins.
+        Factory method that generates a new pom.xml in the workspace root directory
+        with basic structure including model version declaration, groupId, and 
+        packaging type 'pom'. Uses the standard BASE_POM_XML template.
+        
+        The pom.xml is always created at workspace/pom.xml to ensure consistent
+        file naming and location.
         
         Args:
-            pom_path (Path): Path where the pom.xml file will be created.
+            workspace (Path): Workspace directory where the pom.xml will be created.
+                The pom.xml will be placed at workspace/pom.xml.
+            group_id (str): Maven groupId for the project (e.g., "de.hofuniversity").
         
         Returns:
-            PomProxy: A configured PomProxy instance pointing to the newly created
-                pom.xml file.
+            PomProxy: A configured PomProxy instance pointing to workspace/pom.xml.
         
         Example:
             ```python
-            pom = PomProxy.base(Path("workspace/pom.xml"))
-            pom.set_packaging("pom").save()
+            # Creates workspace/pom.xml with groupId "de.hofuniversity"
+            pom = PomProxy.base(Path("workspace"), "de.hofuniversity")
+            pom.add_module("de.hofuniversity", "transformation-module").save()
             ```
         """
-        base_pom_content = """<?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0">
-  <modelVersion>4.0.0</modelVersion>
-  <groupId>com.example</groupId>
-  <artifactId>example-project</artifactId>
-  <version>1.0-SNAPSHOT</version>
-</project>
-"""
-        pom_path.parent.mkdir(parents=True, exist_ok=True)
-        pom_path.write_text(base_pom_content, encoding="utf-8")
+        pom_path = workspace / "pom.xml"
+        pom_content = BASE_POM_XML.format(group_id=group_id)
+        workspace.mkdir(parents=True, exist_ok=True)
+        pom_path.write_text(pom_content, encoding="utf-8")
         return cls(pom_path)
 
     @classmethod
@@ -582,7 +609,7 @@ class PomProxy:
         return cls(pom_path)
 
 
-# deprecated
+@deprecated
 def add_module_to_pom(
     pom_path: Path, group_id: str, artifact_id: str, version: str | None = None
 ):
@@ -607,7 +634,7 @@ def add_module_to_pom(
     # Write the modified XML back to the pom.xml file
     tree.write(pom_path, encoding="utf-8", xml_declaration=True)
 
-# deprecated
+@deprecated
 def add_dependencies_to_pom(pom_path: Path, dependencies: list[Dependency]):
     """
     Add dependencies to the given pom.xml content.
@@ -640,7 +667,7 @@ def add_dependencies_to_pom(pom_path: Path, dependencies: list[Dependency]):
     tree.write(pom_path, encoding="utf-8", xml_declaration=True)
 
 
-# deprecated
+@deprecated
 def install_dependencies(workspace: Path):
     cp_process = subprocess.run(["mvn", "validate"], cwd=workspace, check=True)
     if cp_process.returncode != 0:
@@ -700,7 +727,7 @@ def add_plugin_to_pom(pom_path: Path, plugin: Plugin):
     # Write the modified XML back to the pom.xml file
     tree.write(pom_path, encoding="utf-8", xml_declaration=True)
 
-# deprecated
+@deprecated
 def format_java_files(workspace: Path):
     """
     Run mvn spotless:apply to format all Java files in the workspace.
