@@ -19,9 +19,7 @@ class MavenProject:
         :return: True if the project is valid, False otherwise.
         """
         validate_process = subprocess.run(
-            ["mvn", "validate"],
-            check=True,
-            cwd=self.workspace
+            ["mvn", "validate"], check=True, cwd=self.workspace
         )
         return validate_process.returncode == 0
 
@@ -32,9 +30,7 @@ class MavenProject:
         :return: True if the build was successful, False otherwise.
         """
         build_process = subprocess.run(
-            ["mvn", "package"],
-            check=True,
-            cwd=self.workspace
+            ["mvn", "package"], check=True, cwd=self.workspace
         )
         return build_process.returncode == 0
 
@@ -45,13 +41,11 @@ class MavenProject:
         :return: True if the formatting was successful, False otherwise.
         """
         format_process = subprocess.run(
-            ["mvn", "spotless:apply"],
-            check=True,
-            cwd=self.workspace
+            ["mvn", "spotless:apply"], check=True, cwd=self.workspace
         )
         return format_process.returncode == 0
 
-    def add_file(self, relative_path: Path, content: str) -> None:
+    def add_file(self, relative_path: Path, content: str) -> Path:
         """
         Add a new file to the Maven project.
 
@@ -61,8 +55,19 @@ class MavenProject:
         full_path = self.workspace / relative_path
         full_path.parent.mkdir(parents=True, exist_ok=True)
         full_path.write_text(content)
+        return full_path
 
-    def add_java_class(self, package: str, class_name: str, content: str) -> None:
+    def get_package_path(self, package: str) -> Path:
+        """
+        Get the path to the specified package in the Maven project.
+
+        :param package: The package name (e.g., "com.example").
+        :return: The Path object representing the package directory.
+        """
+        package_path = Path(*package.split("."))
+        return self.workspace / "src" / "main" / "java" / package_path
+
+    def add_java_class(self, package: str, class_name: str, content: str) -> Path:
         """
         Add a new Java class to the Maven project.
 
@@ -70,9 +75,9 @@ class MavenProject:
         :param class_name: The name of the Java class.
         :param content: The content of the Java class.
         """
-        package_path = Path(*package.split('.'))
+        package_path = Path(*package.split("."))
         java_file_path = package_path / f"{class_name}.java"
-        self.add_file(java_file_path, content)
+        return self.add_file(java_file_path, content)
 
     @classmethod
     def load(cls, workspace: Path) -> "MavenProject":
@@ -81,16 +86,32 @@ class MavenProject:
 
         :param workspace: The path to the workspace where the Maven project is located.
         :return: An instance of MavenProject representing the loaded project.
+        :raises FileNotFoundError: If pom.xml is not found in the workspace.
+        :raises ValueError: If the pom.xml is invalid or missing required elements.
         """
         pom_path = workspace / "pom.xml"
         if not pom_path.exists():
             raise FileNotFoundError(f"pom.xml not found in {workspace}")
-        pom = Pom(pom_path)
+        
+        # Validate that the POM file is not empty before parsing
+        pom_content = pom_path.read_text()
+        if not pom_content.strip():
+            raise ValueError(f"pom.xml at {pom_path} is empty")
+        
+        try:
+            pom = Pom(pom_path)
+        except Exception as e:
+            raise ValueError(f"Failed to parse pom.xml: {e}") from e
+        
         return cls(pom, workspace)
 
     @classmethod
     def create(
-        cls, workspace: Path, group_id: str, artifact_id: str, parent: "MavenProject | None"
+        cls,
+        workspace: Path,
+        group_id: str,
+        artifact_id: str,
+        parent: "MavenProject | None",
     ) -> "MavenProject":
         """
         Create a new Maven project in the specified workspace.
@@ -125,4 +146,4 @@ class MavenProject:
         parent.pom.add_module(Module(artifact_id))
         pom_path = workspace / artifact_id / "pom.xml"
         pom = Pom(pom_path)
-        return cls(pom, workspace)
+        return cls(pom, workspace / artifact_id)

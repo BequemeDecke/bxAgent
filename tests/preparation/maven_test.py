@@ -62,6 +62,31 @@ class TestMavenProjectLoad(TestCase):
             
             self.assertIn("pom.xml not found", str(context.exception))
             self.assertIn(str(workspace), str(context.exception))
+    
+    def test_load_with_invalid_pom_raises_error(self):
+        """Test that load() raises ValueError when pom.xml is invalid."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            workspace = Path(temp_dir)
+            pom_path = workspace / "pom.xml"
+            # Write invalid XML
+            pom_path.write_text("This is not valid XML<<<>")
+            
+            with self.assertRaises(ValueError) as context:
+                MavenProject.load(workspace)
+            
+            self.assertIn("Failed to parse pom.xml", str(context.exception))
+    
+    def test_load_with_empty_pom_raises_error(self):
+        """Test that load() raises ValueError when pom.xml is empty."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            workspace = Path(temp_dir)
+            pom_path = workspace / "pom.xml"
+            pom_path.write_text("")
+            
+            with self.assertRaises(ValueError) as context:
+                MavenProject.load(workspace)
+            
+            self.assertIn("is empty", str(context.exception))
 
 
 class TestMavenProjectCreate(TestCase):
@@ -119,6 +144,9 @@ class TestMavenProjectCreate(TestCase):
             child_pom_path = workspace / child_artifact_id / "pom.xml"
             self.assertTrue(child_pom_path.exists())
             
+            # Child project's workspace should be workspace / artifact_id
+            self.assertEqual(child_project.workspace, workspace / child_artifact_id)
+            
             # Parent pom should have the child as a module
             parent_project.pom.save()  # Save to apply changes
             parent_content = (workspace / "pom.xml").read_text()
@@ -155,28 +183,37 @@ class TestMavenProjectCreate(TestCase):
             self.assertEqual(len(parent_project.pom.modules), 1)
             self.assertEqual(parent_project.pom.modules[0].artifact_id, child_artifact_id)
     
-    def test_create_returns_different_instances(self):
-        """Test that create() returns different MavenProject instances for parent and child."""
+    def test_parent_and_child_have_different_workspaces(self):
+        """Test that parent and child projects have different workspace paths."""
         with tempfile.TemporaryDirectory() as temp_dir:
             workspace = Path(temp_dir)
             group_id = "com.example"
+            parent_artifact_id = "parent"
+            child_artifact_id = "child"
             
-            parent = MavenProject.create(
+            # Create parent
+            parent_project = MavenProject.create(
                 workspace=workspace,
                 group_id=group_id,
-                artifact_id="parent",
+                artifact_id=parent_artifact_id,
                 parent=None
             )
             
-            child = MavenProject.create(
+            # Verify parent workspace is the base workspace
+            self.assertEqual(parent_project.workspace, workspace)
+            
+            # Create child
+            child_project = MavenProject.create(
                 workspace=workspace,
                 group_id=group_id,
-                artifact_id="child",
-                parent=parent
+                artifact_id=child_artifact_id,
+                parent=parent_project
             )
             
-            self.assertIsNot(parent, child)
-            self.assertNotEqual(parent.pom.pom_path, child.pom.pom_path)
+            # Verify child workspace is workspace / artifact_id
+            expected_child_workspace = workspace / child_artifact_id
+            self.assertEqual(child_project.workspace, expected_child_workspace)
+            self.assertNotEqual(parent_project.workspace, child_project.workspace)
 
 
 class TestMavenProjectStructure(TestCase):
@@ -215,6 +252,11 @@ class TestMavenProjectStructure(TestCase):
             module_artifact_ids = {m.artifact_id for m in parent.pom.modules}
             self.assertIn("module-1", module_artifact_ids)
             self.assertIn("module-2", module_artifact_ids)
+            
+            # Children should have different workspaces
+            self.assertNotEqual(child1.workspace, child2.workspace)
+            self.assertEqual(child1.workspace, workspace / "module-1")
+            self.assertEqual(child2.workspace, workspace / "module-2")
             
             # Children should be in different directories
             self.assertNotEqual(child1.pom.pom_path, child2.pom.pom_path)
@@ -273,11 +315,13 @@ class TestMavenProjectAddFile(TestCase):
             relative_path = Path("src/main/resources/config.properties")
             content = "key=value\nfoo=bar"
             
-            project.add_file(relative_path, content)
+            result_path = project.add_file(relative_path, content)
             
-            full_path = workspace / relative_path
-            self.assertTrue(full_path.exists())
-            self.assertEqual(full_path.read_text(), content)
+            # Should return the full path
+            expected_path = workspace / relative_path
+            self.assertEqual(result_path, expected_path)
+            self.assertTrue(result_path.exists())
+            self.assertEqual(result_path.read_text(), content)
     
     def test_add_file_creates_parent_directories(self):
         """Test that add_file creates parent directories if they don't exist."""
@@ -297,11 +341,10 @@ class TestMavenProjectAddFile(TestCase):
             
             relative_path = Path("deeply/nested/directory/structure/file.txt")
             
-            project.add_file(relative_path, "content")
+            result_path = project.add_file(relative_path, "content")
             
-            full_path = workspace / relative_path
-            self.assertTrue(full_path.exists())
-            self.assertTrue(full_path.parent.exists())
+            self.assertTrue(result_path.exists())
+            self.assertTrue(result_path.parent.exists())
 
 
 class TestMavenProjectAddJavaClass(TestCase):
@@ -327,9 +370,10 @@ class TestMavenProjectAddJavaClass(TestCase):
             class_name = "MyService"
             content = "package com.example.service;\npublic class MyService {}"
             
-            project.add_java_class(package, class_name, content)
+            result_path = project.add_java_class(package, class_name, content)
             
             expected_path = workspace / "com" / "example" / "service" / "MyService.java"
+            self.assertEqual(result_path, expected_path)
             self.assertTrue(expected_path.exists())
             self.assertEqual(expected_path.read_text(), content)
     
@@ -353,7 +397,50 @@ class TestMavenProjectAddJavaClass(TestCase):
             class_name = "InternalServiceImpl"
             content = "package com.example.service.impl.internal;\npublic class InternalServiceImpl {}"
             
-            project.add_java_class(package, class_name, content)
+            result_path = project.add_java_class(package, class_name, content)
             
             expected_path = workspace / "com" / "example" / "service" / "impl" / "internal" / "InternalServiceImpl.java"
+            self.assertEqual(result_path, expected_path)
             self.assertTrue(expected_path.exists())
+
+
+class TestMavenProjectChildWorkspace(TestCase):
+    """Test cases for MavenProject child workspace handling."""
+    
+    def test_child_project_add_file_uses_child_workspace(self):
+        """Test that add_file on a child project uses the child's workspace."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            workspace = Path(temp_dir)
+            group_id = "com.example"
+            parent_artifact_id = "parent"
+            child_artifact_id = "child"
+            
+            # Create parent
+            parent = MavenProject.create(
+                workspace=workspace,
+                group_id=group_id,
+                artifact_id=parent_artifact_id,
+                parent=None
+            )
+            
+            # Create child
+            child = MavenProject.create(
+                workspace=workspace,
+                group_id=group_id,
+                artifact_id=child_artifact_id,
+                parent=parent
+            )
+            
+            # Add file to child project
+            relative_path = Path("src/main/java/com/example/ChildClass.java")
+            content = "package com.example; public class ChildClass {}"
+            
+            child.add_file(relative_path, content)
+            
+            # File should be in child's workspace, not parent's
+            expected_path = child.workspace / relative_path
+            self.assertTrue(expected_path.exists())
+            
+            # File should NOT be in parent's workspace
+            parent_path = parent.workspace / relative_path
+            self.assertNotEqual(expected_path.parent, parent_path.parent)
