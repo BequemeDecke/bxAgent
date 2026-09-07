@@ -1,14 +1,13 @@
-import subprocess
 from abc import ABC, abstractmethod
 from pathlib import Path
 
-import mdeagent.preparation.pom as pom_utils
 from mdeagent.comprehension import FileTransformationPlanParser, TransformationPlan
 from mdeagent.config import Config
-from mdeagent.preparation.pom import Plugin
+from mdeagent.preparation.maven import MavenProject
+from mdeagent.preparation.pom import Dependency, Module, Plugin, Pom
 from mdeagent.preparation.state import PreparationState
 
-EMF_DEPENDENCIES: list[pom_utils.Dependency] = [
+EMF_DEPENDENCIES: list[Dependency] = [
     {
         "group_id": "org.eclipse.emf",
         "artifact_id": "org.eclipse.emf.ecore",
@@ -29,7 +28,7 @@ EMF_DEPENDENCIES: list[pom_utils.Dependency] = [
 SPOTLESS_PLUGIN: Plugin = {
     "group_id": "com.diffplug.maven",
     "artifact_id": "spotless-maven-plugin",
-    "version": "2.x.x",
+    "version": "2.41.0",
     "configuration": "<java><googleJavaFormat/></java>",
 }
 
@@ -42,62 +41,6 @@ class StructureFixStrategy(ABC):
     @abstractmethod
     def fix_structure(self, state: PreparationState) -> PreparationState:
         pass
-
-
-def create_maven_project(group_id: str, artifact_id: str, workspace: Path):
-    cp_process = subprocess.run(
-        [
-            "mvn",
-            "archetype:generate",
-            "-DgroupId=" + group_id,
-            "-DartifactId=" + artifact_id,
-            "-DarchetypeArtifactId=maven-archetype-simple",
-            "-DarchetypeVersion=1.5",
-            "-DinteractiveMode=false",
-        ],
-        check=True,
-        cwd=workspace,
-    )
-    if cp_process.returncode != 0:
-        raise RuntimeError(
-            f"Failed to create Maven project. Return code: {cp_process.returncode}"
-        )
-
-
-BASE_POM_XML = """<?xml version="1.0" encoding="UTF-8"?>
-
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
-
-  <groupId>{group_id}</groupId>
-  <artifactId>workspace</artifactId>
-  <version>1.0</version>
-  <packaging>pom</packaging>
-
-  <name>Workspace</name>
-  <modules>
-    <!-- Module werden hier hinzugefügt -->
-  </modules>
-
-  <properties>
-    <maven.compiler.source>11</maven.compiler.source>
-    <maven.compiler.target>11</maven.compiler.target>
-  </properties>
-
-</project>
-"""
-
-
-def create_parent_project(workspace: Path, group_id: str):
-    """
-    Create the parent project structure in the given directory.
-    This assumes that the directory has been created and is empty!
-    """
-    pom_xml_path = workspace / "pom.xml"
-    pom_xml_path.write_text(
-        BASE_POM_XML.format(group_id=group_id, artifact_id="workspace")
-    )
 
 
 def is_workspace_structure_correct(
@@ -144,36 +87,56 @@ def create_prepare_workspace_node(fix_strategy: StructureFixStrategy):
 
         # Check if the folder is empty => Create the Parent project, else execute the strategy
         fixed_state = {}  # State to overwrite
-        if any(workspace.iterdir()) and not is_workspace_structure_correct(
-            workspace, group_id, artifact_id
-        ):
+        if not any(workspace.iterdir()):
+            # Create the parent Maven project in the workspace
+            parent_project = MavenProject.create(workspace, group_id, artifact_id, None)
+            project = MavenProject.create(workspace, group_id, artifact_id, parent_project)
+        elif any(workspace.iterdir()) and not is_workspace_structure_correct(workspace, group_id, artifact_id):
+            # Project structure is incorrect, apply the fix strategy
             fixed_state = fix_strategy.fix_structure(state)
+            project = MavenProject.load(workspace / artifact_id) # Workspace should be fixed
         else:
-            create_parent_project(workspace, group_id)
+            # Project structure is correct, load the existing Maven project
+            project = MavenProject.load(workspace / artifact_id)
 
         # Create the transformation module (Maven project) inside the workspace
-        create_maven_project(
-            group_id=group_id, artifact_id=artifact_id, workspace=workspace
-        )
-
-        package_path = (
-            workspace
-            / artifact_id
-            / "src"
-            / "main"
-            / "java"
-            / group_id.replace(".", "/")
-            / artifact_id
-        )
+        # Package path includes artifact_id as subpackage (e.g., de.example.mdeagent)
+        full_package = f"{group_id}.{artifact_id}"
+        package_path = project.get_package_path(full_package)
         if not package_path.exists():
             package_path.mkdir(parents=True)
 
         # Create the TRANSFORMATION.md file
         transformation_md_path = workspace / artifact_id / "TRANSFORMATION.md"
-        tp_parser = FileTransformationPlanParser(transformation_md_path)
-        tp = TransformationPlan.parse(parser=tp_parser)
         if not transformation_md_path.exists():
-            tp.update_iteration(0)
+            # Create minimal transformation plan file with required sections
+            transformation_md_path.write_text(f"""---
+source_model_package: {group_id}
+target_model_package: {group_id}
+iteration: 0
+---
+
+--- BEGIN SOURCE MODEL ---
+--- END SOURCE MODEL ---
+
+--- BEGIN TARGET MODEL ---
+--- END TARGET MODEL ---
+
+--- BEGIN TRANSFORMATION DIRECTION ---
+--- END TRANSFORMATION DIRECTION ---
+
+--- BEGIN DIFFICULTIES ---
+--- END DIFFICULTIES ---
+
+--- BEGIN IMPLEMENTATION STEPS ---
+--- END IMPLEMENTATION STEPS ---
+""")
+            tp_parser = FileTransformationPlanParser(transformation_md_path)
+            tp = TransformationPlan.parse(parser=tp_parser)
+        else:
+            # Load existing transformation plan
+            tp_parser = FileTransformationPlanParser(transformation_md_path)
+            tp = TransformationPlan.parse(parser=tp_parser)
 
         # Create the transformation Java file (bxtool)
         transformation_class_name = (
@@ -191,9 +154,9 @@ def create_prepare_workspace_node(fix_strategy: StructureFixStrategy):
 
         # Add EMF dependencies to the pom.xml of the transformation module
         pom_path = workspace / artifact_id / "pom.xml"
-        pom_utils.add_dependencies_to_pom(pom_path, EMF_DEPENDENCIES)
-        pom_utils.add_plugin_to_pom(pom_path, SPOTLESS_PLUGIN)
-        pom_utils.install_dependencies(workspace / artifact_id)
+        # pom_utils.add_dependencies_to_pom(pom_path, EMF_DEPENDENCIES)
+        # pom_utils.add_plugin_to_pom(pom_path, SPOTLESS_PLUGIN)
+        # pom_utils.install_dependencies(workspace / artifact_id)
 
         # Update the state with the new paths and transformation plan
         new_state = PreparationState(

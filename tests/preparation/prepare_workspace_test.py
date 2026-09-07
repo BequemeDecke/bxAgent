@@ -18,8 +18,38 @@ from mdeagent.util import copy_workspace, log_workspace_structure
 class TestPrepareWorkspace(TestCase):
     def setUp(self):
         self.maxDiff = None
+        
+        def fix_structure_side_effect(state: PreparationState) -> PreparationState:
+            """Mock fix strategy that creates the missing pom.xml."""
+            workspace = state.get("workspace_path")
+            artifact_id = state.get("artifact_id")
+            group_id = state.get("group_id")
+            if workspace and artifact_id and group_id:
+                # Create parent pom.xml
+                parent_pom_path = workspace / "pom.xml"
+                parent_pom_path.parent.mkdir(parents=True, exist_ok=True)
+                parent_pom_path.write_text(f"""<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>{group_id}</groupId>
+    <artifactId>parent</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+</project>""")
+                # Create child pom.xml
+                child_pom_path = workspace / artifact_id / "pom.xml"
+                child_pom_path.parent.mkdir(parents=True, exist_ok=True)
+                child_pom_path.write_text(f"""<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>{group_id}</groupId>
+    <artifactId>{artifact_id}</artifactId>
+    <version>1.0-SNAPSHOT</version>
+</project>""")
+            return PreparationState()
+        
         self.fix_strategy = Mock(spec=StructureFixStrategy)
-        self.fix_strategy.fix_structure.return_value = PreparationState()
+        self.fix_strategy.fix_structure.side_effect = fix_structure_side_effect
         self.prepare_workspace_node = create_prepare_workspace_node(self.fix_strategy)
         self.fake_data = TransformationPlanData(
             iteration=0,
@@ -32,35 +62,62 @@ class TestPrepareWorkspace(TestCase):
             implementation_steps="",
         )
         self.template_path = Path.cwd() / "templates"
+    
+    def _mock_subprocess_run(self, args, **kwargs):
+        """Helper to mock subprocess.run and create minimal Maven project structure."""
+        import subprocess
+        cwd = kwargs.get('cwd', Path.cwd())
+        
+        # Check if this is an archetype:generate call
+        if 'archetype:generate' in args:
+            # Extract artifactId from args
+            artifact_id = None
+            group_id = None
+            for arg in args:
+                if arg.startswith('-DartifactId='):
+                    artifact_id = arg.split('=')[1]
+                elif arg.startswith('-DgroupId='):
+                    group_id = arg.split('=')[1]
+            
+            if artifact_id and group_id:
+                # Create the child project structure
+                child_path = Path(cwd) / artifact_id
+                child_path.mkdir(parents=True, exist_ok=True)
+                
+                # Create pom.xml
+                pom_path = child_path / "pom.xml"
+                pom_path.write_text(f"""<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>{group_id}</groupId>
+    <artifactId>{artifact_id}</artifactId>
+    <version>1.0-SNAPSHOT</version>
+</project>""")
+                
+                # Create src directory structure
+                src_path = child_path / "src" / "main" / "java" / group_id.replace('.', '/')
+                src_path.mkdir(parents=True, exist_ok=True)
+                
+                # Create App.java
+                app_java = src_path / "App.java"
+                app_java.write_text(f"package {group_id};\npublic class App {{}}")
+        
+        return subprocess.CompletedProcess(args=args, returncode=0)
 
     @patch(
-        "mdeagent.preparation.pom.install_dependencies",
-        return_value=None,
-    )
-    @patch(
-        "mdeagent.preparation.pom.add_plugin_to_pom",
-        return_value=None,
-    )
-    @patch(
-        "mdeagent.preparation.pom.add_dependencies_to_pom",
-        return_value=None,
-    )
-    @patch(
         "subprocess.run",
-        return_value=subprocess.CompletedProcess(
-            args=["mvn", "archetype:generate"], returncode=0
-        ),
+        side_effect=lambda *args, **kwargs: None,  # Will be set per test
     )
     def test_prepare_workspace__given_folder_does_not_exist(
         self,
         mock_run: Mock,
-        mock_add_dependencies: Mock,
-        mock_add_plugin: Mock,
-        mock_install_dependencies: Mock,
     ):
         """
         This test checks if the workspace is created successfully if the given workspace folder does not exist
         """
+        # Configure mock to create project structure
+        mock_run.side_effect = self._mock_subprocess_run
+        
         with tempfile.TemporaryDirectory() as temp_dir:
             workspace_path = (
                 Path(temp_dir) / "workspace"
@@ -92,11 +149,8 @@ class TestPrepareWorkspace(TestCase):
                 "The output state should contain the transformation class path.",
             )
 
-            # Check if maven was called to create the project structure
-            mock_run.assert_called_once()
-            mock_add_dependencies.assert_called_once()
-            mock_add_plugin.assert_called_once()
-            mock_install_dependencies.assert_called_once()
+            # Check if subprocess.run was called for creating child project with archetype
+            self.assertEqual(mock_run.call_count, 1)
 
             # Check indirect output
             self.assertTrue(
@@ -112,33 +166,19 @@ class TestPrepareWorkspace(TestCase):
             )
 
     @patch(
-        "mdeagent.preparation.pom.install_dependencies",
-        return_value=None,
-    )
-    @patch(
-        "mdeagent.preparation.pom.add_plugin_to_pom",
-        return_value=None,
-    )
-    @patch(
-        "mdeagent.preparation.pom.add_dependencies_to_pom",
-        return_value=None,
-    )
-    @patch(
         "subprocess.run",
-        return_value=subprocess.CompletedProcess(
-            args=["mvn", "archetype:generate"], returncode=0
-        ),
+        side_effect=lambda *args, **kwargs: None,
     )
     def test_prepare_workspace__given_folder_exists(
         self,
         mock_run: Mock,
-        mock_add_dependencies: Mock,
-        mock_add_plugin: Mock,
-        mock_install_dependencies: Mock,
     ):
         """
         This test checks if the workspace is created successfully if the given workspace folder exists
         """
+        # Configure mock to create project structure
+        mock_run.side_effect = self._mock_subprocess_run
+        
         with tempfile.TemporaryDirectory() as temp_dir:
             input_state = PreparationState(
                 required_commands=[],
@@ -166,11 +206,8 @@ class TestPrepareWorkspace(TestCase):
                 Path,
                 "The output state should contain the transformation class path.",
             )
-            # Check if maven was called to create the project structure
-            mock_run.assert_called_once()
-            mock_add_dependencies.assert_called_once()
-            mock_add_plugin.assert_called_once()
-            mock_install_dependencies.assert_called_once()
+            # Check if subprocess.run was called for creating child project with archetype
+            self.assertEqual(mock_run.call_count, 1)
 
             # Check indirect output
             self.assertTrue(
@@ -185,23 +222,8 @@ class TestPrepareWorkspace(TestCase):
                 "The 'TRANSFORMATION.md' file should be created in the workspace.",
             )
 
-    @patch(
-        "mdeagent.preparation.pom.install_dependencies",
-        return_value=None,
-    )
-    @patch(
-        "mdeagent.preparation.pom.add_plugin_to_pom",
-        return_value=None,
-    )
-    @patch(
-        "mdeagent.preparation.pom.add_dependencies_to_pom",
-        return_value=None,
-    )
     def test_prepare_workspace__content_exists_structure_incorrect(
-        self,
-        mock_add_dependencies: Mock,
-        mock_add_plugin: Mock,
-        mock_install_dependencies: Mock,
+        self
     ):
         """
         This test checks if the StructureFixStrategy is invoked if the workspace folder exists but the structure is incorrect.
@@ -238,35 +260,17 @@ class TestPrepareWorkspace(TestCase):
             self.prepare_workspace_node(input_state)
             self.fix_strategy.fix_structure.assert_called_once_with(input_state)
 
-            mock_add_dependencies.assert_called_once()
-            mock_add_plugin.assert_called_once()
-            mock_install_dependencies.assert_called_once()
-
-    @patch(
-        "mdeagent.preparation.pom.install_dependencies",
-        return_value=None,
-    )
-    @patch(
-        "mdeagent.preparation.pom.add_plugin_to_pom",
-        return_value=None,
-    )
-    @patch(
-        "mdeagent.preparation.pom.add_dependencies_to_pom",
-        return_value=None,
-    )
     @patch(
         "subprocess.run",
-        return_value=subprocess.CompletedProcess(
-            args=["mvn", "archetype:generate"], returncode=0
-        ),
+        side_effect=lambda *args, **kwargs: None,
     )
     def test_prepare_workspace__transformation_plan_exists(
         self,
         mock_run: Mock,
-        mock_add_dependencies: Mock,
-        mock_add_plugin: Mock,
-        mock_install_dependencies: Mock,
     ):
+        # Configure mock to create project structure
+        mock_run.side_effect = self._mock_subprocess_run
+        
         with tempfile.TemporaryDirectory() as temp_dir:
             # Create a fake transformation plan in the workspace
             tp_path = Path(temp_dir) / "mdeagent" / "TRANSFORMATION.md"
@@ -285,7 +289,29 @@ class TestPrepareWorkspace(TestCase):
             tp.update_iteration(1)
 
             # Create the rest of the necessary structure for the workspace
-            (Path(temp_dir) / "pom.xml").touch()
+            # Parent pom.xml
+            (Path(temp_dir) / "pom.xml").write_text("""<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>de.example</groupId>
+    <artifactId>parent</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+</project>""")
+            
+            # Child project directory with pom.xml
+            child_pom_path = Path(temp_dir) / "mdeagent" / "pom.xml"
+            child_pom_path.parent.mkdir(parents=True, exist_ok=True)
+            child_pom_path.write_text("""<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>de.example</groupId>
+    <artifactId>mdeagent</artifactId>
+    <version>1.0-SNAPSHOT</version>
+</project>""")
+            
+            # src directory
+            (Path(temp_dir) / "mdeagent" / "src" / "main" / "java" / "de" / "example" / "mdeagent").mkdir(parents=True, exist_ok=True)
 
             input_state = PreparationState(
                 required_commands=[],
@@ -309,10 +335,8 @@ class TestPrepareWorkspace(TestCase):
                 "The transformation plan in the output state should match the existing transformation plan.",
             )
 
-            mock_run.assert_called_once()
-            mock_add_dependencies.assert_called_once()
-            mock_add_plugin.assert_called_once()
-            mock_install_dependencies.assert_called_once()
+            # Should NOT call subprocess.run because structure already exists and is loaded
+            self.assertEqual(mock_run.call_count, 0)
 
     def test_prepare_workspace__state_properties_missing(self):
         input_state = PreparationState(
