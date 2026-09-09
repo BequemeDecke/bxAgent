@@ -1,5 +1,6 @@
-import datetime
+import asyncio
 import logging
+from datetime import UTC, datetime
 from pathlib import Path
 from unittest import TestCase
 
@@ -11,6 +12,8 @@ from mdeagent.implementation.state import ImplementationState
 from mdeagent.models import build_coding_model
 
 TEST_ENVIRONMENT = Path(".mdeagent-tests")
+
+logger = logging.getLogger(__name__)
 
 
 class TestImplementTransformationIntegration(TestCase):
@@ -52,10 +55,10 @@ class TestImplementTransformationIntegration(TestCase):
             TEST_ENVIRONMENT
             / "test-executions"
             / "implement_transformation"
-            / datetime.datetime.now().strftime("%Y%m%d%H%M%S_%f")
+            / datetime.now(tz=UTC).strftime("%Y%m%d%H%M%S_%f")
         )
         self.workspace_path.mkdir(parents=True, exist_ok=True)
-        logging.info(f"Created test workspace at {self.workspace_path}")
+        logger.info(f"Created test workspace at {self.workspace_path}")
 
         # Set up paths
         self.setup_files = TEST_ENVIRONMENT / "setup-files"
@@ -170,7 +173,7 @@ Requirements:
         }
 
         # Invoke the node
-        output_state = implement_transformation(initial_state)
+        output_state = asyncio.run(implement_transformation(initial_state))
 
         # Verify: Exactly one transformation class file was created
         java_files_in_workspace = list(self.workspace_path.glob("*.java"))
@@ -234,7 +237,7 @@ Focus on extracting FamilyMembers as Person instances in the forward direction.
         }
 
         # Invoke the node
-        output_state = implement_transformation(initial_state)
+        output_state = asyncio.run(implement_transformation(initial_state))
 
         # Verify: transformation_md is set (either from state or created by factory)
         self.assertIsNotNone(

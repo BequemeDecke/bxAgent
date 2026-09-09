@@ -63,7 +63,7 @@ def create_implement_transformation_node(
     structured_llm = llm.with_structured_output(TransformationClassSpec)
     resolver = TransformationClassTemplateResolver(template_path=template_path)
 
-    def implement_transformation(state: ImplementationState) -> ImplementationState:
+    async def implement_transformation(state: ImplementationState) -> ImplementationState:
         transformation_class_path = state.get("transformation_class_path")
         if transformation_class_path is None:
             raise ValueError(
@@ -83,7 +83,7 @@ def create_implement_transformation_node(
         )
 
         # 3. Invoke the structured LLM to generate the transformation class
-        response: TransformationClassSpec = structured_llm.invoke(input=input_prompt)
+        response: TransformationClassSpec = await structured_llm.ainvoke(input=input_prompt)
 
         # 4. Render the template with the generated specification
         rendered_code = resolver.render_template(response)

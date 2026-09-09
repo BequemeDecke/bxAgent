@@ -39,7 +39,7 @@ def create_implement_bx_tool_node(llm: BaseChatModel, workspace: Path):
     structured_llm = llm.with_structured_output(BxToolForEMF)
     resolver = BxToolTemplateResolver()
 
-    def implement_bx_tool(state: ImplementationState) -> ImplementationState:
+    async def implement_bx_tool(state: ImplementationState) -> ImplementationState:
         # 1. Collect information and construct the prompt
         task_specification = state["task_specification"]
         transformation_implementation = state["transformation_implementation"]
@@ -52,7 +52,7 @@ def create_implement_bx_tool_node(llm: BaseChatModel, workspace: Path):
         )
 
         # 2. Invoke the llm to get the bx tool implementation
-        response: BxToolForEMF = structured_llm.invoke(input=input_prompt)
+        response: BxToolForEMF = await structured_llm.ainvoke(input=input_prompt)
         bx_tool = resolver.render_template(response)
 
         # 3. Write the implementation to the workspace file

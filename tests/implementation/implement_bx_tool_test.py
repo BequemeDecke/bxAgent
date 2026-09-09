@@ -5,7 +5,7 @@ Two types of tests should be implemented:
 1. Unit tests: These tests will mock the llm calls and test the logic of the node in isolation.
 2. Agent Evaluation: This will be an end-to-end test where the node is tested as part of the entire agent, ensuring that the generated bx tool works correctly within the agent
 """
-
+import asyncio
 from pathlib import Path
 from unittest import TestCase
 from unittest.mock import Mock, patch
@@ -85,7 +85,7 @@ class TestImplementBxTool(TestCase):
         mocked_llm = Mock(spec=BaseChatModel)
         mocked_llm_structured_output = Mock(spec=BaseChatModel)
         mocked_llm.with_structured_output.return_value = mocked_llm_structured_output
-        mocked_llm_structured_output.invoke.return_value = BxToolForEMF(
+        mocked_llm_structured_output.ainvoke.return_value = BxToolForEMF(
             **self.fake_data
         )
 
@@ -116,7 +116,7 @@ class TestImplementBxTool(TestCase):
             bxtool_path=bxtool_path,
         )
 
-        new_state = self.implement_bx_tool(state)
+        new_state = asyncio.run(self.implement_bx_tool(state))
 
         # Check if the new state contains the path to the written Java file
         actual_written_files = new_state["written_java_files"]
