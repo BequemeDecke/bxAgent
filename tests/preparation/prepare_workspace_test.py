@@ -149,8 +149,8 @@ class TestPrepareWorkspace(TestCase):
                 "The output state should contain the transformation class path.",
             )
 
-            # Check if subprocess.run was called for creating child project with archetype
-            self.assertEqual(mock_run.call_count, 1)
+            # Check if subprocess.run was called for creating child project with archetype and for validating
+            self.assertEqual(mock_run.call_count, 2)
 
             # Check indirect output
             self.assertTrue(
@@ -206,8 +206,8 @@ class TestPrepareWorkspace(TestCase):
                 Path,
                 "The output state should contain the transformation class path.",
             )
-            # Check if subprocess.run was called for creating child project with archetype
-            self.assertEqual(mock_run.call_count, 1)
+            # Check if subprocess.run was called for creating child project with archetype and for validating
+            self.assertEqual(mock_run.call_count, 2)
 
             # Check indirect output
             self.assertTrue(
@@ -335,8 +335,8 @@ class TestPrepareWorkspace(TestCase):
                 "The transformation plan in the output state should match the existing transformation plan.",
             )
 
-            # Should NOT call subprocess.run because structure already exists and is loaded
-            self.assertEqual(mock_run.call_count, 0)
+            # Should call subprocess.run for validating the existing Maven project, but not for creating a new one
+            self.assertEqual(mock_run.call_count, 1)
 
     def test_prepare_workspace__state_properties_missing(self):
         input_state = PreparationState(
@@ -440,7 +440,6 @@ class TestMavenIntegration(TestCase):
                     / "java"
                     / "de"
                     / "example"
-                    / "mdeagent"
                     / "App.java"
                 ).exists(),
                 "The App.java file should be deleted.",
