@@ -1,6 +1,6 @@
 from langchain.tools import ToolRuntime, tool
 
-from mdeagent.comprehension import TransformationPlan, SerializedTransformationPlan
+from mdeagent.comprehension import SerializedTransformationPlan, TransformationPlan
 
 
 @tool

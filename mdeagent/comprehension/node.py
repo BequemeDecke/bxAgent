@@ -48,7 +48,7 @@ def create_comprehension_node(comprehension_agent: CompiledStateGraph):
         await comprehension_agent.ainvoke(
             input={
                 "messages": [HumanMessage(content=input_prompt)],
-                "transformation_plan": transformation,
+                "transformation_plan": serialized_transformation,
             },
             version="v2"
         )
