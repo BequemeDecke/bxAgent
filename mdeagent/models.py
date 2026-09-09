@@ -12,6 +12,7 @@ def build_base_model():
         api_key=agent_config.API_KEY.get_secret_value(),
         model=agent_config.BASE_MODEL,
         request_timeout=agent_config.REQUEST_TIMEOUT,
+        max_retries=agent_config.MAX_RETRIES,
     )
 
 
@@ -24,4 +25,5 @@ def build_coding_model():
         api_key=agent_config.API_KEY.get_secret_value(),
         model=agent_config.CODING_MODEL,
         request_timeout=agent_config.REQUEST_TIMEOUT,
+        max_retries=agent_config.MAX_RETRIES,
     )
