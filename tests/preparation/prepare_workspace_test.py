@@ -147,6 +147,10 @@ class TestPrepareWorkspace(TestCase):
                 Path,
                 "The output state should contain the transformation class path.",
             )
+            self.assertEqual(
+                output_state.get("maven_project_path"),
+                workspace_path / "mdeagent",
+            )
 
             # Check if subprocess.run was called for creating child project with archetype and for validating
             self.assertEqual(mock_run.call_count, 2)
@@ -204,6 +208,10 @@ class TestPrepareWorkspace(TestCase):
                 output_state.get("transformation_class_path"),
                 Path,
                 "The output state should contain the transformation class path.",
+            )
+            self.assertEqual(
+                output_state.get("maven_project_path"),
+                Path(temp_dir) / "mdeagent",
             )
             # Check if subprocess.run was called for creating child project with archetype and for validating
             self.assertEqual(mock_run.call_count, 2)
@@ -385,9 +393,15 @@ class TestMavenIntegration(TestCase):
             )
 
             try:
-                create_prepare_workspace_node(
+                output = create_prepare_workspace_node(
                     fix_strategy=Mock(spec=StructureFixStrategy)
                 )(input_state)
+
+                self.assertEqual(
+                    output.get("maven_project_path"),
+                    Path(temp_dir) / "mdeagent",
+                    "The output state should contain the maven project path.",
+                )
             except Exception as e:
                 log_workspace_structure(Path(temp_dir))
                 copy_workspace(

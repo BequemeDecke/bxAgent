@@ -27,6 +27,7 @@ class MDEAgentState(TypedDict):
 
     # === Workspace ===
     workspace_path: Path                        # This has to be set by the user, and is used to identify the workspace of the workflow.
+    maven_project_path: Path                    # This will be set by the preparation_node and used by the implementation_node and evaluated by the evaluation_node. This will be used for implementing the transformation class.
     source_model_path: Path                     # This has to be set by the user, and is used to identify the source model of the workflow.
     target_model_path: Path                     # This has to be set by the user, and is used to identify the target model of the workflow.
 

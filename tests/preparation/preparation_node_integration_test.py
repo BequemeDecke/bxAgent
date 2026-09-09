@@ -151,6 +151,12 @@ class TestPreparationNodeIntegration(TestCase):
             "Required commands should match the provided commands.",
         )
 
+        # Check that maven_project_path is set correctly
+        self.assertIsNotNone(
+            output.get("maven_project_path"),
+            "Maven project path should not be None.",
+        )
+
         # Check that the transformation class path is set
         self.assertIsNotNone(
             output.get("transformation_class_path"),

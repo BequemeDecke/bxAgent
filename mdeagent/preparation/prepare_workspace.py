@@ -157,6 +157,7 @@ def create_prepare_workspace_node(fix_strategy: StructureFixStrategy):
             transformation_plan=tp,
             bxtool_path=bxtool_path,
             transformation_class_path=transformation_class_path,
+            maven_project_path=project.workspace,
         )
         new_state.update(fixed_state)
         return new_state

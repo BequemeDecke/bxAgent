@@ -127,6 +127,11 @@ class TestPreparationNodeIntegration(TestCase):
                 required_commands,
                 "The output required_commands should match the expected commands.",
             )
+            self.assertEqual(
+                output.get("maven_project_path"),
+                workspace_path / artifact_id,
+                "The output state should contain the maven project path.",
+            )
 
             # Check that the transformation plan file was created
             self.assertTrue(

@@ -28,9 +28,9 @@ def create_format_code_node(workspace: Path):
         """
         # Run spotless:apply to format all Java files
         maven_project = MavenProject.load(state["maven_project_path"])
-        maven_project.format_code()
+        maven_project.format_code() # TODO: Return an error if formatting fails
         
         # Return the state unchanged (files are formatted in-place)
-        return state
+        return {}
 
     return format_code

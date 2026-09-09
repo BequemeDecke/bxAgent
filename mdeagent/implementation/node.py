@@ -37,6 +37,11 @@ def create_implementation_node(agent: CompiledStateGraph):
             raise ValueError(
                 "BxTool file path is required for the implementation agent."
             )        
+        maven_project_path = state.get("maven_project_path")
+        if maven_project_path is None:
+            raise ValueError(
+                "Maven project path is required for the implementation agent."
+            )
 
         tp = TransformationPlan.from_dict(serialized_tp)
 
@@ -45,6 +50,7 @@ def create_implementation_node(agent: CompiledStateGraph):
             task_specification="", # TODO: This field will be used by a higher component to provide instructions for the implementation agent
             transformation_class_path=transformation_class_path,
             bxtool_path=bxtool_path,
+            maven_project_path=maven_project_path
         )
         response: GraphOutput = await agent.ainvoke(prep_invoke_state, version="v2")
         prep_output_state: ImplementationState = response.value
