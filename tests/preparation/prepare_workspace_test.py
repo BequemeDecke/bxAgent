@@ -443,6 +443,22 @@ class TestMavenIntegration(TestCase):
                 "The bxtool Java file should be created in the package path.",
             )
 
+            # Check if the AgentTransformationForEMF.java file is created
+            self.assertTrue(
+                (
+                    Path(temp_dir)
+                    / "mdeagent"
+                    / "src"
+                    / "main"
+                    / "java"
+                    / "de"
+                    / "example"
+                    / "mdeagent"
+                    / "AgentTransformationForEMF.java"
+                ).exists(),
+                "The AgentTransformationForEMF.java file should be created in the package path.",
+            )
+
             # Check if the App.java file is deleted
             self.assertFalse(
                 (

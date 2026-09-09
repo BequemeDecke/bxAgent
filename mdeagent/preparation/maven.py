@@ -75,8 +75,10 @@ class MavenProject:
         :param class_name: The name of the Java class.
         :param content: The content of the Java class.
         """
-        package_path = Path(*package.split("."))
-        java_file_path = package_path / f"{class_name}.java"
+        # Get absolute package path, then convert to relative path for add_file()
+        package_path = self.get_package_path(package)
+        relative_package_path = package_path.relative_to(self.workspace)
+        java_file_path = relative_package_path / f"{class_name}.java"
         return self.add_file(java_file_path, content)
 
     @classmethod

@@ -372,7 +372,7 @@ class TestMavenProjectAddJavaClass(TestCase):
             
             result_path = project.add_java_class(package, class_name, content)
             
-            expected_path = workspace / "com" / "example" / "service" / "MyService.java"
+            expected_path = workspace / "src" / "main" / "java" / "com" / "example" / "service" / "MyService.java"
             self.assertEqual(result_path, expected_path)
             self.assertTrue(expected_path.exists())
             self.assertEqual(expected_path.read_text(), content)
@@ -399,7 +399,7 @@ class TestMavenProjectAddJavaClass(TestCase):
             
             result_path = project.add_java_class(package, class_name, content)
             
-            expected_path = workspace / "com" / "example" / "service" / "impl" / "internal" / "InternalServiceImpl.java"
+            expected_path = workspace / "src" / "main" / "java" / "com" / "example" / "service" / "impl" / "internal" / "InternalServiceImpl.java"
             self.assertEqual(result_path, expected_path)
             self.assertTrue(expected_path.exists())
 

@@ -121,8 +121,6 @@ def create_prepare_workspace_node(fix_strategy: StructureFixStrategy):
         # Package path includes artifact_id as subpackage (e.g., de.example.mdeagent)
         full_package = f"{group_id}.{artifact_id}"
         package_path = project.get_package_path(full_package)
-        if not package_path.exists():
-            package_path.mkdir(parents=True)
 
         # Create the TRANSFORMATION.md file
         transformation_md_path = workspace / artifact_id / "TRANSFORMATION.md"
@@ -135,10 +133,25 @@ def create_prepare_workspace_node(fix_strategy: StructureFixStrategy):
         transformation_class_name = (
             Config.get_instance().VARIABLES.TRANSFORMATION_CLASS_NAME
         )
-        transformation_class_path = package_path / f"{transformation_class_name}.java"
-        bxtool_path = package_path / f"{transformation_class_name}BxToolAdapter.java"
-        if not bxtool_path.exists():
-            bxtool_path.touch()
+        # Calculate transformation class path but don't create the file (user will implement it)
+        transformation_class_path = project.get_package_path(full_package) / f"{transformation_class_name}.java"
+
+        bxtool_class_name = f"{transformation_class_name}BxToolAdapter"
+        bxtool_path = project.add_java_class(
+            package=full_package,
+            class_name=bxtool_class_name,
+            content=f"public class {bxtool_class_name} {{\n    // TODO: Implement the BxTool adapter logic here\n}}\n",
+        )
+
+        # Copy the AgentTransformationForEMF.java file into the package path
+        agent_transformation_source = (
+            Path.cwd() / "context" / "AgentTransformationForEMF.java"
+        )
+        project.add_java_class(
+            package=full_package,
+            class_name="AgentTransformationForEMF",
+            content=agent_transformation_source.read_text(),
+        )
 
         # Delete the App.java file created by the Maven archetype
         app_java_path = package_path / ".." / "App.java"
