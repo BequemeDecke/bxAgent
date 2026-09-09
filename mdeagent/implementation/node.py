@@ -3,6 +3,7 @@ import logging
 from langgraph.graph.state import CompiledStateGraph
 from langgraph.types import GraphOutput
 
+from mdeagent.comprehension.plan import TransformationPlan
 from mdeagent.implementation.state import ImplementationState
 from mdeagent.state import MDEAgentState
 
@@ -21,10 +22,10 @@ def create_implementation_node(agent: CompiledStateGraph):
     async def implementation_node(state: MDEAgentState) -> MDEAgentState:
         logger.info("Starting implementation node ... (For State look at LangFuse)")
 
-        transformation_md = state.get("transformation_plan")
-        if transformation_md is None:
+        serialized_tp = state.get("transformation_plan")
+        if serialized_tp is None:
             raise ValueError(
-                "Transformation metadata is required for the implementation agent."
+                "The Transformation Plan is required for the implementation agent!"
             )
         transformation_class_path = state.get("transformation_class_path")
         if transformation_class_path is None:
@@ -37,8 +38,10 @@ def create_implementation_node(agent: CompiledStateGraph):
                 "BxTool file path is required for the implementation agent."
             )        
 
+        tp = TransformationPlan.from_dict(serialized_tp)
+
         prep_invoke_state = ImplementationState(
-            transformation_md=transformation_md,
+            transformation_md=tp,
             task_specification="", # TODO: This field will be used by a higher component to provide instructions for the implementation agent
             transformation_class_path=transformation_class_path,
             bxtool_path=bxtool_path,

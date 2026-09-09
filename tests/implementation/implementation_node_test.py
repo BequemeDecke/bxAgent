@@ -46,7 +46,7 @@ class TestImplementationNode(TestCase):
             input_state = MDEAgentState(
                 transformation_plan=TransformationPlan.parse(
                     FileTransformationPlanParser(tp_file)
-                ),
+                ).to_dict(),
                 transformation_class_path=workspace / "TransformationClass.java",
                 bxtool_path=workspace / "TransformationClassBxToolAdapter.java",
                 written_files=[workspace / "existing_file.java"],
