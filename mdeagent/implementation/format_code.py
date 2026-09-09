@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from mdeagent.preparation.pom import format_java_files
+from mdeagent.preparation.maven import MavenProject
 
 from .state import ImplementationState
 
@@ -16,7 +16,7 @@ def create_format_code_node(workspace: Path):
         A node function that formats Java files and updates the state.
     """
 
-    def format_code(state: ImplementationState) -> ImplementationState:
+    async def format_code(state: ImplementationState) -> ImplementationState:
         """
         Format all Java files in the workspace using Maven Spotless plugin.
         
@@ -27,7 +27,8 @@ def create_format_code_node(workspace: Path):
             The updated state (formatting is done in-place).
         """
         # Run spotless:apply to format all Java files
-        format_java_files(workspace)
+        maven_project = MavenProject.load(state["maven_project_path"])
+        maven_project.format_code()
         
         # Return the state unchanged (files are formatted in-place)
         return state

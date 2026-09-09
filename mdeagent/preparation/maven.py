@@ -111,7 +111,7 @@ class MavenProject:
         workspace: Path,
         group_id: str,
         artifact_id: str,
-        parent: "MavenProject | None",
+        parent: "MavenProject | None" = None,
     ) -> "MavenProject":
         """
         Create a new Maven project in the specified workspace.

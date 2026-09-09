@@ -13,6 +13,7 @@ class ImplementationState(TypedDict):
 
     # === Required ===
     task_specification: str  # This field will be used by a higher component
+    maven_project_path: Path  # This field will be used by a higher component
     transformation_class_path: Path  # This field will be used by a higher component
     bxtool_path: Path  # This field will be used by a higher component
 

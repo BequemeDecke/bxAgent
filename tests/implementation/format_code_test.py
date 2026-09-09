@@ -1,3 +1,4 @@
+import asyncio
 import subprocess
 import tempfile
 from pathlib import Path
@@ -6,36 +7,51 @@ from unittest.mock import patch
 
 from mdeagent.implementation.format_code import create_format_code_node
 from mdeagent.implementation.state import ImplementationState
+from mdeagent.preparation.maven import MavenProject
 
 
 class TestFormatCodeNode(TestCase):
     def setUp(self):
-        self.format_code_node = create_format_code_node(workspace=Path("/fake/workspace"))
+        self.format_code_node = create_format_code_node(
+            workspace=Path("/fake/workspace")
+        )
 
-    @patch("mdeagent.implementation.format_code.format_java_files")
+    @patch("mdeagent.preparation.maven.MavenProject.format_code")
     def test_format_code_node__calls_format_java_files(self, mock_format):
-        """Test that the format_code node calls format_java_files"""
-        state: ImplementationState = {
-            "transformation_md": None,  # type: ignore
-            "task_specification": "Test task",
-            "written_java_files": [],
-            "bxtool_path": Path("/fake/path"),
-            "transformation_implementation": "test implementation",
-            "latest_evaluation_results": {},
-            "implementation_iteration": 1,
-        }
+        """Test that the format_code node calls MavenProject.format_code and returns the state unchanged"""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            workspace_path = Path(temp_dir) / "example"
+            workspace_path.mkdir(parents=True, exist_ok=True)
 
-        result = self.format_code_node(state)
+            project = MavenProject.create(
+                workspace_path, group_id="com.example", artifact_id="example-artifact"
+            )
+            bxtool_path = project.add_java_class(
+                package="com.example", class_name="BxTool", content="public class BxTool {}"
+            )
 
-        mock_format.assert_called_once_with(Path("/fake/workspace"))
-        self.assertEqual(result, state)
+            state: ImplementationState = {
+                "transformation_md": None,  # type: ignore
+                "task_specification": "Test task",
+                "written_java_files": [],
+                "bxtool_path": bxtool_path,
+                "transformation_implementation": "test implementation",
+                "latest_evaluation_results": {},
+                "implementation_iteration": 1,
+                "maven_project_path": workspace_path,
+            }
+
+            result = asyncio.run(self.format_code_node(state))
+
+            mock_format.assert_called_once()
+            self.assertEqual(result, state)
 
 
 class TestFormatJavaFiles(TestCase):
     @patch("subprocess.run")
     def test_format_java_files__success(self, mock_run):
         """Test that format_java_files runs successfully when mvn spotless:apply succeeds"""
-        from mdeagent.preparation.pom import format_java_files
+        from mdeagent.preparation.maven import MavenProject
 
         mock_run.return_value = subprocess.CompletedProcess(
             args=["mvn", "spotless:apply"], returncode=0, stdout="", stderr=""
@@ -43,19 +59,21 @@ class TestFormatJavaFiles(TestCase):
 
         with tempfile.TemporaryDirectory() as temp_dir:
             workspace = Path(temp_dir)
-            format_java_files(workspace)
+            maven_project = MavenProject.create(
+                workspace, group_id="com.example", artifact_id="example-artifact"
+            )
+            maven_project.format_code()  # This should call the mocked subprocess.run
 
             mock_run.assert_called_once_with(
                 ["mvn", "spotless:apply"],
                 cwd=workspace,
-                capture_output=True,
-                text=True,
+                check=True,
             )
 
     @patch("subprocess.run")
-    def test_format_java_files__failure_raises_error(self, mock_run):
-        """Test that format_java_files raises RuntimeError when formatting fails"""
-        from mdeagent.preparation.pom import format_java_files
+    def test_format_java_files__failure_returns_error_code(self, mock_run):
+        """Test that format_java_files raises an error when mvn spotless:apply fails"""
+        from mdeagent.preparation.maven import MavenProject
 
         mock_run.return_value = subprocess.CompletedProcess(
             args=["mvn", "spotless:apply"],
@@ -66,9 +84,12 @@ class TestFormatJavaFiles(TestCase):
 
         with tempfile.TemporaryDirectory() as temp_dir:
             workspace = Path(temp_dir)
+            project = MavenProject.create(
+                workspace, group_id="com.example", artifact_id="example-artifact"
+            )
 
-            with self.assertRaises(RuntimeError) as context:
-                format_java_files(workspace)
+            has_formatting_succeeded = (
+                project.format_code()
+            )  # This should call the mocked subprocess.run
 
-            self.assertIn("Failed to format Java files", str(context.exception))
-            self.assertIn("Return code: 1", str(context.exception))
+            self.assertFalse(has_formatting_succeeded)

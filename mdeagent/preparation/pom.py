@@ -1,8 +1,5 @@
-import subprocess
 import xml.etree.ElementTree as ET
 from pathlib import Path
-from typing import TypedDict
-from warnings import deprecated
 
 from mdeagent.util import get_all_namespaces
 
@@ -519,20 +516,3 @@ class Pom:
         workspace.mkdir(parents=True, exist_ok=True)
         pom_path.write_text(pom_content, encoding="utf-8")
         return cls(pom_path)
-
-
-
-def format_java_files(workspace: Path):
-    """
-    Run mvn spotless:apply to format all Java files in the workspace.
-    Raises RuntimeError if the formatting fails.
-    """
-    cp_process = subprocess.run(
-        ["mvn", "spotless:apply"], cwd=workspace, capture_output=True, text=True
-    )
-    if cp_process.returncode != 0:
-        raise RuntimeError(
-            f"Failed to format Java files. Return code: {cp_process.returncode}\n"
-            f"stdout: {cp_process.stdout}\n"
-            f"stderr: {cp_process.stderr}"
-        )
