@@ -3,6 +3,7 @@ This test checks if the comprehension node correctly utilizes the comprehension 
 It has to write the plan into the `TRANSFORMATION.md` file.
 """
 
+import asyncio
 import tempfile
 from pathlib import Path
 from typing import TypedDict
@@ -53,11 +54,11 @@ class TestComprehensionNode(TestCase):
             tp.data = self.transformation_plan_data
             parser.save(str(tp))
 
-            result = call_sub(
+            result = asyncio.run(call_sub(
                 {
                     "transformation_plan": tp.to_dict(),
                 }
-            )
+            ))
 
             serialized_tp = result.get("transformation_plan")
             self.assertIsInstance(
@@ -75,15 +76,18 @@ class TestComprehensionNode(TestCase):
     def test_comprehension_node__missing_transformation_plan(self):
         call_sub = create_comprehension_node(self.graph)
 
-        with self.assertRaises(ValueError) as context:
-            call_sub(
-                {
-                    "latest_evaluation_runs": [],
-                }
+        async def run_test():
+            with self.assertRaises(ValueError) as context:
+                await call_sub(
+                    {
+                        "latest_evaluation_runs": [],
+                    }
+                )
+
+            self.assertIn(
+                "The comprehension node requires a transformation plan in the state.",
+                str(context.exception),
+                "The comprehension node should raise a ValueError if the transformation plan is missing in the state.",
             )
 
-        self.assertIn(
-            "The comprehension node requires a transformation plan in the state.",
-            str(context.exception),
-            "The comprehension node should raise a ValueError if the transformation plan is missing in the state.",
-        )
+        asyncio.run(run_test())

@@ -2,6 +2,7 @@
 This test checks if the transformation iteration control node correctly limits the number of iterations the agent performs when trying to implement a model transformation.
 """
 
+import asyncio
 from datetime import datetime, timedelta
 from unittest import TestCase
 from unittest.mock import Mock
@@ -19,13 +20,15 @@ from mdeagent.evaluation.types import EvaluationError, EvaluationResult, Evaluat
 
 class TestTransformationIterationControl(TestCase):
     def setUp(self):
+        import asyncio
         mocked_llm = Mock(spec=BaseChatModel)
         mocked_llm_structured_output = Mock(spec=BaseChatModel)
         self.mocked_llm = mocked_llm_structured_output
         mocked_llm.with_structured_output.return_value = mocked_llm_structured_output
-        mocked_llm_structured_output.invoke.return_value = IterationRoute(
-            decision="stop"
-        )
+        # Make ainvoke return a coroutine that yields IterationRoute
+        async def fake_ainvoke(*args, **kwargs):
+            return IterationRoute(decision="stop")
+        mocked_llm_structured_output.ainvoke = Mock(side_effect=fake_ainvoke)
         self.check_transformation_iteration = (
             create_check_transformation_iteration_function(llm=mocked_llm)
         )
@@ -38,7 +41,7 @@ class TestTransformationIterationControl(TestCase):
             "iteration": 3,
             "latest_evaluation_runs": [],
         }
-        result = self.check_transformation_iteration(state, max_iterations)
+        result = asyncio.run(self.check_transformation_iteration(state, max_iterations))
         self.assertEqual(result, "stop")
 
     def test_transformation_iteration_control__run_results_have_errors(self):
@@ -70,7 +73,7 @@ class TestTransformationIterationControl(TestCase):
                 )
             ],
         }
-        result = self.check_transformation_iteration(state, max_iterations)
+        result = asyncio.run(self.check_transformation_iteration(state, max_iterations))
         self.assertEqual(result, "error")
 
     def test_transformation_iteration_control__run_results_no_errors(self):
@@ -102,10 +105,10 @@ class TestTransformationIterationControl(TestCase):
                 )
             ],
         }
-        result = self.check_transformation_iteration(state, max_iterations)
+        result = asyncio.run(self.check_transformation_iteration(state, max_iterations))
         self.assertEqual(result, "stop")
 
-        called_args = self.mocked_llm.invoke.call_args[0][0]
+        called_args = self.mocked_llm.ainvoke.call_args[0][0]
         self.assertIsInstance(called_args[0], SystemMessage)
 
         human_message = called_args[1]

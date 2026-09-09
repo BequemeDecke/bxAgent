@@ -22,7 +22,7 @@ Use the following results to check if the transformation plan is complete and co
 
 
 def create_comprehension_node(comprehension_agent: CompiledStateGraph):
-    def comprehension_node(state: MDEAgentState) -> MDEAgentState:
+    async def comprehension_node(state: MDEAgentState) -> MDEAgentState:
         """
         Calls the comprehension agent with the current workflow state.
 
@@ -45,7 +45,7 @@ def create_comprehension_node(comprehension_agent: CompiledStateGraph):
             ),
         )
 
-        comprehension_agent.invoke(
+        await comprehension_agent.ainvoke(
             input={
                 "messages": [HumanMessage(content=input_prompt)],
                 "transformation_plan": transformation,

@@ -26,7 +26,7 @@ def create_check_transformation_iteration_function(llm: BaseChatModel):
         IterationRoute
     )  # This will help to check the action after the llm call
 
-    def check_transformation_iteration(
+    async def check_transformation_iteration(
         state: MDEAgentState, max_iterations: int = WORKFLOW_MAX_ITERATIONS
     ) -> Literal["stop", "continue", "error"]:
         """
@@ -53,7 +53,7 @@ def create_check_transformation_iteration_function(llm: BaseChatModel):
             f"Evaluation results from the latest iteration: {[result.content for result in filtered_results]}\n"
         )
 
-        response: IterationRoute = router.invoke(
+        response: IterationRoute = await router.ainvoke(
             [
                 SystemMessage(
                     content="Route the input to 'continue' or 'stop' based on the evaluation results and the descriptions of the source and target models."

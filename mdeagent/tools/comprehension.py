@@ -19,7 +19,7 @@ def update_model_implementation(
     if serialized_tp is None:
         raise ValueError("Transformation plan not found in the runtime state.")
 
-    tp: TransformationPlan = TransformationPlan.from_dict(serialized_tp.dict())
+    tp: TransformationPlan = TransformationPlan.from_dict(serialized_tp)
 
     if (
         source_model_implementation is not None
@@ -53,7 +53,7 @@ def update_transformation_direction(
     if serialized_tp is None:
         raise ValueError("Transformation plan not found in the runtime state.")
 
-    tp: TransformationPlan = TransformationPlan.from_dict(serialized_tp.dict())
+    tp: TransformationPlan = TransformationPlan.from_dict(serialized_tp)
     if tp is None:
         raise ValueError("Transformation plan not found in the runtime state.")
 
@@ -71,7 +71,7 @@ def update_difficulties(runtime: ToolRuntime, difficulties: str):
     if serialized_tp is None:
         raise ValueError("Transformation plan not found in the runtime state.")
 
-    tp: TransformationPlan = TransformationPlan.from_dict(serialized_tp.dict())
+    tp: TransformationPlan = TransformationPlan.from_dict(serialized_tp)
     if tp is None:
         raise ValueError("Transformation plan not found in the runtime state.")
 
@@ -89,7 +89,7 @@ def update_implementation_steps(runtime: ToolRuntime, implementation_steps: str)
     if serialized_tp is None:
         raise ValueError("Transformation plan not found in the runtime state.")
 
-    tp: TransformationPlan = TransformationPlan.from_dict(serialized_tp.dict())
+    tp: TransformationPlan = TransformationPlan.from_dict(serialized_tp)
     if tp is None:
         raise ValueError("Transformation plan not found in the runtime state.")
 
