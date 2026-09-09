@@ -52,22 +52,20 @@ INITIAL_POM_WITH_DEPENDENCIES = """<?xml version='1.0' encoding='utf-8'?>
   </dependencies>
 
   <build>
-    <pluginManagement>
-      <plugins>
-        <plugin>
-          <artifactId>maven-clean-plugin</artifactId>
-          <version>3.4.0</version>
-        </plugin>
-        <plugin>
-          <artifactId>maven-site-plugin</artifactId>
-          <version>3.12.1</version>
-        </plugin>
-        <plugin>
-          <artifactId>maven-project-info-reports-plugin</artifactId>
-          <version>3.6.1</version>
-        </plugin>
-      </plugins>
-    </pluginManagement>
+    <plugins>
+      <plugin>
+        <artifactId>maven-clean-plugin</artifactId>
+        <version>3.4.0</version>
+      </plugin>
+      <plugin>
+        <artifactId>maven-site-plugin</artifactId>
+        <version>3.12.1</version>
+      </plugin>
+      <plugin>
+        <artifactId>maven-project-info-reports-plugin</artifactId>
+        <version>3.6.1</version>
+      </plugin>
+    </plugins>
   </build>
 
   <reporting>
@@ -94,15 +92,13 @@ POM_WITH_SECTIONS = """<?xml version='1.0' encoding='utf-8'?>
   <artifactId>test-project</artifactId>
   <version>1.0-SNAPSHOT</version>
   <build>
-    <pluginManagement>
-      <plugins>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-compiler-plugin</artifactId>
-          <version>3.11.0</version>
-        </plugin>
-      </plugins>
-    </pluginManagement>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.11.0</version>
+      </plugin>
+    </plugins>
   </build>
 </project>"""
 
@@ -389,7 +385,7 @@ class TestPomAddPlugin(TestCase):
     """Test cases for Pom.add_plugin() method."""
 
     def test_add_plugin_with_version(self):
-        """Test adding a plugin with version to pluginManagement."""
+        """Test adding a plugin with version directly under <build><plugins>."""
         with tempfile.TemporaryDirectory() as temp_dir:
             pom_path = Path(temp_dir, "pom.xml")
             pom_path.write_text(BASE_POM_FOR_PROXY)
@@ -408,7 +404,7 @@ class TestPomAddPlugin(TestCase):
             modified_pom = pom_path.read_text()
             logger.debug(f"Modified POM:\n{modified_pom}")
 
-            self.assertIn("<pluginManagement>", modified_pom)
+            self.assertIn("<build>", modified_pom)
             self.assertIn("<plugins>", modified_pom)
             self.assertIn("<groupId>com.diffplug.maven</groupId>", modified_pom)
             self.assertIn(
@@ -440,8 +436,8 @@ class TestPomAddPlugin(TestCase):
             self.assertIn("<java>", modified_pom)
             self.assertIn("<googleJavaFormat", modified_pom)
 
-    def test_add_plugin_to_existing_plugin_management(self):
-        """Test that plugins are added to existing pluginManagement section."""
+    def test_add_plugin_to_existing_plugins(self):
+        """Test that plugins are added to existing <build><plugins> section."""
         with tempfile.TemporaryDirectory() as temp_dir:
             pom_path = Path(temp_dir, "pom.xml")
             pom_path.write_text(POM_WITH_SECTIONS)
@@ -460,17 +456,14 @@ class TestPomAddPlugin(TestCase):
             modified_pom = pom_path.read_text()
             logger.debug(f"Modified POM:\n{modified_pom}")
 
-            # Should still have only one pluginManagement section
-            self.assertEqual(
-                modified_pom.count("<pluginManagement>"),
-                1,
-                "There should be exactly one <pluginManagement> section.",
-            )
+            # Should have build section with plugins
+            self.assertIn("<build>", modified_pom)
+            self.assertIn("<plugins>", modified_pom)
             # Should now have 2 plugins (existing + new)
             self.assertEqual(
                 modified_pom.count("<plugin>"),
                 2,
-                "There should be exactly 2 <plugin> entries in pluginManagement.",
+                "There should be exactly 2 <plugin> entries in <build><plugins>.",
             )
 
     def test_add_plugin_returns_self_for_chaining(self):
@@ -522,13 +515,14 @@ class TestPomAddPlugin(TestCase):
             modified_pom = pom_path.read_text()
             logger.debug(f"Modified POM:\n{modified_pom}")
 
-            # Should only have one plugin entry in pluginManagement
-            pm_start = modified_pom.find("<pluginManagement>")
-            pm_end = modified_pom.find("</pluginManagement>")
-            pm_section = modified_pom[pm_start:pm_end]
+            # Should only have one plugin entry in <build><plugins>
+            build_start = modified_pom.find("<build>")
+            plugins_start = modified_pom.find("<plugins>", build_start)
+            plugins_end = modified_pom.find("</plugins>", plugins_start)
+            plugins_section = modified_pom[plugins_start:plugins_end]
 
             self.assertEqual(
-                pm_section.count("<plugin>"),
+                plugins_section.count("<plugin>"),
                 1,
                 "Duplicate plugins should not be added.",
             )

@@ -25,8 +25,19 @@ EMF_DEPENDENCIES: list[Dependency] = [
     ),
 ]
 
+# This is tested on Java 23.0.1
 SPOTLESS_PLUGIN = Plugin(
-    group_id="com.diffplug.maven", artifact_id="spotless-maven-plugin", version="2.41.0"
+    group_id="com.diffplug.spotless",
+    artifact_id="spotless-maven-plugin",
+    version="3.0.0",
+    configuration={
+        "java": {
+            "includes": {
+                "include": ["src/main/java/**/*.java", "src/test/java/**/*.java"]
+            },
+            "palantirJavaFormat": {"version": "2.71.0"},
+        }
+    },
 )
 
 
@@ -86,9 +97,11 @@ def create_prepare_workspace_node(fix_strategy: StructureFixStrategy):
         fixed_state = {}  # State to overwrite
         if not any(workspace.iterdir()):
             # Create the parent Maven project in the workspace
-            # artifact_id in parent project must not be the same as the child project            
+            # artifact_id in parent project must not be the same as the child project
             parent_artifact_id = workspace.name
-            parent_project = MavenProject.create(workspace, group_id, parent_artifact_id, None)
+            parent_project = MavenProject.create(
+                workspace, group_id, parent_artifact_id, None
+            )
             project = MavenProject.create(
                 workspace, group_id, artifact_id, parent_project
             )

@@ -275,13 +275,10 @@ class Pom:
         if build_element is None:
             build_element = ET.SubElement(root, "build")
 
-        plugin_management_element = build_element.find("pluginManagement", self.registered_namespaces)
-        if plugin_management_element is None:
-            plugin_management_element = ET.SubElement(build_element, "pluginManagement")
-
-        plugins_element = plugin_management_element.find("plugins", self.registered_namespaces)
+        # Get or create <plugins> element directly under <build> (not in pluginManagement)
+        plugins_element = build_element.find("plugins", self.registered_namespaces)
         if plugins_element is None:
-            plugins_element = ET.SubElement(plugin_management_element, "plugins")
+            plugins_element = ET.SubElement(build_element, "plugins")
 
         self._plugins_element = plugins_element
 
