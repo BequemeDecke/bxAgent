@@ -41,6 +41,7 @@ def build_implementation_graph(
             )
         ),
     )
+    # Implement BxTool adapter only when BenchmarX is being used (benchmarx_path=None)
     if benchmarx_path:
         implement_bx_tool = create_implement_bx_tool_node(
             llm=base_model,
@@ -72,6 +73,8 @@ def build_implementation_graph(
     graph.add_edge(START, "implement_transformation")
     graph.add_edge("format_code", "evaluation_agentic_work")
 
+
+    # BxTool adapter flow only when BenchmarX is being used
     if benchmarx_path:
         graph.add_node("implement_bx_tool", implement_bx_tool)
         graph.add_edge("implement_transformation", "implement_bx_tool")

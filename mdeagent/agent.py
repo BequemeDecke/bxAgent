@@ -79,6 +79,7 @@ def build_mdeagent(workspace_path: Path, benchmarx_path: Path | None = None, dow
         agent=build_implementation_graph(
             evaluation_executor=agent_evaluator,
             workspace_path=workspace_path,
+            benchmarx_path=benchmarx_path,
         ).compile()
     )
     call_evaluation_node = create_evaluation_node(

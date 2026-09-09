@@ -31,6 +31,6 @@ def create_format_code_node(workspace: Path):
         maven_project.format_code() # TODO: Return an error if formatting fails
         
         # Return the state unchanged (files are formatted in-place)
-        return {}
+        return state
 
     return format_code

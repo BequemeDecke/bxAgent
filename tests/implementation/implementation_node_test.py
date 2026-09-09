@@ -35,7 +35,8 @@ class TestImplementationNode(TestCase):
         self.coding_agent = MagicMock(spec=CompiledStateGraph)
         self.coding_agent.ainvoke = MagicMock(side_effect=fake_ainvoke)
 
-        self.call_implementation = create_implementation_node(self.coding_agent)
+        # Default: benchmarx_path=None means BxTool adapter IS used
+        self.call_implementation = create_implementation_node(self.coding_agent, benchmarx_path=None)
 
     def test_call_implementation_agent__invoke_coding_agent(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -49,6 +50,7 @@ class TestImplementationNode(TestCase):
                 ).to_dict(),
                 transformation_class_path=workspace / "TransformationClass.java",
                 bxtool_path=workspace / "TransformationClassBxToolAdapter.java",
+                maven_project_path=workspace,
                 written_files=[workspace / "existing_file.java"],
             )
 
@@ -79,3 +81,37 @@ class TestImplementationNode(TestCase):
             )
 
             self.coding_agent.ainvoke.assert_called_once()
+
+    def test_call_implementation_agent_with_benchmarx_no_bxtool_required(self):
+        """Test that bxtool_path is not required when benchmarx_path is provided."""
+        # Create a new instance with benchmarx_path set
+        call_impl_with_benchmarx = create_implementation_node(self.coding_agent, benchmarx_path=Path("/benchmarx/tool.jar"))
+        
+        with tempfile.TemporaryDirectory() as temp_dir:
+            workspace = Path(temp_dir)
+            tp_file = workspace / "TRANSFORMATION.md"
+            tp_file.touch()
+
+            input_state = MDEAgentState(
+                transformation_plan=TransformationPlan.parse(
+                    FileTransformationPlanParser(tp_file)
+                ).to_dict(),
+                transformation_class_path=workspace / "TransformationClass.java",
+                # bxtool_path is NOT set when using BenchmarX
+                bxtool_path=None,
+                maven_project_path=workspace,
+                written_files=[workspace / "existing_file.java"],
+            )
+
+            output_state: MDEAgentState = asyncio.run(
+                call_impl_with_benchmarx(input_state)
+            )
+            logger.debug(f"Output state: {output_state}")
+
+            self.assertIn(
+                "written_files",
+                output_state,
+                "Output state should contain 'written_files' key.",
+            )
+
+            self.coding_agent.ainvoke.assert_called()

@@ -10,7 +10,7 @@ from mdeagent.state import MDEAgentState
 logger = logging.getLogger(__name__)
 
 
-def create_implementation_node(agent: CompiledStateGraph):
+def create_implementation_node(agent: CompiledStateGraph, benchmarx_path: str | None = None):
     """Creates a function that calls the implementation agent with the necessary state and returns the updated state after the implementation agent has done its work.
 
     TODO: Use the task_specification for the user to provide instructions on how to implement the transformation
@@ -32,11 +32,18 @@ def create_implementation_node(agent: CompiledStateGraph):
             raise ValueError(
                 "Transformation class path is required for the implementation agent."
             )
-        bxtool_path = state.get("bxtool_path")
-        if bxtool_path is None:
-            raise ValueError(
-                "BxTool file path is required for the implementation agent."
-            )        
+        # BxTool adapter is only created when BenchmarX is NOT being used
+        # So if benchmarx_path is None, we need bxtool_path; otherwise it's None
+        if benchmarx_path is None:
+            bxtool_path = state.get("bxtool_path")
+            if bxtool_path is None:
+                raise ValueError(
+                    "BxTool file path is required for the implementation agent when BenchmarX is not being used."
+                ) 
+        else:
+            # BenchmarX is being used, no BxTool adapter needed
+            bxtool_path = None
+            
         maven_project_path = state.get("maven_project_path")
         if maven_project_path is None:
             raise ValueError(

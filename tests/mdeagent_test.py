@@ -57,8 +57,8 @@ class TestMDEAgent(TestCase):
                 f"Expected 3 target model files in {self.target_model_path}, but found {len(list(self.target_model_path.glob('*.java')))}."
             )
 
-        # Build the workflow agent
-        self.agent = build_mdeagent(self.workspace_path).compile()
+        # Build the workflow agent without BenchmarX support
+        self.agent = build_mdeagent(self.workspace_path, benchmarx_path=None).compile()
 
         # Build the Langfuse client for monitoring (optional)
         self.enable_langfuse = enable_langfuse
