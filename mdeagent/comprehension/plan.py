@@ -292,6 +292,7 @@ class TransformationPlan:
                 "difficulties": "",
                 "implementation_steps": "",
             }
+            parser.save(str(tp))
         return tp
 
     def __str__(self) -> str:

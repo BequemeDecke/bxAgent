@@ -5,20 +5,20 @@ The file now should have a template structure that lets the agent simply fill in
 """
 
 import logging
-
-from unittest import TestCase
-from unittest.mock import patch, Mock
-from typing import Dict, Callable
 from pathlib import Path
-from jinja2 import Template, Environment, FileSystemLoader
+from typing import Callable
+from unittest import TestCase
+from unittest.mock import Mock, patch
+
+from jinja2 import Environment, FileSystemLoader, Template
 
 from mdeagent.comprehension.plan import (
+    FileTransformationPlanParser,
     SerializedTransformationPlan,
     SerializedTransformationPlanParser,
     TransformationPlan,
-    TransformationPlanParser,
     TransformationPlanData,
-    FileTransformationPlanParser,
+    TransformationPlanParser,
 )
 
 
@@ -26,7 +26,7 @@ class MockedTransformationPlanParser(TransformationPlanParser):
     def __init__(
         self,
         mocked_save: Mock,
-        fake_data: Dict[str, str] = {},
+        fake_data: dict[str, str] = {},
         fail_parsing: bool = False,
     ):
         self.fake_data = fake_data
@@ -41,7 +41,7 @@ class MockedTransformationPlanParser(TransformationPlanParser):
     def save(self, data: str) -> None:
         self.mocked_save(data)
 
-    def to_dict(self) -> Dict[str, str]:
+    def to_dict(self) -> dict[str, str]:
         return {
             "type": self.__class__.__name__,
             "args": {
@@ -51,7 +51,7 @@ class MockedTransformationPlanParser(TransformationPlanParser):
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, str]):
+    def from_dict(cls, data: dict[str, str]):
         return cls(
             mocked_save=Mock(
                 spec=Callable
@@ -112,12 +112,13 @@ class TestTransformationPlan(TestCase):
     @patch("jinja2.Environment.get_template")
     def test_transformation_plan__create_plan_parsing_fails(self, mock_get_template):
         """
-        If parsing the existing file fails, it should handle the error and initialize with empty values.
+        If parsing the existing file fails, it should handle the error, initialize with empty values, and save the initial file.
         """
         mock_get_template.return_value = Template("")
 
+        mocked_save_function = Mock(spec=Callable)
         mocked_parser = MockedTransformationPlanParser(
-            mocked_save=Mock(spec=Callable),
+            mocked_save=mocked_save_function,
             fail_parsing=True,
         )
 
@@ -130,6 +131,41 @@ class TestTransformationPlan(TestCase):
         self.assertEqual(plan.data["transformation_direction"], "")
         self.assertEqual(plan.data["difficulties"], "")
         self.assertEqual(plan.data["implementation_steps"], "")
+        
+        # Verify that save() was called to create the initial file
+        mocked_save_function.assert_called_once()
+        saved_content = mocked_save_function.call_args[0][0]
+        self.assertIsInstance(saved_content, str)
+
+    @patch("jinja2.Environment.get_template")
+    def test_transformation_plan__create_plan_file_not_exists(self, mock_get_template):
+        """
+        If the transformation plan file does not exist, it should create an initial file with default values.
+        """
+        mock_get_template.return_value = Template("")
+
+        mocked_save_function = Mock(spec=Callable)
+        # Create a parser that raises FileNotFoundError on parse()
+        mocked_parser = MockedTransformationPlanParser(
+            mocked_save=mocked_save_function,
+            fake_data={},
+            fail_parsing=True,  # This will raise an exception
+        )
+
+        plan = TransformationPlan.parse(mocked_parser)
+        
+        # Verify initialization with default values
+        self.assertEqual(plan.data["source_model_package"], "")
+        self.assertEqual(plan.data["target_model_package"], "")
+        self.assertEqual(plan.data["iteration"], 0)
+        self.assertEqual(plan.data["source_model_implementation"], "")
+        self.assertEqual(plan.data["target_model_implementation"], "")
+        self.assertEqual(plan.data["transformation_direction"], "")
+        self.assertEqual(plan.data["difficulties"], "")
+        self.assertEqual(plan.data["implementation_steps"], "")
+        
+        # Verify that save() was called to create the initial file
+        mocked_save_function.assert_called_once()
 
     def test_transformation_plan__stringify_plan(self):
         mocked_parser = MockedTransformationPlanParser(
