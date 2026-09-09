@@ -1,9 +1,12 @@
+import logging
 import re
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any, Literal, TypedDict
 
 from jinja2 import Environment, FileSystemLoader, Template
+
+logger = logging.getLogger(__name__)
 
 
 class TransformationPlanData(TypedDict):
@@ -281,7 +284,7 @@ class TransformationPlan:
         try:
             tp.data = parser.parse()
         except Exception as e:
-            print(f"Error occurred while parsing transformation plan: {e}")
+            logger.warning(f"Error occurred while parsing transformation plan: {e}")
             tp.data = {
                 "source_model_package": "",
                 "target_model_package": "",
@@ -292,6 +295,7 @@ class TransformationPlan:
                 "difficulties": "",
                 "implementation_steps": "",
             }
+            logger.info("Creating initial transformation plan with default values.")
             parser.save(str(tp))
         return tp
 
