@@ -377,6 +377,57 @@ class TestPrepareWorkspace(TestCase):
         with self.assertRaises(ValueError):
             self.prepare_workspace_node(input_state)
 
+    def test_prepare_workspace__with_benchmarx_path_no_bxtool_adapter(self):
+        """Test that no BxTool adapter is created when benchmarx_path is provided."""
+        mock_run = Mock()
+        mock_run.side_effect = self._mock_subprocess_run
+        
+        with patch("subprocess.run", mock_run), tempfile.TemporaryDirectory() as temp_dir:
+            workspace_path = Path(temp_dir)
+            benchmarx_path = Path(temp_dir) / "benchmarx" / "tool.jar"
+            benchmarx_path.parent.mkdir(parents=True, exist_ok=True)
+            benchmarx_path.touch()  # Create dummy file
+            
+            input_state = PreparationState(
+                required_commands=[],
+                workspace_path=workspace_path,
+                group_id="de.example",
+                artifact_id="mdeagent",
+                benchmarx_path=benchmarx_path,  # BenchmarX path is set
+            )
+
+            output_state: PreparationState = self.prepare_workspace_node(input_state)
+
+            # Check that bxtool_path is None when benchmarx_path is provided
+            self.assertIsNone(
+                output_state.get("bxtool_path"),
+                "The bxtool_path should be None when benchmarx_path is provided.",
+            )
+
+            # Verify that the BxToolAdapter.java file was NOT created
+            bxtool_file = (
+                workspace_path
+                / "mdeagent"
+                / "src"
+                / "main"
+                / "java"
+                / "de"
+                / "example"
+                / "mdeagent"
+                / "MDEAgentTransformationBxToolAdapter.java"
+            )
+            self.assertFalse(
+                bxtool_file.exists(),
+                "The BxToolAdapter.java file should NOT be created when benchmarx_path is provided.",
+            )
+
+            # But transformation_class_path should still be set (user will implement it)
+            self.assertIsInstance(
+                output_state.get("transformation_class_path"),
+                Path,
+                "The transformation_class_path should still be set.",
+            )
+
 
 class TestMavenIntegration(TestCase):
     def setUp(self):

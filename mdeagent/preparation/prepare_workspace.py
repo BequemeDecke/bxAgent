@@ -4,7 +4,7 @@ from pathlib import Path
 from mdeagent.comprehension import FileTransformationPlanParser, TransformationPlan
 from mdeagent.config import Config
 from mdeagent.preparation.maven import MavenProject
-from mdeagent.preparation.pom import Dependency, Module, Plugin, Pom
+from mdeagent.preparation.pom import Dependency, Plugin
 from mdeagent.preparation.state import PreparationState
 
 EMF_DEPENDENCIES: list[Dependency] = [
@@ -76,7 +76,7 @@ def is_workspace_structure_correct(
     return True
 
 
-def create_prepare_workspace_node(fix_strategy: StructureFixStrategy):
+def create_prepare_workspace_node(fix_strategy: StructureFixStrategy, benchmarx_path: Path | None = None, download_benchmarx: bool = False):
     def prepare_workspace_node(state: PreparationState) -> PreparationState:
         workspace = state.get("workspace_path")
         if workspace is None:
@@ -89,6 +89,9 @@ def create_prepare_workspace_node(fix_strategy: StructureFixStrategy):
         artifact_id = state.get("artifact_id")
         if artifact_id is None:
             raise ValueError("Artifact ID is not set in the state.")
+
+        # Get benchmarx_path from state (can override the parameter)
+        state_benchmarx_path = state.get("benchmarx_path", benchmarx_path)
 
         # Create workspace if directory does not exist
         workspace.mkdir(parents=True, exist_ok=True)
@@ -136,12 +139,20 @@ def create_prepare_workspace_node(fix_strategy: StructureFixStrategy):
         # Calculate transformation class path but don't create the file (user will implement it)
         transformation_class_path = project.get_package_path(full_package) / f"{transformation_class_name}.java"
 
-        bxtool_class_name = f"{transformation_class_name}BxToolAdapter"
-        bxtool_path = project.add_java_class(
-            package=full_package,
-            class_name=bxtool_class_name,
-            content=f"public class {bxtool_class_name} {{\n    // TODO: Implement the BxTool adapter logic here\n}}\n",
-        )
+        # Create the BxTool adapter Java file ONLY if BenchmarX is NOT being used
+        # BenchmarX is not used when: benchmarx_path is None AND download_benchmarx is False
+        create_bxtool_adapter = (state_benchmarx_path is None and not download_benchmarx)
+        
+        if create_bxtool_adapter:
+            bxtool_class_name = f"{transformation_class_name}BxToolAdapter"
+            bxtool_path = project.add_java_class(
+                package=full_package,
+                class_name=bxtool_class_name,
+                content=f"public class {bxtool_class_name} {{\n    // TODO: Implement the BxTool adapter logic here\n}}\n",
+            )
+        else:
+            # BenchmarX will be used, no BxTool adapter needed
+            bxtool_path = None
 
         # Copy the AgentTransformationForEMF.java file into the package path
         agent_transformation_source = (

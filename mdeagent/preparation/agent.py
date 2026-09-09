@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from langgraph.graph import END, START, StateGraph
 
 from mdeagent.evaluation import (
@@ -13,12 +15,13 @@ from mdeagent.preparation.state import PreparationState
 
 
 def build_preparation_graph(
-    evaluation_executor: EvaluationExecutor, download_benchmarx: bool = False
+    evaluation_executor: EvaluationExecutor, benchmarx_path: Path | None = None, download_benchmarx: bool = False
 ) -> StateGraph:
     """Builder for the preparation Subgraph of the MDEAgent. This graph is responsible for preparing the workspace, exploring the source and target models, and validating the preparation state.
 
     Args:
         evaluation_executor (EvaluationExecutor): The evaluation executor that will be used to evaluate the preparation state.
+        benchmarx_path (Path | None, optional): The path to the benchmark data. Defaults to None.   
         download_benchmarx (bool, optional): Whether to include the download_benchmarx node in the graph. Defaults to False. This is experimental.
 
     Returns:
@@ -40,7 +43,9 @@ def build_preparation_graph(
     )
     explore_models_node = create_explore_models_node()
     prepare_workspace_node = create_prepare_workspace_node(
-        fix_strategy=ClearWorkspaceStrategy()
+        fix_strategy=ClearWorkspaceStrategy(), 
+        benchmarx_path=benchmarx_path,
+        download_benchmarx=download_benchmarx
     )
     if download_benchmarx:
         from mdeagent.preparation.benchmarx import create_download_benchmarx_node

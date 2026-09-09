@@ -217,14 +217,11 @@ class TestPreparationAgentIntegration(TestCase):
                 "The transformation plan should have the correct iteration number.",
             )
 
+            # Verify bxtool_path is None when BenchmarX is used
             bxtool_path = output_state.get("bxtool_path")
-            self.assertIsNotNone(
+            self.assertIsNone(
                 bxtool_path,
-                "The bxtool path should be set in the output state.",
-            )
-            self.assertTrue(
-                bxtool_path.exists(),
-                "The bxtool path should point to an existing file.",
+                "The bxtool path should be None when BenchmarX is being used.",
             )
 
             # Verify benchmarx_path IS set when download_benchmarx=True

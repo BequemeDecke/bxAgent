@@ -24,6 +24,7 @@ from mdeagent.models import build_base_model
 def build_implementation_graph(
     evaluation_executor: EvaluationExecutor,
     workspace_path: Path,
+    benchmarx_path: Path | None = None,
 ) -> StateGraph:
 
     evaluation_executor.register_linked_evaluation(
@@ -40,10 +41,12 @@ def build_implementation_graph(
             )
         ),
     )
-    implement_bx_tool = create_implement_bx_tool_node(
-        llm=base_model,
-        workspace=workspace_path,
-    )
+    if benchmarx_path:
+        implement_bx_tool = create_implement_bx_tool_node(
+            llm=base_model,
+            workspace=workspace_path,
+            benchmarx_path=benchmarx_path,
+        )
     format_code = create_format_code_node(
         workspace=workspace_path,
     )
@@ -62,24 +65,38 @@ def build_implementation_graph(
     # Build the state graph
     graph = StateGraph(ImplementationState)
     graph.add_node("implement_transformation", implement_transformation, initial=True)
-    graph.add_node("implement_bx_tool", implement_bx_tool)
     graph.add_node("format_code", format_code)
     graph.add_node("evaluation_agentic_work", evaluation_agentic_work)
 
     # Add edges between the nodes to define the workflow
     graph.add_edge(START, "implement_transformation")
-    graph.add_edge("implement_transformation", "implement_bx_tool")
-    graph.add_edge("implement_bx_tool", "format_code")
     graph.add_edge("format_code", "evaluation_agentic_work")
-    graph.add_conditional_edges(
-        "evaluation_agentic_work",
-        evaluate_transformation_implementation,
-        {
-            "implementation_error": "implement_transformation",
-            "integration_error": "implement_bx_tool",
-            "max_iteration_reached": END,  # TODO: Terminate the workflow with building a failure message
-            "implementation_success": END,
-        },
-    )
+
+    if benchmarx_path:
+        graph.add_node("implement_bx_tool", implement_bx_tool)
+        graph.add_edge("implement_transformation", "implement_bx_tool")
+        graph.add_edge("implement_bx_tool", "format_code")
+        graph.add_conditional_edges(
+            "evaluation_agentic_work",
+            evaluate_transformation_implementation,
+            {
+                "implementation_error": "implement_transformation",
+                "integration_error": "implement_bx_tool",
+                "max_iteration_reached": END,  # TODO: Terminate the workflow with building a failure message
+                "implementation_success": END,
+            },
+        )
+    else:
+        graph.add_edge("implement_transformation", "format_code")
+        graph.add_conditional_edges(
+            "evaluation_agentic_work",
+            evaluate_transformation_implementation,
+            {
+                "implementation_error": "implement_transformation",
+                "integration_error": "implement_transformation",
+                "max_iteration_reached": END,  # TODO: Terminate the workflow with building a failure message
+                "implementation_success": END,
+            },
+        )
 
     return graph

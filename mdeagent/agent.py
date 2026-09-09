@@ -32,7 +32,7 @@ from mdeagent.preparation.node import create_preparation_node
 from mdeagent.state import MDEAgentState
 
 
-def build_mdeagent(workspace_path: Path, download_benchmarx: bool = False) -> StateGraph[MDEAgentState]:
+def build_mdeagent(workspace_path: Path, benchmarx_path: Path | None = None, download_benchmarx: bool = False) -> StateGraph[MDEAgentState]:
     # 1. Initialize the core components of the MDEAgent
     llm = build_base_model()
     check_transformation_iteration = create_check_transformation_iteration_function(llm)
@@ -64,6 +64,7 @@ def build_mdeagent(workspace_path: Path, download_benchmarx: bool = False) -> St
     call_preparation_node = create_preparation_node(
         preparation_agent=build_preparation_graph(
             evaluation_executor=agent_evaluator,
+            benchmarx_path=benchmarx_path,
             download_benchmarx=download_benchmarx,
         ).compile(),
         workspace_path=workspace_path,
