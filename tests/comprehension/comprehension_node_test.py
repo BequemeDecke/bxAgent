@@ -3,10 +3,10 @@ This test checks if the comprehension node correctly utilizes the comprehension 
 It has to write the plan into the `TRANSFORMATION.md` file.
 """
 
+import tempfile
 from pathlib import Path
 from typing import TypedDict
 from unittest import TestCase
-from unittest.mock import MagicMock
 
 from langgraph.graph import START, StateGraph
 
@@ -14,9 +14,9 @@ from mdeagent.comprehension.node import (
     create_comprehension_node,
 )
 from mdeagent.comprehension.plan import (
+    FileTransformationPlanParser,
     TransformationPlan,
     TransformationPlanData,
-    TransformationPlanParser,
 )
 
 
@@ -32,11 +32,7 @@ class TestComprehensionNode(TestCase):
         graph_builder.add_node("comprehension", generate_response)
         graph_builder.add_edge(START, "comprehension")
         self.graph = graph_builder.compile()
-        self.parser = MagicMock(spec=TransformationPlanParser)
-        self.transformation_plan = TransformationPlan(
-            parser=self.parser, template_path=Path() / "templates"
-        )
-        self.transformation_plan.data = TransformationPlanData(
+        self.transformation_plan_data = TransformationPlanData(
             source_model_package="com.example.source",
             target_model_package="com.example.target",
             iteration=1,
@@ -50,17 +46,31 @@ class TestComprehensionNode(TestCase):
     def test_comprehension_node__invoke_subgraph(self):
         call_sub = create_comprehension_node(self.graph)
 
-        result = call_sub(
-            {
-                "transformation_plan": self.transformation_plan,
-            }
-        )
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_path = Path(temp_dir)
+            parser = FileTransformationPlanParser(temp_path / "TRANSFORMATION.md")
+            tp = TransformationPlan.parse(parser)
+            tp.data = self.transformation_plan_data
+            parser.save(str(tp))
 
-        self.assertEqual(
-            result.get("transformation_plan").data.get("iteration"),
-            2,
-            "The iteration should be incremented by 1 after calling the comprehension agent.",
-        )
+            result = call_sub(
+                {
+                    "transformation_plan": tp.to_dict(),
+                }
+            )
+
+            serialized_tp = result.get("transformation_plan")
+            self.assertIsInstance(
+                serialized_tp,
+                dict,
+                "The comprehension node should return a dictionary representing the transformation plan.",
+            )
+            tp = TransformationPlan.from_dict(serialized_tp)
+            self.assertEqual(
+                tp.data.get("iteration"),
+                2,
+                "The iteration should be incremented by 1 after calling the comprehension agent.",
+            )
 
     def test_comprehension_node__missing_transformation_plan(self):
         call_sub = create_comprehension_node(self.graph)

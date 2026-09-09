@@ -3,6 +3,7 @@ import logging
 from langchain.messages import HumanMessage
 from langgraph.graph.state import CompiledStateGraph
 
+from mdeagent.comprehension.plan import TransformationPlan
 from mdeagent.state import MDEAgentState
 
 logger = logging.getLogger(__name__)    
@@ -30,11 +31,12 @@ def create_comprehension_node(comprehension_agent: CompiledStateGraph):
         """
         logger.info("Starting comprehension node ... (For State look at LangFuse)")
 
-        transformation = state.get("transformation_plan")
-        if transformation is None:
+        serialized_transformation = state.get("transformation_plan")
+        if serialized_transformation is None:
             raise ValueError(
                 "The comprehension node requires a transformation plan in the state."
             )
+        transformation = TransformationPlan.from_dict(serialized_transformation)
 
         input_prompt = PROMPT_TEMPLATE.format(
             transformation_plan=str(transformation),
@@ -54,6 +56,6 @@ def create_comprehension_node(comprehension_agent: CompiledStateGraph):
         iteration = transformation.data.get("iteration", 0)
         transformation.update_iteration(iteration + 1)
 
-        return {"transformation_plan": transformation}
+        return {"transformation_plan": transformation.to_dict()}
 
     return comprehension_node
