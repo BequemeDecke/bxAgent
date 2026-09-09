@@ -62,7 +62,7 @@ class TestFormatJavaFiles(TestCase):
             maven_project = MavenProject.create(
                 workspace, group_id="com.example", artifact_id="example-artifact"
             )
-            maven_project.format_code()  # This should call the mocked subprocess.run
+            maven_project.format()  # This should call the mocked subprocess.run
 
             mock_run.assert_called_once_with(
                 ["mvn", "spotless:apply"],
@@ -89,7 +89,7 @@ class TestFormatJavaFiles(TestCase):
             )
 
             has_formatting_succeeded = (
-                project.format_code()
+                project.format()
             )  # This should call the mocked subprocess.run
 
             self.assertFalse(has_formatting_succeeded)

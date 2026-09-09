@@ -23,6 +23,17 @@ class MavenProject:
         )
         return validate_process.returncode == 0
 
+    def format(self) -> bool:
+        """
+        Execute `mvn spotless:apply` to format the code in the Maven project.
+
+        :return: True if the formatting was successful, False otherwise.
+        """
+        format_process = subprocess.run(
+            ["mvn", "spotless:apply"], check=True, cwd=self.workspace
+        )
+        return format_process.returncode == 0
+
     def build(self) -> bool:
         """
         Execute `mvn package` to build the Maven project.
@@ -33,17 +44,6 @@ class MavenProject:
             ["mvn", "package"], check=True, cwd=self.workspace
         )
         return build_process.returncode == 0
-
-    def format_code(self) -> bool:
-        """
-        Execute `mvn spotless:apply` to format the code in the Maven project.
-
-        :return: True if the formatting was successful, False otherwise.
-        """
-        format_process = subprocess.run(
-            ["mvn", "spotless:apply"], check=True, cwd=self.workspace
-        )
-        return format_process.returncode == 0
 
     def add_file(self, relative_path: Path, content: str) -> Path:
         """
@@ -94,17 +94,17 @@ class MavenProject:
         pom_path = workspace / "pom.xml"
         if not pom_path.exists():
             raise FileNotFoundError(f"pom.xml not found in {workspace}")
-        
+
         # Validate that the POM file is not empty before parsing
         pom_content = pom_path.read_text()
         if not pom_content.strip():
             raise ValueError(f"pom.xml at {pom_path} is empty")
-        
+
         try:
             pom = Pom(pom_path)
         except Exception as e:
             raise ValueError(f"Failed to parse pom.xml: {e}") from e
-        
+
         return cls(pom, workspace)
 
     @classmethod
