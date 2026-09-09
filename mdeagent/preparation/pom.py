@@ -30,26 +30,57 @@ BASE_POM_XML = """<?xml version="1.0" encoding="UTF-8"?>
 """
 
 
+class Module:
+    """Represents a Maven module reference."""
+
+    def __init__(self, artifact_id: str):
+        self.artifact_id = artifact_id
+
+    def __eq__(self, other):
+        if not isinstance(other, Module):
+            return False
+        return self.artifact_id == other.artifact_id
+
+    def __repr__(self):
+        return f"Module(artifact_id={self.artifact_id!r})"
+
+    @classmethod
+    def from_etree(cls, element: ET.Element) -> "Module":
+        artifact_id = element.text
+        if artifact_id is None:
+            raise ValueError("Module must have an artifactId.")
+        return cls(artifact_id=artifact_id)
+
+    def to_etree(self, parent: ET.Element) -> ET.Element:
+        module_element = ET.SubElement(parent, "module")
+        module_element.text = self.artifact_id
+        return module_element
+
+
 class Dependency:
     """Represents a Maven dependency."""
-    
+
     def __init__(self, group_id: str, artifact_id: str, version: str | None = None):
         self.group_id = group_id
         self.artifact_id = artifact_id
         self.version = version
-    
+
     def __eq__(self, other):
         if not isinstance(other, Dependency):
             return False
-        return (self.group_id == other.group_id and 
-                self.artifact_id == other.artifact_id and 
-                self.version == other.version)
-    
+        return (
+            self.group_id == other.group_id
+            and self.artifact_id == other.artifact_id
+            and self.version == other.version
+        )
+
     def __repr__(self):
         return f"Dependency(group_id={self.group_id!r}, artifact_id={self.artifact_id!r}, version={self.version!r})"
-    
+
     @classmethod
-    def from_etree_element(cls, element: ET.Element, namespaces: dict[str, str]) -> "Dependency":
+    def from_etree(
+        cls, element: ET.Element, namespaces: dict[str, str]
+    ) -> "Dependency":
         group_id_element = element.find("groupId", namespaces)
         artifact_id_element = element.find("artifactId", namespaces)
         if group_id_element is None or artifact_id_element is None:
@@ -58,10 +89,14 @@ class Dependency:
         artifact_id = artifact_id_element.text
         if group_id is None or artifact_id is None:
             raise ValueError("Dependency must have both groupId and artifactId.")
-        version = element.find("version", namespaces).text if element.find("version", namespaces) is not None else None
+        version = (
+            element.find("version", namespaces).text
+            if element.find("version", namespaces) is not None
+            else None
+        )
         return cls(group_id=group_id, artifact_id=artifact_id, version=version)
 
-    def to_etree_element(self, parent: ET.Element) -> ET.Element:
+    def to_etree(self, parent: ET.Element) -> ET.Element:
         dependency_element = ET.SubElement(parent, "dependency")
         group_id_element = ET.SubElement(dependency_element, "groupId")
         group_id_element.text = self.group_id
@@ -75,26 +110,34 @@ class Dependency:
 
 class Plugin:
     """Represents a Maven plugin."""
-    
-    def __init__(self, group_id: str | None, artifact_id: str, version: str | None = None, configuration: str | None = None):
+
+    def __init__(
+        self,
+        group_id: str | None,
+        artifact_id: str,
+        version: str | None = None,
+        configuration: str | None = None,
+    ):
         self.group_id = group_id
         self.artifact_id = artifact_id
         self.version = version
         self.configuration = configuration
-    
+
     def __eq__(self, other):
         if not isinstance(other, Plugin):
             return False
-        return (self.group_id == other.group_id and 
-                self.artifact_id == other.artifact_id and 
-                self.version == other.version and 
-                self.configuration == other.configuration)
-    
+        return (
+            self.group_id == other.group_id
+            and self.artifact_id == other.artifact_id
+            and self.version == other.version
+            and self.configuration == other.configuration
+        )
+
     def __repr__(self):
         return f"Plugin(group_id={self.group_id!r}, artifact_id={self.artifact_id!r}, version={self.version!r}, configuration={self.configuration!r})"
-    
+
     @classmethod
-    def from_etree_element(cls, element: ET.Element, namespaces: dict[str, str]) -> "Plugin":
+    def from_etree(cls, element: ET.Element, namespaces: dict[str, str]) -> "Plugin":
         artifact_id_element = element.find("artifactId", namespaces)
         if artifact_id_element is None:
             raise ValueError("Plugin must have an artifactId.")
@@ -120,7 +163,7 @@ class Plugin:
             configuration=configuration,
         )
 
-    def to_etree_element(self, parent: ET.Element) -> ET.Element:
+    def to_etree(self, parent: ET.Element) -> ET.Element:
         plugin_element = ET.SubElement(parent, "plugin")
         if self.group_id:
             group_id_element = ET.SubElement(plugin_element, "groupId")
@@ -133,37 +176,12 @@ class Plugin:
         if self.configuration:
             configuration_element = ET.SubElement(plugin_element, "configuration")
             # Parse the configuration string and append children
-            config_tree = ET.fromstring(f"<config_root>{self.configuration}</config_root>")
+            config_tree = ET.fromstring(
+                f"<config_root>{self.configuration}</config_root>"
+            )
             for child in config_tree:
                 configuration_element.append(child)
         return plugin_element
-
-
-class Module:
-    """Represents a Maven module reference."""
-    
-    def __init__(self, artifact_id: str):
-        self.artifact_id = artifact_id
-    
-    def __eq__(self, other):
-        if not isinstance(other, Module):
-            return False
-        return self.artifact_id == other.artifact_id
-    
-    def __repr__(self):
-        return f"Module(artifact_id={self.artifact_id!r})"
-    
-    @classmethod
-    def from_etree_element(cls, element: ET.Element) -> "Module":
-        artifact_id = element.text
-        if artifact_id is None:
-            raise ValueError("Module must have an artifactId.")
-        return cls(artifact_id=artifact_id)
-
-    def to_etree_element(self, parent: ET.Element) -> ET.Element:
-        module_element = ET.SubElement(parent, "module")
-        module_element.text = self.artifact_id
-        return module_element
 
 
 class Pom:
@@ -252,8 +270,10 @@ class Pom:
 
         self._modules_element = modules_element
 
-        for module_elem in modules_element.findall("module", self.registered_namespaces):
-            module = Module.from_etree_element(module_elem)
+        for module_elem in modules_element.findall(
+            "module", self.registered_namespaces
+        ):
+            module = Module.from_etree(module_elem)
             self.modules.append(module)
 
         # Parse dependencies
@@ -263,8 +283,10 @@ class Pom:
 
         self._dependencies_element = dependencies_element
 
-        for dep_elem in dependencies_element.findall("dependency", self.registered_namespaces):
-            dependency = Dependency.from_etree_element(dep_elem, self.registered_namespaces)
+        for dep_elem in dependencies_element.findall(
+            "dependency", self.registered_namespaces
+        ):
+            dependency = Dependency.from_etree(dep_elem, self.registered_namespaces)
             self.dependencies.append(dependency)
 
         # Parse plugins
@@ -279,8 +301,10 @@ class Pom:
 
         self._plugins_element = plugins_element
 
-        for plugin_elem in plugins_element.findall("plugin", self.registered_namespaces):
-            plugin = Plugin.from_etree_element(plugin_elem, self.registered_namespaces)
+        for plugin_elem in plugins_element.findall(
+            "plugin", self.registered_namespaces
+        ):
+            plugin = Plugin.from_etree(plugin_elem, self.registered_namespaces)
             self.plugins.append(plugin)
 
         # Parse packaging
@@ -289,7 +313,6 @@ class Pom:
 
         if packaging_element is not None:
             self.packaging_value = packaging_element.text
-        
 
     def add_module(self, module: Module) -> "Pom":
         """Add a new module reference to the pom.xml.
@@ -448,20 +471,22 @@ class Pom:
 
         # Re-add modules
         for module in self.modules:
-            module.to_etree_element(self._modules_element)
+            module.to_etree(self._modules_element)
 
         # Re-add dependencies
         for dep in self.dependencies:
-            dep.to_etree_element(self._dependencies_element)
+            dep.to_etree(self._dependencies_element)
 
         # Re-add plugins
         for plugin in self.plugins:
-            plugin.to_etree_element(self._plugins_element)
+            plugin.to_etree(self._plugins_element)
 
         # Update packaging if set
         if self.packaging_value is not None:
             if self._packaging_element is None:
-                self._packaging_element = ET.SubElement(self._tree.getroot(), "packaging")
+                self._packaging_element = ET.SubElement(
+                    self._tree.getroot(), "packaging"
+                )
             self._packaging_element.text = self.packaging_value
 
     def save(self) -> None:
