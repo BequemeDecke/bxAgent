@@ -43,6 +43,7 @@ def create_implement_bx_tool_node(llm: BaseChatModel, workspace: Path):
         # 1. Collect information and construct the prompt
         task_specification = state["task_specification"]
         transformation_implementation = state["transformation_implementation"]
+        bxtool_path = state["bxtool_path"]
         raw_template = resolver.get_raw_template()
         input_prompt = create_input_prompt(
             task_specification=task_specification,
@@ -55,14 +56,9 @@ def create_implement_bx_tool_node(llm: BaseChatModel, workspace: Path):
         bx_tool = resolver.render_template(response)
 
         # 3. Write the implementation to the workspace file
-        file_path = workspace / (
-            response.transformation_implementation.class_name + ".java"
-        )
-        if not file_path.parent.exists():
-            file_path.parent.mkdir(parents=True)
-            file_path.touch()
-        file_path.write_text(bx_tool)
+        bxtool_path.touch(exist_ok=True)
+        bxtool_path.write_text(bx_tool)
 
-        return {"written_java_files": state.get("written_java_files", []) + [file_path]}
+        return {"written_java_files": state.get("written_java_files", []) + [bxtool_path]}
 
     return implement_bx_tool

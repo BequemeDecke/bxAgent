@@ -107,11 +107,13 @@ class TestImplementBxTool(TestCase):
         mock_get_raw_template.return_value = "Raw template content"
         mock_render_template.return_value = "Rendered bx tool content"
 
+        bxtool_path = Path("/tmp/workspace/TransformationImplementation.java")
+
         state = ImplementationState(
-            transformation_md=None,
             task_specification="Implement the bx tool",
             written_java_files=[],
             transformation_implementation="public class MyTransformation { ... }",
+            bxtool_path=bxtool_path,
         )
 
         new_state = self.implement_bx_tool(state)
@@ -121,7 +123,7 @@ class TestImplementBxTool(TestCase):
         self.assertEqual(len(actual_written_files), 1)
         self.assertEqual(
             actual_written_files[0],
-            Path("/tmp/workspace/TransformationImplementation.java"),
+            bxtool_path,
         )
 
         # Check if the template resolver methods were called with the correct parameters
