@@ -14,6 +14,7 @@ from unittest import TestCase
 
 import pytest
 
+from mdeagent.comprehension.plan import TransformationPlan
 from mdeagent.evaluation import EvaluationExecutor, implementations
 from mdeagent.preparation.agent import build_preparation_graph
 from mdeagent.preparation.node import create_preparation_node
@@ -150,12 +151,6 @@ class TestPreparationNodeIntegration(TestCase):
             "Required commands should match the provided commands.",
         )
 
-        # Check that the transformation plan is set
-        self.assertIsNotNone(
-            output.get("transformation_plan"),
-            "Transformation plan should not be None.",
-        )
-
         # Check that the transformation class path is set
         self.assertIsNotNone(
             output.get("transformation_class_path"),
@@ -177,8 +172,21 @@ class TestPreparationNodeIntegration(TestCase):
             "BXT tool file should exist.",
         )
 
+        # Check that the transformation plan is set
+        self.assertIsNotNone(
+            output.get("transformation_plan"),
+            "Transformation plan should not be None.",
+        )
+        self.assertIsInstance(
+            output["transformation_plan"],
+            dict,
+            "Transformation plan should be a serialized dictionary.",
+        )
+        
         # Check that the transformation plan contains model implementations
-        tp_data = output["transformation_plan"].data
+        tp = TransformationPlan.from_dict(output["transformation_plan"])
+        tp_data = tp.data
+
         self.assertIn(
             "source_model_implementation",
             tp_data,
@@ -238,7 +246,8 @@ class TestPreparationNodeIntegration(TestCase):
         """Check the contents of the workspace for expected files and structure."""
         # Check that the workspace directory structure is correct
         expected_dirs = [
-            self.workspace_path / "PreparationNodeIntegrationTest/src/main/java/de/hofuniversity/PreparationNodeIntegrationTest/",
+            self.workspace_path
+            / "PreparationNodeIntegrationTest/src/main/java/de/hofuniversity/PreparationNodeIntegrationTest/",
             self.workspace_path / self.artifact_id,
         ]
         for dir_path in expected_dirs:
@@ -249,7 +258,11 @@ class TestPreparationNodeIntegration(TestCase):
 
         # Check that the workspace contains the BXT tool file
         bxtool_expected_name = "MDEAgentTransformationBxToolAdapter.java"
-        bxtool_path = self.workspace_path / "PreparationNodeIntegrationTest/src/main/java/de/hofuniversity/PreparationNodeIntegrationTest/" / bxtool_expected_name
+        bxtool_path = (
+            self.workspace_path
+            / "PreparationNodeIntegrationTest/src/main/java/de/hofuniversity/PreparationNodeIntegrationTest/"
+            / bxtool_expected_name
+        )
         self.assertTrue(
             bxtool_path.exists(),
             f"Expected BXT tool file {bxtool_expected_name} to exist in the workspace.",
@@ -303,7 +316,6 @@ class TestPreparationNodeIntegration(TestCase):
             pom_content,
             f"pom.xml should contain artifact ID '{self.artifact_id}'.",
         )
-
 
     def tearDown(self):
         """Clean up the workspace after each test."""
