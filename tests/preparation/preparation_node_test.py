@@ -9,6 +9,7 @@ import tempfile
 from pathlib import Path
 from unittest import TestCase
 
+from mdeagent.comprehension.plan import TransformationPlan
 from mdeagent.evaluation import EvaluationExecutor, implementations
 from mdeagent.preparation.agent import build_preparation_graph
 from mdeagent.preparation.node import (
@@ -138,7 +139,13 @@ class TestPreparationNodeIntegration(TestCase):
                 output.get("transformation_plan"),
                 "The output state should contain a transformation plan.",
             )
-            tp_data = output["transformation_plan"].data
+            self.assertIsInstance(
+                output["transformation_plan"],
+                dict,
+                "The transformation plan in the output state should be a serialized dictionary.",
+            )
+            tp = TransformationPlan.from_dict(output["transformation_plan"])
+            tp_data = tp.data
 
             # Check that the transformation plan contains the model implementations
             self.assertIn(

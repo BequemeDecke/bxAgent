@@ -77,7 +77,7 @@ def create_preparation_node(
         return MDEAgentState(
             workspace_path=workspace_path,
             required_commands=required_commands,
-            transformation_plan=prep_output_state.get("transformation_plan"),
+            transformation_plan=transformation_plan.to_dict(),
             transformation_class_path=prep_output_state.get("transformation_class_path"),
             bxtool_path=prep_output_state.get("bxtool_path"),
         )

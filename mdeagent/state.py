@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import TypedDict
 
-from mdeagent.comprehension.plan import TransformationPlan
+from mdeagent.comprehension.plan import SerializedTransformationPlan
 from mdeagent.evaluation.types import EvaluationRun
 
 
@@ -31,7 +31,7 @@ class MDEAgentState(TypedDict):
     target_model_path: Path                     # This has to be set by the user, and is used to identify the target model of the workflow.
 
     # === Transformation ===
-    transformation_plan: TransformationPlan | None
+    transformation_plan: SerializedTransformationPlan | None
     transformation_package_path: str  # deprecated
 
     # === Implementation ===
