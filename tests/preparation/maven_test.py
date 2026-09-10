@@ -1,6 +1,7 @@
 import tempfile
 from pathlib import Path
 from unittest import TestCase
+from unittest.mock import MagicMock, patch
 
 from mdeagent.preparation.maven import MavenProject
 from mdeagent.preparation.pom import Pom
@@ -444,3 +445,148 @@ class TestMavenProjectChildWorkspace(TestCase):
             # File should NOT be in parent's workspace
             parent_path = parent.workspace / relative_path
             self.assertNotEqual(expected_path.parent, parent_path.parent)
+
+
+class TestMavenProjectCompile(TestCase):
+    """Test cases for MavenProject.compile() method."""
+    
+    def test_compile_method_exists(self):
+        """Test that compile method exists on MavenProject."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            workspace = Path(temp_dir)
+            pom_path = workspace / "pom.xml"
+            pom_path.write_text("""<?xml version='1.0' encoding='utf-8'?>
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.example</groupId>
+  <artifactId>test-app</artifactId>
+  <version>1.0-SNAPSHOT</version>
+</project>""")
+            
+            pom = Pom(pom_path)
+            project = MavenProject(pom, workspace)
+            
+            self.assertTrue(
+                hasattr(project, "compile"),
+                "MavenProject should have a 'compile' method.",
+            )
+    
+    @patch("subprocess.run")
+    def test_compile_returns_tuple_on_success(self, mock_subprocess_run):
+        """Test that compile returns a tuple with (True, output) on success."""
+        mock_subprocess_run.return_value = MagicMock(
+            returncode=0,
+            stdout="BUILD SUCCESS",
+            stderr=""
+        )
+        
+        with tempfile.TemporaryDirectory() as temp_dir:
+            workspace = Path(temp_dir)
+            pom_path = workspace / "pom.xml"
+            pom_path.write_text("""<?xml version='1.0' encoding='utf-8'?>
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.example</groupId>
+  <artifactId>test-app</artifactId>
+  <version>1.0-SNAPSHOT</version>
+</project>""")
+            
+            pom = Pom(pom_path)
+            project = MavenProject(pom, workspace)
+            
+            success, output = project.compile()
+            
+            self.assertTrue(success)
+            self.assertEqual(output, "BUILD SUCCESS")
+            mock_subprocess_run.assert_called_once()
+            call_args = mock_subprocess_run.call_args[0][0]
+            self.assertEqual(call_args[0], "mvn")
+            self.assertEqual(call_args[1], "compile")
+    
+    @patch("subprocess.run")
+    def test_compile_returns_tuple_on_failure(self, mock_subprocess_run):
+        """Test that compile returns a tuple with (False, error_output) on failure."""
+        error_output = "[ERROR] Compilation failed\nSome error message"
+        mock_subprocess_run.return_value = MagicMock(
+            returncode=1,
+            stdout="",
+            stderr=error_output
+        )
+        
+        with tempfile.TemporaryDirectory() as temp_dir:
+            workspace = Path(temp_dir)
+            pom_path = workspace / "pom.xml"
+            pom_path.write_text("""<?xml version='1.0' encoding='utf-8'?>
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.example</groupId>
+  <artifactId>test-app</artifactId>
+  <version>1.0-SNAPSHOT</version>
+</project>""")
+            
+            pom = Pom(pom_path)
+            project = MavenProject(pom, workspace)
+            
+            success, output = project.compile()
+            
+            self.assertFalse(success)
+            self.assertEqual(output, error_output)
+    
+    @patch("subprocess.run")
+    def test_compile_uses_correct_working_directory(self, mock_subprocess_run):
+        """Test that compile uses the project's workspace as working directory."""
+        mock_subprocess_run.return_value = MagicMock(
+            returncode=0,
+            stdout="BUILD SUCCESS",
+            stderr=""
+        )
+        
+        with tempfile.TemporaryDirectory() as temp_dir:
+            workspace = Path(temp_dir)
+            pom_path = workspace / "pom.xml"
+            pom_path.write_text("""<?xml version='1.0' encoding='utf-8'?>
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.example</groupId>
+  <artifactId>test-app</artifactId>
+  <version>1.0-SNAPSHOT</version>
+</project>""")
+            
+            pom = Pom(pom_path)
+            project = MavenProject(pom, workspace)
+            
+            project.compile()
+            
+            # Check that cwd parameter was set to workspace
+            call_kwargs = mock_subprocess_run.call_args[1]
+            self.assertEqual(call_kwargs["cwd"], workspace)
+    
+    @patch("subprocess.run")
+    def test_compile_captures_stdout_and_stderr(self, mock_subprocess_run):
+        """Test that compile captures both stdout and stderr."""
+        mock_subprocess_run.return_value = MagicMock(
+            returncode=1,
+            stdout="Some output",
+            stderr="Some error"
+        )
+        
+        with tempfile.TemporaryDirectory() as temp_dir:
+            workspace = Path(temp_dir)
+            pom_path = workspace / "pom.xml"
+            pom_path.write_text("""<?xml version='1.0' encoding='utf-8'?>
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.example</groupId>
+  <artifactId>test-app</artifactId>
+  <version>1.0-SNAPSHOT</version>
+</project>""")
+            
+            pom = Pom(pom_path)
+            project = MavenProject(pom, workspace)
+            
+            project.compile()
+            
+            # Verify capture_output and text are set
+            call_kwargs = mock_subprocess_run.call_args[1]
+            self.assertTrue(call_kwargs["capture_output"])
+            self.assertTrue(call_kwargs["text"])

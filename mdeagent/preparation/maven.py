@@ -34,6 +34,23 @@ class MavenProject:
         )
         return format_process.returncode == 0
 
+    def compile(self) -> tuple[bool, str]:
+        """
+        Execute `mvn compile` to compile the Maven project.
+
+        :return: A tuple containing a boolean indicating success and the output of the compilation process.
+        """
+        compile_process = subprocess.run(
+            ["mvn", "compile"],
+            cwd=self.workspace,
+            capture_output=True,
+            text=True,
+        )
+        return (
+            compile_process.returncode == 0,
+            compile_process.stderr if compile_process.returncode != 0 else compile_process.stdout,
+        )
+
     def build(self) -> bool:
         """
         Execute `mvn package` to build the Maven project.
