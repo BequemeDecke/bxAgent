@@ -11,17 +11,17 @@ EMF_DEPENDENCIES: list[Dependency] = [
     Dependency(
         group_id="org.eclipse.emf",
         artifact_id="org.eclipse.emf.ecore",
-        version="2.30.0",
+        version="2.42.0",
     ),
     Dependency(
         group_id="org.eclipse.emf",
         artifact_id="org.eclipse.emf.common",
-        version="2.30.0",
+        version="2.42.0",
     ),
     Dependency(
         group_id="org.eclipse.emf",
         artifact_id="org.eclipse.emf.ecore.xmi",
-        version="2.30.0",
+        version="2.40.0",
     ),
 ]
 
