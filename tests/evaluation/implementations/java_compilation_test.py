@@ -1,262 +1,383 @@
 import asyncio
-import subprocess
+import tempfile
 from pathlib import Path
 from unittest import TestCase
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from mdeagent.evaluation.implementations.java_compilation import (
     JavaCompilationEvaluation,
-    parse_javac_output,
+    JavaCompilationEvaluationConfig,
+    parse_mvn_compile_output,
 )
 from mdeagent.evaluation.types import EvaluationResult
-
-ERROR_BLOCK_1 = """
-    ublic static void main(String[] args) {
-         ^"""
-ERROR_BLOCK_2 = """
-    String getName() 
-                    ^"""
-ERROR_BLOCK_3 = """
-}
-^"""
-
-JAVAC_ERROR_OUTPUT = f"""
-./.mdagent-workspace/test/Family.java:2: Fehler: <ID> erwartet
-{ERROR_BLOCK_1}
-./.mdagent-workspace/test/Family.java:6: Fehler: ';' erwartet
-{ERROR_BLOCK_2}
-./.mdagent-workspace/test/Family.java:10: Fehler: class, interface, enum oder record erwartet
-{ERROR_BLOCK_3}
-3 Fehler
-"""
-
-JAVAC_SUCCESS_OUTPUT = ""
-
-SYMBOL_ERRORS = """
-./.mdagent-workspace/transformation/transformation/Family.java:29: Fehler: Symbol nicht gefunden
-    FamilyMember getFather();
-    ^
-  Symbol: Klasse FamilyMember
-  Ort: Schnittstelle Family
-./.mdagent-workspace/transformation/transformation/Family.java:36: Fehler: Symbol nicht gefunden
-    void setFather(FamilyMember father);
-                   ^
-  Symbol: Klasse FamilyMember
-  Ort: Schnittstelle Family
-./.mdagent-workspace/transformation/transformation/Family.java:43: Fehler: Symbol nicht gefunden
-    FamilyMember getMother();
-    ^
-  Symbol: Klasse FamilyMember
-  Ort: Schnittstelle Family
-./.mdagent-workspace/transformation/transformation/Family.java:50: Fehler: Symbol nicht gefunden
-    void setMother(FamilyMember mother);
-                   ^
-  Symbol: Klasse FamilyMember
-  Ort: Schnittstelle Family
-./.mdagent-workspace/transformation/transformation/Family.java:57: Fehler: Symbol nicht gefunden
-    List<FamilyMember> getSons();
-         ^
-  Symbol: Klasse FamilyMember
-  Ort: Schnittstelle Family
-./.mdagent-workspace/transformation/transformation/Family.java:64: Fehler: Symbol nicht gefunden
-    List<FamilyMember> getDaughters();
-         ^
-  Symbol: Klasse FamilyMember
-  Ort: Schnittstelle Family
-6 Fehler"""
+from mdeagent.preparation.maven import MavenProject
+from mdeagent.preparation.pom import Pom
 
 
-class TestJavaCompilation(TestCase):
-    @patch("shutil.which")
-    def test_setup__fail_if_javac_not_found(self, mock_which):
-        """
-        Test that the setup method fails if javac is not installed on the system.
-        """
+class TestJavaCompilationEvaluationConfig(TestCase):
+    """Test cases for JavaCompilationEvaluationConfig."""
 
-        self.assertTrue(
-            hasattr(JavaCompilationEvaluation, "setup"),
-            "JavaCompilationEvaluation should have a 'setup' method.",
-        )
+    def test_config_requires_project_path(self):
+        """Test that config requires project_path parameter."""
+        with self.assertRaises(ValueError):
+            JavaCompilationEvaluationConfig()
 
-        mock_which.return_value = None
-        java_compilation_evaluation = JavaCompilationEvaluation()
+        config = JavaCompilationEvaluationConfig(project_path=Path("/test"))
+        self.assertEqual(config.project_path, Path("/test"))
 
-        with self.assertRaises(
-            RuntimeError,
-            msg="JavaCompilationEvaluation's 'setup' method should raise RuntimeError if javac is not installed on the system.",
-        ):
-            asyncio.run(java_compilation_evaluation.setup())
 
-    def test_run__method_defined(self):
+class TestJavaCompilationEvaluationInitialization(TestCase):
+    """Test cases for JavaCompilationEvaluation initialization."""
+
+    def test_init_with_default_factory(self):
+        """Test initialization with default MavenProject.load factory."""
+        evaluation = JavaCompilationEvaluation()
+        self.assertIsNotNone(evaluation._maven_project_factory)
+        self.assertIsNone(evaluation._maven_project)
+
+    def test_init_with_custom_factory(self):
+        """Test initialization with custom factory method."""
+        custom_factory = MagicMock()
+        evaluation = JavaCompilationEvaluation(maven_project_factory=custom_factory)
+        self.assertEqual(evaluation._maven_project_factory, custom_factory)
+        self.assertIsNone(evaluation._maven_project)
+
+
+class TestJavaCompilationEvaluationSetup(TestCase):
+    """Test cases for JavaCompilationEvaluation.setup() method."""
+
+    def test_setup_loads_maven_project(self):
+        """Test that setup loads the Maven project using the factory."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            workspace = Path(temp_dir)
+            pom_path = workspace / "pom.xml"
+            pom_path.write_text("""<?xml version='1.0' encoding='utf-8'?>
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.example</groupId>
+  <artifactId>test-app</artifactId>
+  <version>1.0-SNAPSHOT</version>
+</project>""")
+
+            mock_project = MagicMock(spec=MavenProject)
+            mock_factory = MagicMock(return_value=mock_project)
+
+            evaluation = JavaCompilationEvaluation(maven_project_factory=mock_factory)
+            asyncio.run(evaluation.setup(project_path=workspace))
+
+            mock_factory.assert_called_once_with(workspace)
+            self.assertEqual(evaluation._maven_project, mock_project)
+
+    def test_setup_raises_on_factory_error(self):
+        """Test that setup raises RuntimeError when factory fails."""
+        mock_factory = MagicMock(side_effect=FileNotFoundError("pom.xml not found"))
+        evaluation = JavaCompilationEvaluation(maven_project_factory=mock_factory)
+
+        with self.assertRaises(RuntimeError) as context:
+            asyncio.run(evaluation.setup(project_path=Path("/nonexistent")))
+
+        self.assertIn("Failed to load Maven project", str(context.exception))
+        self.assertIn("pom.xml not found", str(context.exception))
+
+
+class TestJavaCompilationEvaluationRun(TestCase):
+    """Test cases for JavaCompilationEvaluation.run() method."""
+
+    def test_run_method_defined(self):
+        """Test that run method is defined with correct signature."""
         self.assertTrue(
             hasattr(JavaCompilationEvaluation, "run"),
             "JavaCompilationEvaluation should have a 'run' method.",
         )
 
-    @patch("subprocess.run")
-    def test_run__invalid_syntax(self, mock_subprocess_run):
-        """
-        Test that the run method returns an EvaluationError when javac returns a syntax error.
-        """
+    def test_run_successful_compilation(self):
+        """Test run method with successful compilation."""
+        mock_project = MagicMock(spec=MavenProject)
+        mock_project.compile.return_value = (True, "BUILD SUCCESS")
+        mock_project.workspace = Path("/test/workspace")
 
-        mock_subprocess_run.return_value = subprocess.CompletedProcess(
-            args=["javac", "Test.java"],
-            returncode=1,
-            stdout="",
-            stderr=JAVAC_ERROR_OUTPUT,
-        )
+        evaluation = JavaCompilationEvaluation()
+        evaluation._maven_project = mock_project
 
-        java_compilation_evaluation = JavaCompilationEvaluation()
-        results, errors = asyncio.run(
-            java_compilation_evaluation.run(files=[Path("Test.java")])
+        results, errors = asyncio.run(evaluation.run())
+
+        self.assertEqual(len(results), 1)
+        self.assertEqual(len(errors), 0)
+        self.assertEqual(results[0].content, "Maven project compiled successfully.")
+        self.assertEqual(results[0].metadata["success"], True)
+
+    def test_run_failed_compilation_with_errors(self):
+        """Test run method with failed compilation and parseable errors."""
+        mock_project = MagicMock(spec=MavenProject)
+        error_output = """
+[ERROR] /workspace/src/main/java/com/example/Test.java:[10:5] cannot find symbol
+  symbol:   class UnknownClass
+  location: class Test
+[ERROR] /workspace/src/main/java/com/example/Test.java:[15:10] ';' expected
+"""
+        mock_project.compile.return_value = (False, error_output)
+        mock_project.workspace = Path("/workspace")
+
+        evaluation = JavaCompilationEvaluation()
+        evaluation._maven_project = mock_project
+
+        results, errors = asyncio.run(evaluation.run())
+
+        self.assertEqual(len(errors), 0)
+        self.assertGreater(len(results), 0)
+        
+        # Check that at least some results indicate failure
+        failed_results = [r for r in results if not r.metadata.get("success", True)]
+        self.assertGreater(len(failed_results), 0)
+
+    def test_run_exception_during_compilation(self):
+        """Test run method when compilation raises an exception."""
+        mock_project = MagicMock(spec=MavenProject)
+        mock_project.compile.side_effect = Exception("Compilation failed")
+        mock_project.workspace = Path("/test/workspace")
+
+        evaluation = JavaCompilationEvaluation()
+        evaluation._maven_project = mock_project
+
+        results, errors = asyncio.run(evaluation.run())
+
+        self.assertEqual(len(results), 0)
+        self.assertEqual(len(errors), 1)
+        self.assertIn("Compilation failed", errors[0].message)
+        self.assertEqual(errors[0].type, "Exception")
+
+    def test_run_without_setup_uses_kwargs(self):
+        """Test that run can work without prior setup by using kwargs."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            workspace = Path(temp_dir)
+            pom_path = workspace / "pom.xml"
+            pom_path.write_text("""<?xml version='1.0' encoding='utf-8'?>
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.example</groupId>
+  <artifactId>test-app</artifactId>
+  <version>1.0-SNAPSHOT</version>
+</project>""")
+
+            mock_project = MagicMock(spec=MavenProject)
+            mock_project.compile.return_value = (True, "BUILD SUCCESS")
+            mock_project.workspace = workspace
+
+            mock_factory = MagicMock(return_value=mock_project)
+            evaluation = JavaCompilationEvaluation(maven_project_factory=mock_factory)
+
+            results, errors = asyncio.run(evaluation.run(project_path=workspace))
+
+            mock_factory.assert_called_once_with(workspace)
+            self.assertEqual(len(results), 1)
+            self.assertEqual(len(errors), 0)
+
+    def test_run_missing_project_path_parameter(self):
+        """Test that run raises ValueError when project_path is missing."""
+        evaluation = JavaCompilationEvaluation()
+
+        with self.assertRaises(ValueError):
+            asyncio.run(evaluation.run())
+
+
+class TestParseMvnCompileOutput(TestCase):
+    """Test cases for parse_mvn_compile_output function."""
+
+    def test_parse_no_errors(self):
+        """Test parsing output with no errors."""
+        output = """
+[INFO] Compiling 1 source file
+[INFO] BUILD SUCCESS
+"""
+        results = parse_mvn_compile_output(output)
+        self.assertEqual(len(results), 0)
+
+    def test_parse_maven_error_format(self):
+        """Test parsing Maven-style error format with [ERROR] prefix."""
+        output = """
+[INFO] Compiling 1 source file
+[ERROR] /workspace/src/main/java/com/example/Test.java:[10:5] cannot find symbol
+  symbol:   class UnknownClass
+  location: class Test
+[ERROR] /workspace/src/main/java/com/example/Test.java:[15:10] ';' expected
+[INFO] BUILD FAILURE
+"""
+        results = parse_mvn_compile_output(output)
+
+        self.assertEqual(len(results), 2)
+        
+        self.assertEqual(
+            results[0].content,
+            "cannot find symbol",
         )
+        self.assertEqual(results[0].metadata["success"], False)
+        self.assertEqual(
+            results[0].metadata["file"],
+            "/workspace/src/main/java/com/example/Test.java",
+        )
+        self.assertEqual(results[0].metadata["line"], 10)
+        self.assertEqual(results[0].metadata["column"], 5)
 
         self.assertEqual(
-            len(results),
-            3,
-            "There should be three failed EvaluationResults when javac returns a syntax error.",
+            results[1].content,
+            "';' expected",
         )
-        self.assertEqual(
-            len(errors),
-            0,
-            "There should be no EvaluationErrors for the provided javac error output.",
-        )
+        self.assertEqual(results[1].metadata["line"], 15)
+        self.assertEqual(results[1].metadata["column"], 10)
 
+    def test_parse_javac_line_format(self):
+        """Test parsing javac-style error format with line number only."""
+        output = """
+/workspace/src/main/java/com/example/Test.java:10: error: cannot find symbol
+    UnknownClass obj = new UnknownClass();
+    ^
+  symbol:   class UnknownClass
+  location: class Test
+1 error
+"""
+        results = parse_mvn_compile_output(output)
+
+        self.assertEqual(len(results), 1)
+        self.assertEqual(
+            results[0].content,
+            "error: cannot find symbol",
+        )
+        self.assertEqual(results[0].metadata["success"], False)
+        self.assertEqual(
+            results[0].metadata["file"],
+            "/workspace/src/main/java/com/example/Test.java",
+        )
+        self.assertEqual(results[0].metadata["line"], 10)
+        self.assertNotIn("column", results[0].metadata)
+
+    def test_parse_javac_column_format(self):
+        """Test parsing javac-style error format with line and column."""
+        output = """
+/workspace/src/main/java/com/example/Test.java:10:5: error: cannot find symbol
+    UnknownClass obj = new UnknownClass();
+    ^
+1 error
+"""
+        results = parse_mvn_compile_output(output)
+
+        self.assertEqual(len(results), 1)
+        self.assertEqual(
+            results[0].content,
+            "error: cannot find symbol",
+        )
+        self.assertEqual(results[0].metadata["line"], 10)
+        self.assertEqual(results[0].metadata["column"], 5)
+
+    def test_parse_german_error_messages(self):
+        """Test parsing German error messages from javac."""
+        output = """
+./workspace/test/Family.java:2: Fehler: <ID> erwartet
+    ublic static void main(String[] args) {
+         ^
+./workspace/test/Family.java:6: Fehler: ';' erwartet
+    String getName() 
+                    ^
+3 Fehler
+"""
+        results = parse_mvn_compile_output(output)
+
+        self.assertEqual(len(results), 2)
+        self.assertIn("<ID> erwartet", results[0].content)
+        self.assertIn("';' erwartet", results[1].content)
+        self.assertEqual(results[0].metadata["line"], 2)
+        self.assertEqual(results[1].metadata["line"], 6)
+
+    def test_parse_symbol_not_found_errors(self):
+        """Test parsing 'Symbol nicht gefunden' errors."""
+        output = """
+./workspace/transformation/Family.java:29: Fehler: Symbol nicht gefunden
+    FamilyMember getFather();
+    ^
+  Symbol: Klasse FamilyMember
+  Ort: Schnittstelle Family
+./workspace/transformation/Family.java:36: Fehler: Symbol nicht gefunden
+    void setFather(FamilyMember father);
+                   ^
+  Symbol: Klasse FamilyMember
+  Ort: Schnittstelle Family
+6 Fehler
+"""
+        results = parse_mvn_compile_output(output)
+
+        self.assertEqual(len(results), 2)
         for result in results:
-            self.assertIn(
-                result.content,
-                [
-                    "Fehler: <ID> erwartet",
-                    "Fehler: ';' erwartet",
-                    "Fehler: class, interface, enum oder record erwartet",
-                ],
-                f"Expected error message not found in actual error message '{result.content}'.",
-            )
+            self.assertIn("Symbol nicht gefunden", result.content)
+            self.assertEqual(result.metadata["success"], False)
 
-    @patch("subprocess.run")
-    def test_run__valid_syntax(self, mock_subprocess_run):
-        mock_subprocess_run.return_value = subprocess.CompletedProcess(
-            args=["javac", "Test.java"],
-            returncode=0,
-            stdout=JAVAC_SUCCESS_OUTPUT,
-            stderr="",
-        )
+    def test_parse_multiple_errors_same_file(self):
+        """Test parsing multiple errors in the same file."""
+        output = """
+[ERROR] /workspace/Test.java:[5:1] class Test is public, should be declared in a file named Test.java
+[ERROR] /workspace/Test.java:[10:15] cannot find symbol
+[ERROR] /workspace/Test.java:[15:20] incompatible types: int cannot be converted to String
+"""
+        results = parse_mvn_compile_output(output)
 
-        java_compilation_evaluation = JavaCompilationEvaluation()
-        results, errors = asyncio.run(
-            java_compilation_evaluation.run(files=[Path("Test.java")])
-        )
-
-        self.assertEqual(
-            len(results),
-            1,
-            "There should be one EvaluationResult when javac returns a success output (since we haven't implemented result parsing yet).",
-        )
-        self.assertEqual(
-            len(errors),
-            0,
-            "There should be no EvaluationErrors when javac returns a success output.",
-        )
-
-    def test_run__missing_files_parameter(self):
-        java_compilation_evaluation = JavaCompilationEvaluation()
-
-        with self.assertRaises(
-            ValueError,
-            msg="JavaCompilationEvaluation's 'run' method should raise ValueError if 'files' parameter is missing.",
-        ):
-            asyncio.run(java_compilation_evaluation.run())
-
-    @patch("subprocess.run")
-    def test_run__exception_occurs_during_javac(self, mock_subprocess_run):
-        mock_subprocess_run.side_effect = Exception("Test exception")
-
-        java_compilation_evaluation = JavaCompilationEvaluation()
-        results, errors = asyncio.run(
-            java_compilation_evaluation.run(files=[Path("Test.java")])
-        )
-
-        self.assertEqual(
-            len(results),
-            0,
-            "There should be no EvaluationResult objects when an exception occurs during javac execution.",
-        )
-        self.assertEqual(
-            len(errors),
-            1,
-            "There should be one EvaluationError when an exception occurs during javac execution.",
-        )
-
-
-class TestJavaCompilationEvaluation__parse_javac_output(TestCase):
-    def test_parse_javac_output__no_errors(self):
-        errors = parse_javac_output(JAVAC_SUCCESS_OUTPUT)
-
-        self.assertEqual(
-            len(errors),
-            0,
-            "There should be no EvaluationErrors for the provided javac success output.",
-        )
-
-    def test_parse_javac_output__with_errors(self):
-        errors = parse_javac_output(JAVAC_ERROR_OUTPUT)
-
-        self.assertEqual(
-            len(errors),
-            3,
-            "There should be three EvaluationResult objects for the provided javac error output.",
-        )
-
-        expected_errors: list[EvaluationResult] = [
-            EvaluationResult(
-                content="Fehler: <ID> erwartet",
-                metadata={
-                    "file": "./.mdagent-workspace/test/Family.java",
-                    "line": 2,
-                    "block": ERROR_BLOCK_1,
-                },
-            ),
-            EvaluationResult(
-                content="Fehler: ';' erwartet",
-                metadata={
-                    "file": "./.mdagent-workspace/test/Family.java",
-                    "line": 6,
-                    "block": ERROR_BLOCK_2,
-                },
-            ),
-            EvaluationResult(
-                content="Fehler: class, interface, enum oder record erwartet",
-                metadata={
-                    "file": "./.mdagent-workspace/test/Family.java",
-                    "line": 10,
-                    "block": ERROR_BLOCK_3,
-                },
-            ),
-        ]
-
-        for error, expected_error in zip(errors, expected_errors):
+        self.assertEqual(len(results), 3)
+        for result in results:
             self.assertEqual(
-                expected_error.content,
-                error.content,
-                f"Expected error message '{expected_error.content}' not found in actual error message '{error.content}'.",
+                result.metadata["file"], "/workspace/Test.java"
             )
+            self.assertEqual(result.metadata["success"], False)
 
-    def test_parse_javac_output__symbol_errors(self):
-        errors = parse_javac_output(SYMBOL_ERRORS)
+    def test_parse_empty_output(self):
+        """Test parsing empty output."""
+        results = parse_mvn_compile_output("")
+        self.assertEqual(len(results), 0)
 
-        self.assertEqual(
-            len(errors),
-            6,
-            "There should be six EvaluationResult objects for the provided javac symbol error output.",
-        )
+    def test_parse_whitespace_only_output(self):
+        """Test parsing whitespace-only output."""
+        results = parse_mvn_compile_output("   \n\n   ")
+        self.assertEqual(len(results), 0)
 
-        expected_error_messages = [
-            "Fehler: Symbol nicht gefunden",
-        ]
 
-        for error in errors:
-            self.assertIn(
-                error.content,
-                expected_error_messages,
-                f"Expected error message not found in actual error message '{error.content}'.",
-            )
+class TestJavaCompilationEvaluationIntegration(TestCase):
+    """Integration tests for JavaCompilationEvaluation with real MavenProject."""
+
+    def test_end_to_end_with_mock_project(self):
+        """Test complete flow with mocked MavenProject."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            workspace = Path(temp_dir)
+            
+            # Create mock project
+            mock_project = MagicMock(spec=MavenProject)
+            mock_project.workspace = workspace
+            mock_project.compile.return_value = (True, "BUILD SUCCESS")
+
+            mock_factory = MagicMock(return_value=mock_project)
+            evaluation = JavaCompilationEvaluation(maven_project_factory=mock_factory)
+
+            # Setup
+            asyncio.run(evaluation.setup(project_path=workspace))
+
+            # Run
+            results, errors = asyncio.run(evaluation.run())
+
+            # Verify
+            self.assertEqual(len(results), 1)
+            self.assertEqual(len(errors), 0)
+            self.assertTrue(results[0].metadata["success"])
+
+    def test_factory_called_only_in_setup(self):
+        """Test that factory is called during setup, not during each run."""
+        workspace = Path("/test/workspace")
+        mock_project = MagicMock(spec=MavenProject)
+        mock_project.workspace = workspace
+        mock_project.compile.return_value = (True, "BUILD SUCCESS")
+        
+        mock_factory = MagicMock(return_value=mock_project)
+        evaluation = JavaCompilationEvaluation(maven_project_factory=mock_factory)
+
+        # Setup should call factory
+        asyncio.run(evaluation.setup(project_path=workspace))
+        self.assertEqual(mock_factory.call_count, 1)
+
+        # Multiple runs should not call factory again
+        asyncio.run(evaluation.run())
+        asyncio.run(evaluation.run())
+        self.assertEqual(mock_factory.call_count, 1)
