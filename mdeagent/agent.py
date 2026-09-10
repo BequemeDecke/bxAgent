@@ -24,6 +24,7 @@ from mdeagent.implementation.node import create_implementation_node
 from mdeagent.mapping import (
     map_workflow_to_commands,
     map_workflow_to_file,
+    map_workflow_to_maven_project,
     map_workflow_to_workspace,
 )
 from mdeagent.models import build_base_model
@@ -32,7 +33,11 @@ from mdeagent.preparation.node import create_preparation_node
 from mdeagent.state import MDEAgentState
 
 
-def build_mdeagent(workspace_path: Path, benchmarx_path: Path | None = None, download_benchmarx: bool = False) -> StateGraph[MDEAgentState]:
+def build_mdeagent(
+    workspace_path: Path,
+    benchmarx_path: Path | None = None,
+    download_benchmarx: bool = False,
+) -> StateGraph[MDEAgentState]:
     # 1. Initialize the core components of the MDEAgent
     llm = build_base_model()
     check_transformation_iteration = create_check_transformation_iteration_function(llm)
@@ -86,7 +91,7 @@ def build_mdeagent(workspace_path: Path, benchmarx_path: Path | None = None, dow
         evaluation_executor=agent_evaluator,
         mapper={
             "file_existence": map_workflow_to_file,
-            "java_compilation": map_workflow_to_file,
+            "java_compilation": map_workflow_to_maven_project,
             "commands_installed": map_workflow_to_commands,
             "workspace_operability": map_workflow_to_workspace,
         },

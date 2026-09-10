@@ -1,14 +1,15 @@
 import logging
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable
 
 from pydantic import BaseModel
 
+from mdeagent.evaluation.types import Evaluation, EvaluationError, EvaluationResult
 from mdeagent.preparation.maven import MavenProject
 
-from ..types import Evaluation, EvaluationError, EvaluationResult
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -60,13 +61,11 @@ class JavaCompilationEvaluation(Evaluation):
 
         try:
             self._maven_project = self._maven_project_factory(project_path)
-            logging.debug(
+            logger.debug(
                 f"JavaCompilationEvaluation setup completed successfully for project at {project_path}."
             )
         except Exception as e:
-            logging.error(
-                f"Failed to load Maven project at {project_path}: {e}"
-            )
+            logger.error(f"Failed to load Maven project at {project_path}: {e}")
             raise RuntimeError(
                 f"Failed to load Maven project at {project_path}: {e}"
             ) from e
@@ -103,7 +102,7 @@ class JavaCompilationEvaluation(Evaluation):
                 results.extend(parsed_results)
 
         except Exception as e:
-            logging.exception(
+            logger.exception(
                 f"An error occurred while compiling the Maven project: {e}"
             )
             errors.append(
