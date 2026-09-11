@@ -35,7 +35,7 @@ def create_input_prompt(
     )
 
 
-def create_implement_bx_tool_node(llm: BaseChatModel, workspace: Path):
+def create_implement_bx_tool_node(llm: BaseChatModel, workspace: Path, benchmarx_path: Path):
     structured_llm = llm.with_structured_output(BxToolForEMF)
     resolver = BxToolTemplateResolver()
 

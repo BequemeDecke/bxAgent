@@ -53,7 +53,6 @@ def create_implement_transformation_node(
 
     Args:
         llm: The base chat model to use for generation.
-        workspace: The workspace path where files will be written.
         optional_plan_factory: A factory function to create a transformation plan if none exists.
         template_path: The path to the templates directory.
 

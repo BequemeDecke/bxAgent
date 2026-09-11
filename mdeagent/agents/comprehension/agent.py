@@ -2,7 +2,7 @@ from langchain.agents import create_agent
 from langchain.chat_models import BaseChatModel
 from langchain.messages import SystemMessage
 
-from mdeagent.agents.comprehension.state import ComprehensionAgentState
+from mdeagent.agents.comprehension.state import ComprehensionAgent
 from mdeagent.models import build_base_model
 from mdeagent.tools.comprehension import transformation_plan_tools
 
@@ -39,7 +39,7 @@ def build_comprehension_agent(
 
     return create_agent(
         model=model,
-        state_schema=ComprehensionAgentState,
+        state_schema=ComprehensionAgent,
         system_prompt=SystemMessage(system_prompt),
         middleware=[],
         # checkpointer=InMemorySaver(
