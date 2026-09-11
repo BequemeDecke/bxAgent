@@ -2,7 +2,7 @@ from pathlib import Path
 
 from langgraph.graph import END, START, StateGraph
 
-from mdeagent.agents import build_comprehension_agent
+from mdeagent.comprehension.agent import build_comprehension_agent
 from mdeagent.comprehension.node import create_comprehension_node
 from mdeagent.evaluation import (
     CommandInstalledEvaluation,

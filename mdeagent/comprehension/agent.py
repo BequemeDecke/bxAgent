@@ -2,7 +2,7 @@ from langchain.agents import create_agent
 from langchain.chat_models import BaseChatModel
 from langchain.messages import SystemMessage
 
-from mdeagent.agents.comprehension.state import ComprehensionAgent
+from mdeagent.comprehension.state import ComprehensionAgent
 from mdeagent.models import build_base_model
 from mdeagent.tools.comprehension import transformation_plan_tools
 
