@@ -5,8 +5,8 @@ from langgraph.graph import END, START, StateGraph
 from mdeagent.comprehension.agent import build_comprehension_agent
 from mdeagent.comprehension.node import create_comprehension_node
 from mdeagent.evaluation import (
-    CommandInstalledEvaluation,
-    CommandInstalledEvaluationConfig,
+    ToolInstalledEvaluation,
+    ToolInstalledEvaluationConfig,
     EvaluationExecutor,
     FileExistenceEvaluation,
     FileExistenceEvaluationConfig,
@@ -48,8 +48,8 @@ def build_mdeagent(
                 "evaluation_schema": WorkspaceOperabilityEvaluationConfig,
             },
             "commands_installed": {
-                "evaluation": CommandInstalledEvaluation(),
-                "evaluation_schema": CommandInstalledEvaluationConfig,
+                "evaluation": ToolInstalledEvaluation(),
+                "evaluation_schema": ToolInstalledEvaluationConfig,
             },
             "file_existence": {
                 "evaluation": FileExistenceEvaluation(),

@@ -4,8 +4,8 @@ from .pipefilter import EvaluationFilter, EvaluationPipe
 from .types import Evaluation, EvaluationError, EvaluationResult, EvaluationRun
 
 __all__ = [
-    "CommandInstalledEvaluation",
-    "CommandInstalledEvaluationConfig",
+    "ToolInstalledEvaluation",
+    "ToolInstalledEvaluationConfig",
     "Evaluation",
     "EvaluationError",
     "EvaluationExecutor",

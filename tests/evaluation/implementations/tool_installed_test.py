@@ -2,23 +2,23 @@ import asyncio
 from unittest import TestCase
 from unittest.mock import patch
 
-from mdeagent.evaluation.implementations.command_installed import (
-    CommandInstalledEvaluation,
+from mdeagent.evaluation.implementations.tool_installed import (
+    ToolInstalledEvaluation,
 )
 
 
-class CommandInstalled(TestCase):
+class ToolInstalled(TestCase):
     def test_setup__do_nothing(self):
         self.assertTrue(
-            hasattr(CommandInstalledEvaluation, "setup"),
-            "CommandInstalledEvaluation should have a 'setup' method.",
+            hasattr(ToolInstalledEvaluation, "setup"),
+            "ToolInstalledEvaluation should have a 'setup' method.",
         )
 
-        command_installed_evaluation = CommandInstalledEvaluation()
+        command_installed_evaluation = ToolInstalledEvaluation()
 
         self.assertIsNone(
             asyncio.run(command_installed_evaluation.setup()),
-            "CommandInstalledEvaluation's 'setup' method should return None.",
+            "ToolInstalledEvaluation's 'setup' method should return None.",
         )
 
     @patch("shutil.which")
@@ -26,7 +26,7 @@ class CommandInstalled(TestCase):
         mock_which.side_effect = lambda command: (
             "/usr/bin/python" if command == "python" else None
         )
-        command_installed_evaluation = CommandInstalledEvaluation()
+        command_installed_evaluation = ToolInstalledEvaluation()
 
         results, errors = asyncio.run(
             command_installed_evaluation.run(commands=["python", "nonexistentcommand"])
@@ -66,7 +66,7 @@ class CommandInstalled(TestCase):
     @patch("shutil.which")
     def test_run__exception_in_which(self, mock_which):
         mock_which.side_effect = Exception("Unexpected error in shutil.which")
-        command_installed_evaluation = CommandInstalledEvaluation()
+        command_installed_evaluation = ToolInstalledEvaluation()
 
         results, errors = asyncio.run(
             command_installed_evaluation.run(commands=["python"])

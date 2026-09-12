@@ -5,11 +5,11 @@ from pydantic import BaseModel
 from ..types import Evaluation, EvaluationError, EvaluationResult
 
 
-class CommandInstalledEvaluationConfig(BaseModel):
+class ToolInstalledEvaluationConfig(BaseModel):
     commands: list[str]
 
 
-class CommandInstalledEvaluation(Evaluation):
+class ToolInstalledEvaluation(Evaluation):
     async def setup(self):
         pass
 

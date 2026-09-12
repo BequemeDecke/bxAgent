@@ -48,8 +48,8 @@ class TestPreparationAgentIntegration(TestCase):
                     "evaluation_schema": implementations.WorkspaceOperabilityEvaluationConfig,
                 },
                 "commands_installed": {
-                    "evaluation": implementations.CommandInstalledEvaluation(),
-                    "evaluation_schema": implementations.CommandInstalledEvaluationConfig,
+                    "evaluation": implementations.ToolInstalledEvaluation(),
+                    "evaluation_schema": implementations.ToolInstalledEvaluationConfig,
                 },
             }
         )
