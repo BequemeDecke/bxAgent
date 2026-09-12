@@ -3,8 +3,8 @@ from langchain.chat_models import BaseChatModel
 from langchain.messages import SystemMessage
 
 from mdeagent.comprehension.state import ComprehensionAgent
+from mdeagent.comprehension.tools import transformation_plan_tools
 from mdeagent.models import build_base_model
-from mdeagent.tools.comprehension import transformation_plan_tools
 
 COMPREHENSION_SYSTEM_PROMPT = """
 You are the planning agent for the Ecore model transformation process.
