@@ -1,7 +1,7 @@
 import unittest
 
 from langchain.tools import BaseTool
-from mdeagent.tools.evaluation import create_evaluation_tools
+from mdeagent.evaluation.tools import create_evaluation_tools
 
 
 class TestEvaluationToolFactory(unittest.TestCase):
