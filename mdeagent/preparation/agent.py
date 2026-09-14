@@ -33,6 +33,7 @@ def build_preparation_graph(
         mapper={
             "workspace_structure": lambda state: {
                 "workspace_path": state.get("workspace_path"),
+                "artifact_id": state.get("artifact_id"),
                 "package_path": f"{state.get('group_id')}.{state.get('artifact_id')}",
             },
             "commands_installed": lambda state: {
