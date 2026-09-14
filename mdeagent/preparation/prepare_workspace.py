@@ -30,14 +30,17 @@ SPOTLESS_PLUGIN = Plugin(
     group_id="com.diffplug.spotless",
     artifact_id="spotless-maven-plugin",
     version="3.0.0",
-    configuration={
-        "java": {
-            "includes": {
-                "include": ["src/main/java/**/*.java", "src/test/java/**/*.java"]
-            },
-            "palantirJavaFormat": {"version": "2.71.0"},
-        }
-    },
+    configuration="""
+        <java>
+            <includes>
+                <include>src/main/java/**/*.java</include>
+                <include>src/test/java/**/*.java</include>
+            </includes>
+            <palantirJavaFormat>
+                <version>2.71.0</version>
+            </palantirJavaFormat>
+        </java>
+    """,
 )
 
 
@@ -76,7 +79,11 @@ def is_workspace_structure_correct(
     return True
 
 
-def create_prepare_workspace_node(fix_strategy: StructureFixStrategy, benchmarx_path: Path | None = None, download_benchmarx: bool = False):
+def create_prepare_workspace_node(
+    fix_strategy: StructureFixStrategy,
+    benchmarx_path: Path | None = None,
+    download_benchmarx: bool = False,
+):
     def prepare_workspace_node(state: PreparationState) -> PreparationState:
         workspace = state.get("workspace_path")
         if workspace is None:
@@ -137,12 +144,14 @@ def create_prepare_workspace_node(fix_strategy: StructureFixStrategy, benchmarx_
             Config.get_instance().VARIABLES.TRANSFORMATION_CLASS_NAME
         )
         # Calculate transformation class path but don't create the file (user will implement it)
-        transformation_class_path = project.get_package_path(full_package) / f"{transformation_class_name}.java"
+        transformation_class_path = (
+            project.get_package_path(full_package) / f"{transformation_class_name}.java"
+        )
 
         # Create the BxTool adapter Java file ONLY if BenchmarX is NOT being used
         # BenchmarX is not used when: benchmarx_path is None AND download_benchmarx is False
-        create_bxtool_adapter = (state_benchmarx_path is None and not download_benchmarx)
-        
+        create_bxtool_adapter = state_benchmarx_path is None and not download_benchmarx
+
         if create_bxtool_adapter:
             bxtool_class_name = f"{transformation_class_name}BxToolAdapter"
             bxtool_path = project.add_java_class(
