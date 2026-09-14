@@ -1,7 +1,7 @@
 import asyncio
-import datetime
 import unittest
 from dataclasses import asdict
+from datetime import UTC, datetime
 
 from pydantic import BaseModel
 
@@ -83,7 +83,7 @@ class TestEvaluationExecutor__execute_specific(unittest.TestCase):
         )
 
         expected_run = EvaluationRun(
-            started_at=datetime.datetime.now(),
+            started_at=datetime.now(tz=UTC),
             execution_time_ms=100,
             iteration=1,
             results=self.results,
@@ -157,14 +157,14 @@ class TestEvaluationExecutor__execute_specific(unittest.TestCase):
 class TestEvaluationExecutor__execute_all(unittest.TestCase):
     def setUp(self):
         self.run_1 = EvaluationRun(
-            started_at=datetime.datetime.now(),
+            started_at=datetime.now(tz=UTC),
             execution_time_ms=100,
             iteration=1,
             results=[EvaluationResult(content="result1")],
             errors=[],
         )
         self.run_2 = EvaluationRun(
-            started_at=datetime.datetime.now(),
+            started_at=datetime.now(tz=UTC),
             execution_time_ms=100,
             iteration=1,
             results=[],
@@ -208,21 +208,21 @@ class TestEvaluationExecutor__execute_all(unittest.TestCase):
     def test_execute_all__return_evaluation_runs(self):
         expected_runs = [
             EvaluationRun(
-                started_at=datetime.datetime.now(),
+                started_at=datetime.now(tz=UTC),
                 execution_time_ms=100,
                 iteration=1,
                 results=self.run_1.results,
                 errors=self.run_1.errors,
             ),
             EvaluationRun(
-                started_at=datetime.datetime.now(),
+                started_at=datetime.now(tz=UTC),
                 execution_time_ms=100,
                 iteration=1,
                 results=self.run_2.results,
                 errors=self.run_2.errors,
             ),
             EvaluationRun(
-                started_at=datetime.datetime.now(),
+                started_at=datetime.now(tz=UTC),
                 execution_time_ms=100,
                 iteration=1,
                 results=[],
@@ -258,14 +258,14 @@ class TestEvaluationExecutor__execute_all(unittest.TestCase):
 class TestEvaluationExecutor__get_latest_results(unittest.TestCase):
     def setUp(self):
         self.run_1 = EvaluationRun(
-            started_at=datetime.datetime.now(),
+            started_at=datetime.now(tz=UTC),
             execution_time_ms=100,
             iteration=1,
             results=[EvaluationResult(content="result1")],
             errors=[],
         )
         self.run_2 = EvaluationRun(
-            started_at=datetime.datetime.now(),
+            started_at=datetime.now(tz=UTC),
             execution_time_ms=100,
             iteration=1,
             results=[],

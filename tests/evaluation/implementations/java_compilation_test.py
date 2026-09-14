@@ -9,9 +9,7 @@ from mdeagent.evaluation.implementations.java_compilation import (
     JavaCompilationEvaluationConfig,
     parse_mvn_compile_output,
 )
-from mdeagent.evaluation.types import EvaluationResult
 from mdeagent.preparation.maven import MavenProject
-from mdeagent.preparation.pom import Pom
 
 
 class TestJavaCompilationEvaluationConfig(TestCase):
@@ -22,62 +20,28 @@ class TestJavaCompilationEvaluationConfig(TestCase):
         with self.assertRaises(ValueError):
             JavaCompilationEvaluationConfig()
 
-        config = JavaCompilationEvaluationConfig(project_path=Path("/test"))
+        config = JavaCompilationEvaluationConfig()
         self.assertEqual(config.project_path, Path("/test"))
-
-
-class TestJavaCompilationEvaluationInitialization(TestCase):
-    """Test cases for JavaCompilationEvaluation initialization."""
-
-    def test_init_with_default_factory(self):
-        """Test initialization with default MavenProject.load factory."""
-        evaluation = JavaCompilationEvaluation()
-        self.assertIsNotNone(evaluation._maven_project_factory)
-        self.assertIsNone(evaluation._maven_project)
-
-    def test_init_with_custom_factory(self):
-        """Test initialization with custom factory method."""
-        custom_factory = MagicMock()
-        evaluation = JavaCompilationEvaluation(maven_project_factory=custom_factory)
-        self.assertEqual(evaluation._maven_project_factory, custom_factory)
-        self.assertIsNone(evaluation._maven_project)
 
 
 class TestJavaCompilationEvaluationSetup(TestCase):
     """Test cases for JavaCompilationEvaluation.setup() method."""
 
-    def test_setup_loads_maven_project(self):
-        """Test that setup loads the Maven project using the factory."""
-        with tempfile.TemporaryDirectory() as temp_dir:
-            workspace = Path(temp_dir)
-            pom_path = workspace / "pom.xml"
-            pom_path.write_text("""<?xml version='1.0' encoding='utf-8'?>
-<project xmlns="http://maven.apache.org/POM/4.0.0">
-  <modelVersion>4.0.0</modelVersion>
-  <groupId>com.example</groupId>
-  <artifactId>test-app</artifactId>
-  <version>1.0-SNAPSHOT</version>
-</project>""")
+    def test_setup_is_noop(self):
+        """Test that setup() does nothing (no-op)."""
+        evaluation = JavaCompilationEvaluation()
+        # Should not raise
+        asyncio.run(evaluation.setup())
+        # No maven project loaded during setup
+        self.assertIsNone(evaluation._maven_project)
 
-            mock_project = MagicMock(spec=MavenProject)
-            mock_factory = MagicMock(return_value=mock_project)
-
-            evaluation = JavaCompilationEvaluation(maven_project_factory=mock_factory)
-            asyncio.run(evaluation.setup(project_path=workspace))
-
-            mock_factory.assert_called_once_with(workspace)
-            self.assertEqual(evaluation._maven_project, mock_project)
-
-    def test_setup_raises_on_factory_error(self):
-        """Test that setup raises RuntimeError when factory fails."""
-        mock_factory = MagicMock(side_effect=FileNotFoundError("pom.xml not found"))
-        evaluation = JavaCompilationEvaluation(maven_project_factory=mock_factory)
-
-        with self.assertRaises(RuntimeError) as context:
-            asyncio.run(evaluation.setup(project_path=Path("/nonexistent")))
-
-        self.assertIn("Failed to load Maven project", str(context.exception))
-        self.assertIn("pom.xml not found", str(context.exception))
+    def test_setup_with_kwargs(self):
+        """Test that setup() accepts but ignores kwargs."""
+        evaluation = JavaCompilationEvaluation()
+        # Should not raise
+        asyncio.run(evaluation.setup(project_path=Path("/other")))
+        # Project still not loaded (lazy loading in run())
+        self.assertIsNone(evaluation._maven_project)
 
 
 class TestJavaCompilationEvaluationRun(TestCase):
@@ -90,64 +54,8 @@ class TestJavaCompilationEvaluationRun(TestCase):
             "JavaCompilationEvaluation should have a 'run' method.",
         )
 
-    def test_run_successful_compilation(self):
-        """Test run method with successful compilation."""
-        mock_project = MagicMock(spec=MavenProject)
-        mock_project.compile.return_value = (True, "BUILD SUCCESS")
-        mock_project.workspace = Path("/test/workspace")
-
-        evaluation = JavaCompilationEvaluation()
-        evaluation._maven_project = mock_project
-
-        results, errors = asyncio.run(evaluation.run())
-
-        self.assertEqual(len(results), 1)
-        self.assertEqual(len(errors), 0)
-        self.assertEqual(results[0].content, "Maven project compiled successfully.")
-        self.assertEqual(results[0].metadata["success"], True)
-
-    def test_run_failed_compilation_with_errors(self):
-        """Test run method with failed compilation and parseable errors."""
-        mock_project = MagicMock(spec=MavenProject)
-        error_output = """
-[ERROR] /workspace/src/main/java/com/example/Test.java:[10:5] cannot find symbol
-  symbol:   class UnknownClass
-  location: class Test
-[ERROR] /workspace/src/main/java/com/example/Test.java:[15:10] ';' expected
-"""
-        mock_project.compile.return_value = (False, error_output)
-        mock_project.workspace = Path("/workspace")
-
-        evaluation = JavaCompilationEvaluation()
-        evaluation._maven_project = mock_project
-
-        results, errors = asyncio.run(evaluation.run())
-
-        self.assertEqual(len(errors), 0)
-        self.assertGreater(len(results), 0)
-        
-        # Check that at least some results indicate failure
-        failed_results = [r for r in results if not r.metadata.get("success", True)]
-        self.assertGreater(len(failed_results), 0)
-
-    def test_run_exception_during_compilation(self):
-        """Test run method when compilation raises an exception."""
-        mock_project = MagicMock(spec=MavenProject)
-        mock_project.compile.side_effect = Exception("Compilation failed")
-        mock_project.workspace = Path("/test/workspace")
-
-        evaluation = JavaCompilationEvaluation()
-        evaluation._maven_project = mock_project
-
-        results, errors = asyncio.run(evaluation.run())
-
-        self.assertEqual(len(results), 0)
-        self.assertEqual(len(errors), 1)
-        self.assertIn("Compilation failed", errors[0].message)
-        self.assertEqual(errors[0].type, "Exception")
-
-    def test_run_without_setup_uses_kwargs(self):
-        """Test that run can work without prior setup by using kwargs."""
+    def test_run_with_project_path_in_constructor(self):
+        """Test run method with project_path passed to constructor."""
         with tempfile.TemporaryDirectory() as temp_dir:
             workspace = Path(temp_dir)
             pom_path = workspace / "pom.xml"
@@ -159,25 +67,145 @@ class TestJavaCompilationEvaluationRun(TestCase):
   <version>1.0-SNAPSHOT</version>
 </project>""")
 
-            mock_project = MagicMock(spec=MavenProject)
+            with patch.object(MavenProject, 'load', return_value=MagicMock(compile=lambda: (True, "BUILD SUCCESS"), workspace=workspace)) as mock_load:
+                evaluation = JavaCompilationEvaluation(project_path=workspace)
+                results, errors = asyncio.run(evaluation.run())
+
+                mock_load.assert_called_once_with(workspace)
+                self.assertEqual(len(results), 1)
+                self.assertEqual(len(errors), 0)
+                self.assertEqual(results[0].content, "Maven project compiled successfully.")
+
+    def test_run_with_project_path_in_run_kwargs(self):
+        """Test run method with project_path passed to run() instead of constructor."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            workspace = Path(temp_dir)
+            pom_path = workspace / "pom.xml"
+            pom_path.write_text("""<?xml version='1.0' encoding='utf-8'?>
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.example</groupId>
+  <artifactId>test-app</artifactId>
+  <version>1.0-SNAPSHOT</version>
+</project>""")
+
+            mock_project = MagicMock()
             mock_project.compile.return_value = (True, "BUILD SUCCESS")
             mock_project.workspace = workspace
 
-            mock_factory = MagicMock(return_value=mock_project)
-            evaluation = JavaCompilationEvaluation(maven_project_factory=mock_factory)
+            evaluation = JavaCompilationEvaluation()  # No project_path in constructor
+            with patch.object(MavenProject, 'load', return_value=mock_project) as mock_load:
+                results, errors = asyncio.run(evaluation.run(project_path=workspace))
 
-            results, errors = asyncio.run(evaluation.run(project_path=workspace))
+                mock_load.assert_called_once_with(workspace)
+                self.assertEqual(len(results), 1)
+                self.assertEqual(len(errors), 0)
 
-            mock_factory.assert_called_once_with(workspace)
-            self.assertEqual(len(results), 1)
-            self.assertEqual(len(errors), 0)
-
-    def test_run_missing_project_path_parameter(self):
+    def test_run_without_project_path_raises(self):
         """Test that run raises ValueError when project_path is missing."""
         evaluation = JavaCompilationEvaluation()
 
-        with self.assertRaises(ValueError):
+        with self.assertRaises(ValueError) as context:
             asyncio.run(evaluation.run())
+
+        self.assertIn("project_path", str(context.exception).lower())
+
+    def test_run_successful_compilation(self):
+        """Test run method with successful compilation."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            workspace = Path(temp_dir)
+            pom_path = workspace / "pom.xml"
+            pom_path.write_text("""<?xml version='1.0' encoding='utf-8'?>
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.example</groupId>
+  <artifactId>test-app</artifactId>
+  <version>1.0-SNAPSHOT</version>
+</project>""")
+
+            mock_project = MagicMock()
+            mock_project.compile.return_value = (True, "BUILD SUCCESS")
+            mock_project.workspace = workspace
+
+            evaluation = JavaCompilationEvaluation(project_path=workspace)
+            with patch.object(MavenProject, 'load', return_value=mock_project):
+                results, errors = asyncio.run(evaluation.run())
+
+            self.assertEqual(len(results), 1)
+            self.assertEqual(len(errors), 0)
+            self.assertEqual(results[0].content, "Maven project compiled successfully.")
+            self.assertEqual(results[0].metadata["success"], True)
+
+    def test_run_failed_compilation_with_errors(self):
+        """Test run method with failed compilation and parseable errors."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            workspace = Path(temp_dir)
+            pom_path = workspace / "pom.xml"
+            pom_path.write_text("""<?xml version='1.0' encoding='utf-8'?>
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.example</groupId>
+  <artifactId>test-app</artifactId>
+  <version>1.0-SNAPSHOT</version>
+</project>""")
+
+            error_output = """
+[ERROR] /workspace/src/main/java/com/example/Test.java:[10:5] cannot find symbol
+  symbol:   class UnknownClass
+  location: class Test
+[ERROR] /workspace/src/main/java/com/example/Test.java:[15:10] ';' expected
+"""
+            mock_project = MagicMock()
+            mock_project.compile.return_value = (False, error_output)
+            mock_project.workspace = workspace
+
+            evaluation = JavaCompilationEvaluation(project_path=workspace)
+            with patch.object(MavenProject, 'load', return_value=mock_project):
+                results, errors = asyncio.run(evaluation.run())
+
+            self.assertEqual(len(errors), 0)
+            self.assertGreater(len(results), 0)
+            
+            # Check that at least some results indicate failure
+            failed_results = [r for r in results if not r.metadata.get("success", True)]
+            self.assertGreater(len(failed_results), 0)
+
+    def test_run_exception_during_compilation(self):
+        """Test run method when compilation raises an exception."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            workspace = Path(temp_dir)
+            pom_path = workspace / "pom.xml"
+            pom_path.write_text("""<?xml version='1.0' encoding='utf-8'?>
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.example</groupId>
+  <artifactId>test-app</artifactId>
+  <version>1.0-SNAPSHOT</version>
+</project>""")
+
+            mock_project = MagicMock()
+            mock_project.compile.side_effect = Exception("Compilation failed")
+            mock_project.workspace = workspace
+
+            evaluation = JavaCompilationEvaluation(project_path=workspace)
+            with patch.object(MavenProject, 'load', return_value=mock_project):
+                results, errors = asyncio.run(evaluation.run())
+
+            self.assertEqual(len(results), 0)
+            self.assertEqual(len(errors), 1)
+            self.assertIn("Compilation failed", errors[0].message)
+            self.assertEqual(errors[0].type, "Exception")
+
+    def test_run_fails_to_load_maven_project(self):
+        """Test run method when MavenProject.load fails."""
+        with patch.object(MavenProject, 'load', side_effect=FileNotFoundError("pom.xml not found")):
+            evaluation = JavaCompilationEvaluation(project_path=Path("/nonexistent"))
+            results, errors = asyncio.run(evaluation.run())
+
+            self.assertEqual(len(results), 0)
+            self.assertEqual(len(errors), 1)
+            self.assertEqual(errors[0].type, "MavenProjectLoadError")
+            self.assertIn("pom.xml not found", errors[0].message)
 
 
 class TestParseMvnCompileOutput(TestCase):
@@ -337,47 +365,119 @@ class TestParseMvnCompileOutput(TestCase):
 
 
 class TestJavaCompilationEvaluationIntegration(TestCase):
-    """Integration tests for JavaCompilationEvaluation with real MavenProject."""
+    """Integration tests for JavaCompilationEvaluation."""
 
-    def test_end_to_end_with_mock_project(self):
-        """Test complete flow with mocked MavenProject."""
+    def test_setup_is_noop(self):
+        """Test that setup() does not load the Maven project."""
         with tempfile.TemporaryDirectory() as temp_dir:
             workspace = Path(temp_dir)
+            pom_path = workspace / "pom.xml"
+            pom_path.write_text("""<?xml version='1.0' encoding='utf-8'?>
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.example</groupId>
+  <artifactId>test-app</artifactId>
+  <version>1.0-SNAPSHOT</version>
+</project>""")
+
+            evaluation = JavaCompilationEvaluation(project_path=workspace)
             
-            # Create mock project
-            mock_project = MagicMock(spec=MavenProject)
-            mock_project.workspace = workspace
+            # Setup should be no-op
+            asyncio.run(evaluation.setup())
+            
+            # Maven project should NOT be loaded yet
+            self.assertIsNone(evaluation._maven_project)
+
+    def test_project_loaded_during_run(self):
+        """Test that MavenProject.load is called during run(), not during setup."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            workspace = Path(temp_dir)
+            pom_path = workspace / "pom.xml"
+            pom_path.write_text("""<?xml version='1.0' encoding='utf-8'?>
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.example</groupId>
+  <artifactId>test-app</artifactId>
+  <version>1.0-SNAPSHOT</version>
+</project>""")
+
+            mock_project = MagicMock()
             mock_project.compile.return_value = (True, "BUILD SUCCESS")
+            mock_project.workspace = workspace
 
-            mock_factory = MagicMock(return_value=mock_project)
-            evaluation = JavaCompilationEvaluation(maven_project_factory=mock_factory)
+            evaluation = JavaCompilationEvaluation(project_path=workspace)
+            
+            # Setup should not call load
+            asyncio.run(evaluation.setup())
+            self.assertIsNone(evaluation._maven_project)
+            
+            # Run should call load
+            with patch.object(MavenProject, 'load', return_value=mock_project) as mock_load:
+                results, errors = asyncio.run(evaluation.run())
+                mock_load.assert_called_once_with(workspace)
+            
+            # Project should now be loaded
+            self.assertIsNotNone(evaluation._maven_project)
 
-            # Setup
-            asyncio.run(evaluation.setup(project_path=workspace))
+    def test_complete_flow_with_mock(self):
+        """Test complete flow: constructor -> setup -> run."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            workspace = Path(temp_dir)
+            pom_path = workspace / "pom.xml"
+            pom_path.write_text("""<?xml version='1.0' encoding='utf-8'?>
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.example</groupId>
+  <artifactId>test-app</artifactId>
+  <version>1.0-SNAPSHOT</version>
+</project>""")
 
-            # Run
-            results, errors = asyncio.run(evaluation.run())
+            mock_project = MagicMock()
+            mock_project.compile.return_value = (True, "BUILD SUCCESS")
+            mock_project.workspace = workspace
 
-            # Verify
+            evaluation = JavaCompilationEvaluation(project_path=workspace)
+
+            # 1. Constructor - no load yet
+            self.assertIsNone(evaluation._maven_project)
+            
+            # 2. Setup - still no load (no-op)
+            asyncio.run(evaluation.setup())
+            self.assertIsNone(evaluation._maven_project)
+            
+            # 3. Run - load called, compilation executed
+            with patch.object(MavenProject, 'load', return_value=mock_project) as mock_load:
+                results, errors = asyncio.run(evaluation.run())
+                mock_load.assert_called_once()
+            
+            # 4. Verify results
             self.assertEqual(len(results), 1)
             self.assertEqual(len(errors), 0)
             self.assertTrue(results[0].metadata["success"])
 
-    def test_factory_called_only_in_setup(self):
-        """Test that factory is called during setup, not during each run."""
-        workspace = Path("/test/workspace")
-        mock_project = MagicMock(spec=MavenProject)
-        mock_project.workspace = workspace
-        mock_project.compile.return_value = (True, "BUILD SUCCESS")
-        
-        mock_factory = MagicMock(return_value=mock_project)
-        evaluation = JavaCompilationEvaluation(maven_project_factory=mock_factory)
+    def test_project_path_from_run_kwargs(self):
+        """Test that project_path can be passed to run() instead of constructor."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            workspace = Path(temp_dir)
+            pom_path = workspace / "pom.xml"
+            pom_path.write_text("""<?xml version='1.0' encoding='utf-8'?>
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.example</groupId>
+  <artifactId>test-app</artifactId>
+  <version>1.0-SNAPSHOT</version>
+</project>""")
 
-        # Setup should call factory
-        asyncio.run(evaluation.setup(project_path=workspace))
-        self.assertEqual(mock_factory.call_count, 1)
+            mock_project = MagicMock()
+            mock_project.compile.return_value = (True, "BUILD SUCCESS")
+            mock_project.workspace = workspace
 
-        # Multiple runs should not call factory again
-        asyncio.run(evaluation.run())
-        asyncio.run(evaluation.run())
-        self.assertEqual(mock_factory.call_count, 1)
+            # No project_path in constructor
+            evaluation = JavaCompilationEvaluation()
+
+            with patch.object(MavenProject, 'load', return_value=mock_project) as mock_load:
+                results, errors = asyncio.run(evaluation.run(project_path=workspace))
+                mock_load.assert_called_once_with(workspace)
+            
+            self.assertEqual(len(results), 1)
+            self.assertEqual(len(errors), 0)

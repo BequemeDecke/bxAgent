@@ -53,7 +53,7 @@ def create_evaluation_node(
 
             # Execute only the evaluations related to transformation implementation with the mapped parameters
             latest_results = {}
-            for evaluation_name in mapper.keys():
+            for evaluation_name in mapper:
                 evaluation_run = await evaluation_executor.execute_specific(
                     evaluation_id=evaluation_name,
                     input=input_parameters[evaluation_name],

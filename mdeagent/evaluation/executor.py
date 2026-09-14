@@ -1,10 +1,15 @@
 import asyncio
-import datetime
+from datetime import UTC, datetime
 from typing import Any, TypedDict
 
 from pydantic import BaseModel
 
-from .types import Evaluation, EvaluationError, EvaluationResult, EvaluationRun
+from mdeagent.evaluation.types import (
+    Evaluation,
+    EvaluationError,
+    EvaluationResult,
+    EvaluationRun,
+)
 
 
 class EvaluationInit(TypedDict):
@@ -58,7 +63,7 @@ class EvaluationExecutor:
         results = []
         tasks = [
             self.execute_specific(evaluation_id, input=input[evaluation_id])
-            for evaluation_id in self.evaluations.keys()
+            for evaluation_id in self.evaluations
         ]
         results = await asyncio.gather(*tasks)
         return results
@@ -75,7 +80,9 @@ class EvaluationExecutor:
 
         validated_params = evaluation_schema.model_validate(input)
 
-        started_at = datetime.datetime.now()
+        await evaluation.setup()
+
+        started_at = datetime.now(tz=UTC)
         iteration = (
             self.iterations[evaluation_id][-1].iteration + 1
             if self.iterations[evaluation_id]
@@ -96,7 +103,7 @@ class EvaluationExecutor:
                 ],
             )
         execution_time_ms = int(
-            (datetime.datetime.now() - started_at).total_seconds() * 1000
+            (datetime.now(tz=UTC) - started_at).total_seconds() * 1000
         )
 
         run = EvaluationRun(

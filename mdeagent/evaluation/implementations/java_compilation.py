@@ -2,7 +2,7 @@ import logging
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 from pydantic import BaseModel
 
@@ -38,37 +38,18 @@ class JavaCompilationEvaluation(Evaluation):
 
     def __init__(
         self,
-        maven_project_factory: Callable[[Path], MavenProject] | None = None,
     ):
         """
         Initialize the JavaCompilationEvaluation.
-
-        :param maven_project_factory: Optional factory method to create/load a MavenProject.
-                                      If not provided, MavenProject.load will be used.
         """
-        self._maven_project_factory = maven_project_factory or MavenProject.load
-        self._maven_project: MavenProject | None = None
 
     async def setup(self, **kwargs) -> None:
         """
-        Set up the evaluation by loading the Maven project.
+        Setup method (no-op). The Maven project is loaded lazily in run().
 
         :param kwargs: Configuration arguments, must include 'project_path'.
-        :raises RuntimeError: If the Maven project cannot be loaded.
         """
-        config = JavaCompilationEvaluationConfig(**kwargs)
-        project_path = config.project_path
-
-        try:
-            self._maven_project = self._maven_project_factory(project_path)
-            logger.debug(
-                f"JavaCompilationEvaluation setup completed successfully for project at {project_path}."
-            )
-        except Exception as e:
-            logger.error(f"Failed to load Maven project at {project_path}: {e}")
-            raise RuntimeError(
-                f"Failed to load Maven project at {project_path}: {e}"
-            ) from e
+        pass
 
     async def run(
         self, **kwargs
@@ -76,13 +57,24 @@ class JavaCompilationEvaluation(Evaluation):
         """
         Compile the Maven project and parse any compilation errors.
 
-        :param kwargs: Configuration arguments, must include 'project_path' if setup was not called.
+        :param kwargs: Configuration arguments, must include 'project_path'.
         :return: A tuple containing a list of evaluation results and a list of evaluation errors.
         """
-        # If project was not set up yet, do it now
-        if self._maven_project is None:
-            config = JavaCompilationEvaluationConfig(**kwargs)
-            self._maven_project = self._maven_project_factory(config.project_path)
+        project_path = kwargs.get("project_path", None)
+        if project_path is None:
+            raise ValueError("project_path is required (passed to constructor or run())")
+
+        try:
+            self._maven_project = MavenProject.load(project_path)
+        except Exception as e:
+            logger.exception(f"Failed to load Maven project at {project_path}")
+            return [], [
+                EvaluationError(
+                    message=f"Failed to load Maven project at {project_path}: {e}",
+                    type="MavenProjectLoadError",
+                    details={"project_path": str(project_path)},
+                )
+            ]
 
         results: list[EvaluationResult] = []
         errors: list[EvaluationError] = []
