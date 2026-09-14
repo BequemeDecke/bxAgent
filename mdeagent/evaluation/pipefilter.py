@@ -1,6 +1,6 @@
 from typing import Callable
 
-from .types import EvaluationResult
+from mdeagent.evaluation.types import EvaluationResult
 
 EvaluationFilter = Callable[[list[EvaluationResult]], list[EvaluationResult]]
 
