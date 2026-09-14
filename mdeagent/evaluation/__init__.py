@@ -18,6 +18,6 @@ __all__ = [
     "JavaCompilationEvaluation",
     "JavaCompilationEvaluationConfig",
     "StateToEvaluationMapper",
-    "WorkspaceOperabilityEvaluation",
-    "WorkspaceOperabilityEvaluationConfig",
+    "WorkspaceStructureEvaluation",
+    "WorkspaceStructureSchema",
 ]

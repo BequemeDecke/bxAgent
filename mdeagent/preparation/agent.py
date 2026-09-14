@@ -31,7 +31,7 @@ def build_preparation_graph(
     validate_preparation_node = create_evaluation_node(
         evaluation_executor=evaluation_executor,
         mapper={
-            "workspace_operability": lambda state: {
+            "workspace_structure": lambda state: {
                 "workspace_path": state.get("workspace_path"),
                 "package_path": f"{state.get('group_id')}.{state.get('artifact_id')}",
             },

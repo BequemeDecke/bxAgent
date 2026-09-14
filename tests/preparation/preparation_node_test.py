@@ -58,9 +58,9 @@ class TestPreparationNodeIntegration(TestCase):
         self.preparation_agent = build_preparation_graph(
             evaluation_executor=EvaluationExecutor(
                 evaluations={
-                    "workspace_operability": {
-                        "evaluation": implementations.WorkspaceOperabilityEvaluation(),
-                        "evaluation_schema": implementations.WorkspaceOperabilityEvaluationConfig,
+                    "workspace_structure": {
+                        "evaluation": implementations.WorkspaceStructureEvaluation(),
+                        "evaluation_schema": implementations.WorkspaceStructureSchema,
                     },
                     "commands_installed": {
                         "evaluation": implementations.ToolInstalledEvaluation(),

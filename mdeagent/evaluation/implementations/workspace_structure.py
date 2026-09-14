@@ -2,15 +2,17 @@ from pathlib import Path
 
 from pydantic import BaseModel
 
-from ..types import Evaluation, EvaluationError, EvaluationResult
+from mdeagent.evaluation.types import Evaluation, EvaluationError, EvaluationResult
 
 
-class WorkspaceOperabilityEvaluationConfig(BaseModel):
+class WorkspaceStructureSchema(BaseModel):
     workspace_path: Path
+    group_id: str
+    artifact_id: str
     package_path: str
 
 
-class WorkspaceOperabilityEvaluation(Evaluation):
+class WorkspaceStructureEvaluation(Evaluation):
     async def setup(self) -> None:
         pass
 

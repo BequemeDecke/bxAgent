@@ -3,32 +3,32 @@ import tempfile
 from pathlib import Path
 from unittest import TestCase
 
-from mdeagent.evaluation.implementations.workspace_operability import (
-    WorkspaceOperabilityEvaluation,
+from mdeagent.evaluation.implementations.workspace_structure import (
+    WorkspaceStructureEvaluation,
 )
 
 
-class TestWorkspaceOperability(TestCase):
+class TestWorkspaceStructure(TestCase):
     def test_setup__do_nothing(self):
         self.assertTrue(
-            hasattr(WorkspaceOperabilityEvaluation, "setup"),
-            "WorkspaceOperabilityEvaluation should have a 'setup' method.",
+            hasattr(WorkspaceStructureEvaluation, "setup"),
+            "WorkspaceStructureEvaluation should have a 'setup' method.",
         )
 
-        workspace_operability_evaluation = WorkspaceOperabilityEvaluation()
+        workspace_structure_evaluation = WorkspaceStructureEvaluation()
 
         self.assertIsNone(
-            asyncio.run(workspace_operability_evaluation.setup()),
-            "WorkspaceOperabilityEvaluation's 'setup' method should return None.",
+            asyncio.run(workspace_structure_evaluation.setup()),
+            "WorkspaceStructureEvaluation's 'setup' method should return None.",
         )
 
-    def test_workspace_operability__no_workspace_folder(self):
+    def test_workspace_structure__no_workspace_folder(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             workspace_path = Path(temp_dir) / "missing-workspace"
 
-            workspace_operability_evaluation = WorkspaceOperabilityEvaluation()
+            workspace_structure_evaluation = WorkspaceStructureEvaluation()
             results, errors = asyncio.run(
-                workspace_operability_evaluation.run(
+                workspace_structure_evaluation.run(
                     workspace_path=workspace_path,
                     package_path="de.example.mdagent",
                 )
@@ -65,15 +65,15 @@ class TestWorkspaceOperability(TestCase):
                 "Expected package path error was not returned.",
             )
 
-    def test_workspace_operability__invalid_transformation_md(self):
+    def test_workspace_structure__invalid_transformation_md(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             workspace_path = Path(temp_dir)
             package_path = workspace_path / "src" / "de" / "example"
             package_path.mkdir(parents=True)
 
-            workspace_operability_evaluation = WorkspaceOperabilityEvaluation()
+            workspace_structure_evaluation = WorkspaceStructureEvaluation()
             results, errors = asyncio.run(
-                workspace_operability_evaluation.run(
+                workspace_structure_evaluation.run(
                     workspace_path=workspace_path,
                     package_path="de.example",
                 )
@@ -95,16 +95,16 @@ class TestWorkspaceOperability(TestCase):
                 "Expected TRANSFORMATION.md error message does not match.",
             )
 
-    def test_workspace_operability__invalid_package_path(self):
+    def test_workspace_structure__invalid_package_path(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             workspace_path = Path(temp_dir)
             (workspace_path / "TRANSFORMATION.md").write_text("# transformation")
             package_path = workspace_path / "src" / "de" / "example"
             package_path.mkdir(parents=True)
 
-            workspace_operability_evaluation = WorkspaceOperabilityEvaluation()
+            workspace_structure_evaluation = WorkspaceStructureEvaluation()
             results, errors = asyncio.run(
-                workspace_operability_evaluation.run(
+                workspace_structure_evaluation.run(
                     workspace_path=workspace_path,
                     package_path="de.example.mdagent",
                 )

@@ -12,8 +12,8 @@ from mdeagent.evaluation import (
     FileExistenceEvaluationConfig,
     JavaCompilationEvaluation,
     JavaCompilationEvaluationConfig,
-    WorkspaceOperabilityEvaluation,
-    WorkspaceOperabilityEvaluationConfig,
+    WorkspaceStructureEvaluation,
+    WorkspaceStructureSchema,
 )
 from mdeagent.evaluation.node import create_evaluation_node
 from mdeagent.guardrails.transformation_iteration_control import (
@@ -43,9 +43,9 @@ def build_mdeagent(
     check_transformation_iteration = create_check_transformation_iteration_function(llm)
     agent_evaluator = EvaluationExecutor(
         evaluations={
-            "workspace_operability": {
-                "evaluation": WorkspaceOperabilityEvaluation(),
-                "evaluation_schema": WorkspaceOperabilityEvaluationConfig,
+            "workspace_structure": {
+                "evaluation": WorkspaceStructureEvaluation(),
+                "evaluation_schema": WorkspaceStructureSchema,
             },
             "commands_installed": {
                 "evaluation": ToolInstalledEvaluation(),
@@ -93,7 +93,7 @@ def build_mdeagent(
             "file_existence": map_workflow_to_file,
             "java_compilation": map_workflow_to_maven_project,
             "commands_installed": map_workflow_to_commands,
-            "workspace_operability": map_workflow_to_workspace,
+            "workspace_structure": map_workflow_to_workspace,
         },
     )
 

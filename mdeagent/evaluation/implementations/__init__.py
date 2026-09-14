@@ -4,9 +4,9 @@ from .tool_installed import (
     ToolInstalledEvaluation,
     ToolInstalledEvaluationConfig,
 )
-from .workspace_operability import (
-    WorkspaceOperabilityEvaluation,
-    WorkspaceOperabilityEvaluationConfig,
+from .workspace_structure import (
+    WorkspaceStructureEvaluation,
+    WorkspaceStructureSchema,
 )
 
 __all__ = [
@@ -16,6 +16,6 @@ __all__ = [
     "JavaCompilationEvaluationConfig",
     "ToolInstalledEvaluation",
     "ToolInstalledEvaluationConfig",
-    "WorkspaceOperabilityEvaluation",
-    "WorkspaceOperabilityEvaluationConfig",
+    "WorkspaceStructureEvaluation",
+    "WorkspaceStructureSchema",
 ]
