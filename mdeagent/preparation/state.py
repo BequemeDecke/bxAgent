@@ -34,3 +34,6 @@ class PreparationState(TypedDict):
     
     # === Evaluation ===
     latest_evaluation_runs: list[EvaluationRun]
+
+    # === Tracking ===
+    iteration: int = 0  # Number of prepare_workspace iterations; used by the conditional edge to detect the very first run

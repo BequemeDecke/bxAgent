@@ -48,6 +48,10 @@ def create_preparation_node(
             group_id=group_id,
             artifact_id=artifact_id,
             required_tools=required_tools,
+            # Start the preparation agent loop at iteration 0 so that the
+            # conditional edge after `evaluate_preparation` routes to
+            # `prepare_workspace` on the very first run.
+            iteration=0,
         )
         response: GraphOutput = await preparation_agent.ainvoke(
             prep_invoke_state, version="v2"
