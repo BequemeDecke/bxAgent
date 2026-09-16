@@ -1,3 +1,4 @@
+from pathlib import Path
 from unittest import TestCase
 from unittest.mock import Mock, patch
 
@@ -36,10 +37,13 @@ class TestBuildImplementationGraph(TestCase):
             name="evaluate_transformation_implementation"
         )
 
-        # Function under test
+        # Function under test. ``benchmarx_path`` is provided so that the BenchmarX
+        # branch is taken and ``create_implement_bx_tool_node`` is actually invoked
+        # (the assertion below relies on it being called once).
         graph = build_implementation_graph(
             evaluation_executor=Mock(name="evaluation_executor"),
             workspace_path=Mock(name="workspace_path"),
+            benchmarx_path=Path("/fake/benchmarx"),
         )
 
         # Assertions

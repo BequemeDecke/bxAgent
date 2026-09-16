@@ -10,6 +10,7 @@ This component uses a few llm calls which will make testing more difficult. Ther
 2. Agent Evaluation: This will be an end-to-end test where the node is tested as part of the entire agent.
 """
 
+import asyncio
 from pathlib import Path
 from unittest import TestCase
 from unittest.mock import Mock, patch
@@ -87,9 +88,13 @@ class TestImplementTransformation(TestCase):
         self.mocked_llm.with_structured_output.return_value = (
             self.mocked_llm_structured_output
         )
-        self.mocked_llm_structured_output.invoke.return_value = TransformationClassSpec(
-            **self.fake_data
-        )
+        # The node under test is ``async def`` and calls ``structured_llm.ainvoke``.
+        # Mock the *async* ``ainvoke`` (not the sync ``invoke``) with an async
+        # side_effect, following the pattern used elsewhere in this test suite.
+        async def fake_ainvoke(*args, **kwargs):
+            return TransformationClassSpec(**self.fake_data)
+
+        self.mocked_llm_structured_output.ainvoke = Mock(side_effect=fake_ainvoke)
 
     @patch("pathlib.Path.touch")
     @patch("pathlib.Path.write_text")
@@ -127,9 +132,9 @@ class TestImplementTransformation(TestCase):
             "implementation_iteration": 1,
         }
 
-        actual_state = implement_transformation(state)
+        actual_state = asyncio.run(implement_transformation(state))
 
-        self.assertTrue(self.mocked_llm_structured_output.invoke.called)
+        self.assertTrue(self.mocked_llm_structured_output.ainvoke.called)
         self.assertIn("written_java_files", actual_state)
         self.assertEqual(
             actual_state["written_java_files"],
@@ -176,7 +181,7 @@ class TestImplementTransformation(TestCase):
             "implementation_iteration": 1,
         }
 
-        actual_state = implement_transformation(state)
+        actual_state = asyncio.run(implement_transformation(state))
 
         self.assertIn(existing_file, actual_state["written_java_files"])
         self.assertIn(Path("/tmp/workspace/MyTransformation.java"), actual_state["written_java_files"])
@@ -222,7 +227,7 @@ class TestImplementTransformation(TestCase):
             "implementation_iteration": 1,
         }
 
-        actual_state = implement_transformation(state)
+        actual_state = asyncio.run(implement_transformation(state))
 
         self.assertEqual(actual_state["transformation_md"], mocked_transformation_plan)
         self.assertTrue(mocked_transformation_plan.__str__.called)
@@ -268,10 +273,10 @@ class TestImplementTransformation(TestCase):
             "implementation_iteration": 1,
         }
 
-        actual_state = implement_transformation(state)
+        actual_state = asyncio.run(implement_transformation(state))
 
         # Verify that the LLM was called with a prompt that includes the transformation plan
-        call_args = self.mocked_llm_structured_output.invoke.call_args
+        call_args = self.mocked_llm_structured_output.ainvoke.call_args
         prompt = call_args.kwargs.get("input") or call_args.args[0]
         self.assertIn("--- BEGIN TRANSFORMATION PLAN ---", prompt)
         self.assertIn(plan_content, prompt)
