@@ -8,7 +8,7 @@ Two types of tests should be implemented:
 import asyncio
 from pathlib import Path
 from unittest import TestCase
-from unittest.mock import Mock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 from langchain.chat_models import BaseChatModel
 
@@ -85,13 +85,14 @@ class TestImplementBxTool(TestCase):
         mocked_llm = Mock(spec=BaseChatModel)
         mocked_llm_structured_output = Mock(spec=BaseChatModel)
         mocked_llm.with_structured_output.return_value = mocked_llm_structured_output
-        mocked_llm_structured_output.ainvoke.return_value = BxToolForEMF(
-            **self.fake_data
+        # The node awaits `structured_llm.ainvoke(...)`, so the mock must be async.
+        mocked_llm_structured_output.ainvoke = AsyncMock(
+            return_value=BxToolForEMF(**self.fake_data)
         )
 
         # --- Node ---
         self.implement_bx_tool = create_implement_bx_tool_node(
-            mocked_llm, Path("/tmp/workspace")
+            mocked_llm, Path("/tmp/workspace"), Path("/tmp/benchmarx")
         )
 
     @patch("pathlib.Path.write_text")
@@ -125,6 +126,10 @@ class TestImplementBxTool(TestCase):
             actual_written_files[0],
             bxtool_path,
         )
+
+        # The iteration counter is advanced by the `evaluate_implementation`
+        # node, NOT by this work node (see `agent.py`).
+        self.assertNotIn("iteration", new_state)
 
         # Check if the template resolver methods were called with the correct parameters
         mock_get_raw_template.assert_called_once()

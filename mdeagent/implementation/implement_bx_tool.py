@@ -59,6 +59,11 @@ def create_implement_bx_tool_node(llm: BaseChatModel, workspace: Path, benchmarx
         bxtool_path.touch(exist_ok=True)
         bxtool_path.write_text(bx_tool)
 
-        return {"written_java_files": state.get("written_java_files", []) + [bxtool_path]}
+        # NOTE: The iteration counter is advanced in the ``evaluate_implementation``
+        # node (see ``agent.py``), not in the work nodes. See
+        # ``implement_transformation`` for the rationale.
+        return {
+            "written_java_files": state.get("written_java_files", []) + [bxtool_path],
+        }
 
     return implement_bx_tool

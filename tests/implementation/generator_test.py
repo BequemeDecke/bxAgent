@@ -66,8 +66,8 @@ class TestTransformationGeneration(TestCase):
             written_java_files=[],
             bxtool_path=Path("/tmp/workspace"),
             transformation_implementation="public class MyTransformation { }",
-            latest_evaluation_results={},
-            implementation_iteration=1,
+            latest_evaluation_runs={},
+            iteration=1,
         )
 
         new_state = self.generate_transformation(state)

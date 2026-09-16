@@ -16,7 +16,7 @@ class TestFormatCodeNode(TestCase):
             workspace=Path("/fake/workspace")
         )
 
-    @patch("mdeagent.preparation.maven.MavenProject.format_code")
+    @patch("mdeagent.preparation.maven.MavenProject.format")
     def test_format_code_node__calls_format_java_files(self, mock_format):
         """Test that the format_code node calls MavenProject.format_code and returns the state unchanged"""
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -36,8 +36,8 @@ class TestFormatCodeNode(TestCase):
                 "written_java_files": [],
                 "bxtool_path": bxtool_path,
                 "transformation_implementation": "test implementation",
-                "latest_evaluation_results": {},
-                "implementation_iteration": 1,
+                "latest_evaluation_runs": {},
+                "iteration": 1,
                 "maven_project_path": workspace_path,
             }
 

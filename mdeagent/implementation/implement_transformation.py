@@ -94,6 +94,15 @@ def create_implement_transformation_node(
         # 6. Retrieve the written files from the state and add the new one
         written_java_files = state.get("written_java_files", []) + [transformation_class_path]
 
+        # NOTE: The iteration counter is *not* advanced here. Unlike the
+        # preparation subgraph (which has a single work node), the
+        # implementation graph may run several work nodes per cycle
+        # (``implement_transformation`` + ``implement_bx_tool``), and the
+        # ``integration_error`` branch even routes back to ``implement_bx_tool``
+        # without re-running ``implement_transformation``. Incrementing in a
+        # work node would therefore either double-count or skip the increment
+        # entirely. The counter is advanced once per cycle in the
+        # ``evaluate_implementation`` node instead (see ``agent.py``).
         return {
             "transformation_md": transformation_plan,
             "written_java_files": written_java_files,
