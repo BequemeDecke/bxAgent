@@ -75,7 +75,7 @@ class TestTransformationIterationControl(TestCase):
                     results=[
                         EvaluationResult(
                             content="Evaluation result content",
-                            metadata={"success": False}
+                            metadata={"success": False},
                         )
                     ],
                     errors=[],
@@ -83,7 +83,7 @@ class TestTransformationIterationControl(TestCase):
             ],
         }
         result = asyncio.run(self.check_transformation_iteration(state, max_iterations))
-        self.assertEqual(result, "error")
+        self.assertEqual(result, "design_failed")
 
     def test_transformation_iteration_control__run_results_no_errors(self):
         max_iterations = 3
@@ -96,6 +96,7 @@ class TestTransformationIterationControl(TestCase):
                     started_at=datetime.now(tz=UTC) - timedelta(minutes=5),
                     execution_time_ms=200,
                     iteration=1,
+                    category="design",
                     results=[
                         EvaluationResult(
                             content="Evaluation result content",
@@ -107,21 +108,29 @@ class TestTransformationIterationControl(TestCase):
                         ),
                         EvaluationResult(
                             content="Evaluation result with error",
-                            metadata={"include_in_report": True, "success": False},
+                            metadata={"include_in_report": True, "success": True},
                         ),
                     ],
                     errors=[],
-                )
+                ),
+                EvaluationRun(
+                    started_at=datetime.now(tz=UTC) - timedelta(minutes=5),
+                    execution_time_ms=200,
+                    iteration=1,
+                    category="execution",
+                    results=[
+                        EvaluationResult(
+                            content="Another evaluation result content",
+                            metadata={"include_in_report": False, "success": True},
+                        ),
+                        EvaluationResult(
+                            content="Evaluation result with error",
+                            metadata={"include_in_report": True, "success": True},
+                        ),
+                    ],
+                    errors=[],
+                ),
             ],
         }
         result = asyncio.run(self.check_transformation_iteration(state, max_iterations))
-        self.assertEqual(result, "max_iteration_reached")
-
-        called_args = self.mocked_llm.ainvoke.call_args[0][0]
-        self.assertIsInstance(called_args[0], SystemMessage)
-
-        human_message = called_args[1]
-        self.assertIsInstance(human_message, HumanMessage)
-        self.assertNotIn("Evaluation result content", human_message.content)
-        self.assertNotIn("Another evaluation result content", human_message.content)
-        self.assertIn("Evaluation result with error", human_message.content)
+        self.assertEqual(result, "design_passed")

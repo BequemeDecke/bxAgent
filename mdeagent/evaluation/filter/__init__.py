@@ -37,7 +37,7 @@ def _is_execution_run(
     Filter function to determine if evaluation runs contain execution errors.
     Returns a list of results that are execution errors.
     """
-    return [run.category == "execution" for run in runs if len(run.results) > 0]
+    return [run for run in runs if run.category == "execution" and len(run.results) > 0]
 
 
 IsExecutionRunFilter: EvaluationFilter = _is_execution_run
@@ -50,6 +50,7 @@ def _is_design_run(
     Filter function to determine if evaluation runs contain design errors.
     Returns a list of results that are design errors.
     """
-    return [run.category == "design" for run in runs if len(run.results) > 0]
+    return [run for run in runs if run.category == "design" and len(run.results) > 0]
+
 
 IsDesignRunFilter: EvaluationFilter = _is_design_run
