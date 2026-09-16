@@ -6,7 +6,7 @@ from ..types import Evaluation, EvaluationError, EvaluationResult
 
 
 class ToolInstalledEvaluationConfig(BaseModel):
-    commands: list[str]
+    tools: list[str]
 
 
 class ToolInstalledEvaluation(Evaluation):
@@ -17,36 +17,36 @@ class ToolInstalledEvaluation(Evaluation):
         self, **kwargs
     ) -> tuple[list[EvaluationResult], list[EvaluationError]]:
         """
-        This evaluation checks whether the specified commands are installed on the machine.
+        This evaluation checks whether the specified tools are installed on the machine.
         """
 
-        commands = kwargs.get("commands", [])
+        tools = kwargs.get("tools", [])
 
         results = []
         errors = []
 
-        for command in commands:
+        for tool in tools:
             try:
-                if shutil.which(command) is None:
+                if shutil.which(tool) is None:
                     results.append(
                         EvaluationResult(
-                            content=f"Command '{command}' is not installed on the system.",
+                            content=f"Command '{tool}' is not installed on the system.",
                             metadata={"success": False, "include_in_report": False},
                         )
                     )
                 else:
                     results.append(
                         EvaluationResult(
-                            content=f"Command '{command}' is installed on the system.",
+                            content=f"Command '{tool}' is installed on the system.",
                             metadata={"success": True, "include_in_report": False},
                         )
                     )
             except Exception as e:
                 errors.append(
                     EvaluationError(
-                        message=f"An error occurred while checking command '{command}': {str(e)}",
+                        message=f"An error occurred while checking tool '{tool}': {str(e)}",
                         type=type(e).__name__,
-                        details={"command": command},
+                        details={"tool": tool},
                     )
                 )
         return results, errors

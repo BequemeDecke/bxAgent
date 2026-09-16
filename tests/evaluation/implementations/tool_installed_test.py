@@ -14,22 +14,22 @@ class ToolInstalled(TestCase):
             "ToolInstalledEvaluation should have a 'setup' method.",
         )
 
-        command_installed_evaluation = ToolInstalledEvaluation()
+        tool_installed_evaluation = ToolInstalledEvaluation()
 
         self.assertIsNone(
-            asyncio.run(command_installed_evaluation.setup()),
+            asyncio.run(tool_installed_evaluation.setup()),
             "ToolInstalledEvaluation's 'setup' method should return None.",
         )
 
     @patch("shutil.which")
-    def test_run__check_commands(self, mock_which):
-        mock_which.side_effect = lambda command: (
-            "/usr/bin/python" if command == "python" else None
+    def test_run__check_tools(self, mock_which):
+        mock_which.side_effect = lambda tool: (
+            "/usr/bin/python" if tool == "python" else None
         )
-        command_installed_evaluation = ToolInstalledEvaluation()
+        tool_installed_evaluation = ToolInstalledEvaluation()
 
         results, errors = asyncio.run(
-            command_installed_evaluation.run(commands=["python", "nonexistentcommand"])
+            tool_installed_evaluation.run(tools=["python", "nonexistenttool"])
         )
 
         self.assertEqual(
@@ -59,17 +59,17 @@ class ToolInstalled(TestCase):
             any(
                 result.metadata.get("success") is False
                 for result in results
-                if "nonexistentcommand" in result.content
+                if "nonexistenttool" in result.content
             )
         )
 
     @patch("shutil.which")
     def test_run__exception_in_which(self, mock_which):
         mock_which.side_effect = Exception("Unexpected error in shutil.which")
-        command_installed_evaluation = ToolInstalledEvaluation()
+        tool_installed_evaluation = ToolInstalledEvaluation()
 
         results, errors = asyncio.run(
-            command_installed_evaluation.run(commands=["python"])
+            tool_installed_evaluation.run(tools=["python"])
         )
 
         self.assertEqual(
@@ -86,7 +86,7 @@ class ToolInstalled(TestCase):
         actual_error = errors[0]
 
         self.assertIn(
-            "An error occurred while checking command 'python': Unexpected error in shutil.which",
+            "An error occurred while checking tool 'python': Unexpected error in shutil.which",
             actual_error.message,
             "Expected error message for the exception was not returned.",
         )

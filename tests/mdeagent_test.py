@@ -81,7 +81,7 @@ class TestMDEAgent(TestCase):
             target_model_path=self.target_model_path,
             group_id="de.hofuniversity",
             artifact_id="MDEAgentFamilyToPerson",
-            required_commands=[
+            required_tools=[
                 "mvn",
                 "java",
                 "javac",

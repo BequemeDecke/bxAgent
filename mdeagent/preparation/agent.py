@@ -36,8 +36,8 @@ def build_preparation_graph(
                 "artifact_id": state.get("artifact_id"),
                 "package_path": f"{state.get('group_id')}.{state.get('artifact_id')}",
             },
-            "commands_installed": lambda state: {
-                "commands": state.get("required_commands", []),
+            "tools_installed": lambda state: {
+                "tools": state.get("required_tools", []),
             },
         },
         execution_mode="specific",

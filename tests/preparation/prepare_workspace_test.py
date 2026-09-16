@@ -122,7 +122,7 @@ class TestPrepareWorkspace(TestCase):
                 Path(temp_dir) / "workspace"
             )  # This folder is not created yet
             input_state = PreparationState(
-                required_commands=[],
+                required_tools=[],
                 workspace_path=workspace_path,
                 group_id="de.example",
                 artifact_id="mdeagent",
@@ -189,7 +189,7 @@ class TestPrepareWorkspace(TestCase):
         
         with tempfile.TemporaryDirectory() as temp_dir:
             input_state = PreparationState(
-                required_commands=[],
+                required_tools=[],
                 workspace_path=Path(temp_dir),
                 group_id="de.example",
                 artifact_id="mdeagent",
@@ -253,7 +253,7 @@ class TestPrepareWorkspace(TestCase):
 
         with tempfile.TemporaryDirectory() as temp_dir:
             input_state = PreparationState(
-                required_commands=[],
+                required_tools=[],
                 workspace_path=Path(temp_dir),
                 group_id="de.example",
                 artifact_id="mdeagent",
@@ -331,7 +331,7 @@ class TestPrepareWorkspace(TestCase):
             (Path(temp_dir) / "mdeagent" / "src" / "main" / "java" / "de" / "example" / "mdeagent").mkdir(parents=True, exist_ok=True)
 
             input_state = PreparationState(
-                required_commands=[],
+                required_tools=[],
                 workspace_path=Path(temp_dir),
                 # package_path="de.example.mdeagent",
                 group_id="de.example",
@@ -357,7 +357,7 @@ class TestPrepareWorkspace(TestCase):
 
     def test_prepare_workspace__state_properties_missing(self):
         input_state = PreparationState(
-            required_commands=[],
+            required_tools=[],
             workspace_path=None,  # Missing workspace path
             # package_path="de.example.mdeagent",
             group_id="de.example",
@@ -368,7 +368,7 @@ class TestPrepareWorkspace(TestCase):
             self.prepare_workspace_node(input_state)
 
         input_state = PreparationState(
-            required_commands=[],
+            required_tools=[],
             workspace_path=Path("/some/path"),
             group_id=None,
             artifact_id="mdeagent",
@@ -378,7 +378,7 @@ class TestPrepareWorkspace(TestCase):
             self.prepare_workspace_node(input_state)
 
         input_state = PreparationState(
-            required_commands=[],
+            required_tools=[],
             workspace_path=Path("/some/path"),
             group_id="de.example",
             artifact_id=None,
@@ -399,7 +399,7 @@ class TestPrepareWorkspace(TestCase):
             benchmarx_path.touch()  # Create dummy file
             
             input_state = PreparationState(
-                required_commands=[],
+                required_tools=[],
                 workspace_path=workspace_path,
                 group_id="de.example",
                 artifact_id="mdeagent",
@@ -447,7 +447,7 @@ class TestMavenIntegration(TestCase):
     def test_prepare_workspace__maven_project_structure(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             input_state = PreparationState(
-                required_commands=["mvn"],
+                required_tools=["mvn"],
                 workspace_path=Path(temp_dir),
                 group_id="de.example",
                 artifact_id="mdeagent",

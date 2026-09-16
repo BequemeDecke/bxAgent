@@ -79,7 +79,7 @@ class TestPreparationNodeIntegration(TestCase):
                     "evaluation": implementations.WorkspaceStructureEvaluation(),
                     "evaluation_schema": implementations.WorkspaceStructureSchema,
                 },
-                "commands_installed": {
+                "tools_installed": {
                     "evaluation": implementations.ToolInstalledEvaluation(),
                     "evaluation_schema": implementations.ToolInstalledEvaluationConfig,
                 },
@@ -89,8 +89,8 @@ class TestPreparationNodeIntegration(TestCase):
             evaluation_executor=self.evaluation_executor
         ).compile()
 
-        # Required commands for the preparation
-        self.required_commands = ["mvn", "java", "javac", "jar"]
+        # Required tools for the preparation
+        self.required_tools = ["mvn", "java", "javac", "jar"]
 
         # Group and artifact IDs for the Maven project
         self.group_id = "de.hofuniversity"
@@ -115,7 +115,7 @@ class TestPreparationNodeIntegration(TestCase):
         preparation_node = create_preparation_node(
             preparation_agent=self.preparation_agent,
             workspace_path=self.workspace_path,
-            required_commands=self.required_commands,
+            required_tools=self.required_tools,
         )
 
         # 3. Invoke the preparation node with the initial state
@@ -140,15 +140,15 @@ class TestPreparationNodeIntegration(TestCase):
             "Workspace path should match the created workspace path.",
         )
 
-        # Check that required_commands is set correctly
+        # Check that required_tools is set correctly
         self.assertIsNotNone(
-            output.get("required_commands"),
-            "Required commands should not be None.",
+            output.get("required_tools"),
+            "Required tools should not be None.",
         )
         self.assertEqual(
-            output["required_commands"],
-            self.required_commands,
-            "Required commands should match the provided commands.",
+            output["required_tools"],
+            self.required_tools,
+            "Required tools should match the provided tools.",
         )
 
         # Check that maven_project_path is set correctly

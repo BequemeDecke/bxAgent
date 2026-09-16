@@ -62,7 +62,7 @@ class TestPreparationNodeIntegration(TestCase):
                         "evaluation": implementations.WorkspaceStructureEvaluation(),
                         "evaluation_schema": implementations.WorkspaceStructureSchema,
                     },
-                    "commands_installed": {
+                    "tools_installed": {
                         "evaluation": implementations.ToolInstalledEvaluation(),
                         "evaluation_schema": implementations.ToolInstalledEvaluationConfig,
                     },
@@ -81,7 +81,7 @@ class TestPreparationNodeIntegration(TestCase):
             transformation_plan_path = (
                 workspace_path / artifact_id / "TRANSFORMATION.md"
             )
-            required_commands = ["mvn", "git"]
+            required_tools = ["mvn", "git"]
 
             (
                 (source_model_path, source_file, *_),
@@ -93,7 +93,7 @@ class TestPreparationNodeIntegration(TestCase):
 
             # Create the preparation node with required parameters
             call_preparation_node = create_preparation_node(
-                self.preparation_agent, workspace_path, required_commands
+                self.preparation_agent, workspace_path, required_tools
             )
 
             initial_state = MDEAgentState(
@@ -108,7 +108,7 @@ class TestPreparationNodeIntegration(TestCase):
             logger = logging.getLogger(__name__)
             logger.debug(f"Output state: {output}")
 
-            # Check that the preparation node set workspace_path and required_commands in the output
+            # Check that the preparation node set workspace_path and required_tools in the output
             self.assertIsNotNone(
                 output.get("workspace_path"),
                 "The preparation node should set workspace_path in the output state.",
@@ -119,13 +119,13 @@ class TestPreparationNodeIntegration(TestCase):
                 "The output workspace_path should match the expected workspace path.",
             )
             self.assertIsNotNone(
-                output.get("required_commands"),
-                "The preparation node should set required_commands in the output state.",
+                output.get("required_tools"),
+                "The preparation node should set required_tools in the output state.",
             )
             self.assertEqual(
-                output["required_commands"],
-                required_commands,
-                "The output required_commands should match the expected commands.",
+                output["required_tools"],
+                required_tools,
+                "The output required_tools should match the expected tools.",
             )
             self.assertEqual(
                 output.get("maven_project_path"),

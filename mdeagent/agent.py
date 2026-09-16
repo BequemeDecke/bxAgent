@@ -22,7 +22,7 @@ from mdeagent.guardrails.transformation_iteration_control import (
 from mdeagent.implementation.agent import build_implementation_graph
 from mdeagent.implementation.node import create_implementation_node
 from mdeagent.mapping import (
-    map_workflow_to_commands,
+    mde_to_tools,
     map_workflow_to_file,
     map_workflow_to_maven_project,
     map_workflow_to_workspace,
@@ -47,7 +47,7 @@ def build_mdeagent(
                 "evaluation": WorkspaceStructureEvaluation(),
                 "evaluation_schema": WorkspaceStructureSchema,
             },
-            "commands_installed": {
+            "tools_installed": {
                 "evaluation": ToolInstalledEvaluation(),
                 "evaluation_schema": ToolInstalledEvaluationConfig,
             },
@@ -73,7 +73,7 @@ def build_mdeagent(
             download_benchmarx=download_benchmarx,
         ).compile(),
         workspace_path=workspace_path,
-        required_commands=[
+        required_tools=[
             "mvn",
             "java",
             "javac",
@@ -92,7 +92,7 @@ def build_mdeagent(
         mapper={
             "file_existence": map_workflow_to_file,
             "java_compilation": map_workflow_to_maven_project,
-            "commands_installed": map_workflow_to_commands,
+            "tools_installed": mde_to_tools,
             "workspace_structure": map_workflow_to_workspace,
         },
     )

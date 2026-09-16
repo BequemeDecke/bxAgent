@@ -31,7 +31,7 @@ class JavaCompilationEvaluation(Evaluation):
     """
     Evaluation that checks if a Maven project can be compiled successfully.
 
-    It uses the `mvn compile` command to attempt to compile the Maven project.
+    It uses the `mvn compile` tool to attempt to compile the Maven project.
     The output is parsed using regular expressions to extract syntax errors
     and other compilation issues.
     """
@@ -110,7 +110,7 @@ class JavaCompilationEvaluation(Evaluation):
 
 def parse_mvn_compile_output(output: str) -> list[EvaluationResult]:
     """
-    Parse the output of the `mvn compile` command to extract compilation errors.
+    Parse the output of the `mvn compile` tool to extract compilation errors.
 
     The parser handles various error formats from the Java compiler (javac) as
     invoked by Maven. It extracts file paths, line numbers, columns, and error messages.
@@ -121,7 +121,7 @@ def parse_mvn_compile_output(output: str) -> list[EvaluationResult]:
     - /path/to/File.java:line:column: error message
 
     Args:
-        output (str): The output from the `mvn compile` command.
+        output (str): The output from the `mvn compile` tool.
 
     Returns:
         list[EvaluationResult]: A list of EvaluationResult objects representing the compilation errors.

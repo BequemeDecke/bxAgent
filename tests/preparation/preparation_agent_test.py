@@ -47,7 +47,7 @@ class TestPreparationAgentIntegration(TestCase):
                     "evaluation": implementations.WorkspaceStructureEvaluation(),
                     "evaluation_schema": implementations.WorkspaceStructureSchema,
                 },
-                "commands_installed": {
+                "tools_installed": {
                     "evaluation": implementations.ToolInstalledEvaluation(),
                     "evaluation_schema": implementations.ToolInstalledEvaluationConfig,
                 },
@@ -87,7 +87,7 @@ class TestPreparationAgentIntegration(TestCase):
                 workspace_path=workspace_path,
                 group_id=group_id,
                 artifact_id=artifact_id,
-                required_commands=["mvn"],
+                required_tools=["mvn"],
                 source_model=ModelImplementation(
                     name="Source",
                     path=source_model_path,
@@ -171,7 +171,7 @@ class TestPreparationAgentIntegration(TestCase):
                 workspace_path=workspace_path,
                 group_id=group_id,
                 artifact_id=artifact_id,
-                required_commands=["mvn"],
+                required_tools=["mvn"],
                 source_model=ModelImplementation(
                     name="Source",
                     path=source_model_path,

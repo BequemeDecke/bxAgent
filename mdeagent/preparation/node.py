@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 def create_preparation_node(
-    preparation_agent: CompiledStateGraph, workspace_path: Path, required_commands: list[str]
+    preparation_agent: CompiledStateGraph, workspace_path: Path, required_tools: list[str]
 ):
 
     async def preparation_node(state: MDEAgentState) -> MDEAgentState:
@@ -47,7 +47,7 @@ def create_preparation_node(
             ),
             group_id=group_id,
             artifact_id=artifact_id,
-            required_commands=required_commands,
+            required_tools=required_tools,
         )
         response: GraphOutput = await preparation_agent.ainvoke(
             prep_invoke_state, version="v2"
@@ -77,7 +77,7 @@ def create_preparation_node(
         return MDEAgentState(
             workspace_path=workspace_path,
             maven_project_path=prep_output_state.get("maven_project_path"),
-            required_commands=required_commands,
+            required_tools=required_tools,
             transformation_plan=transformation_plan.to_dict(),
             transformation_class_path=prep_output_state.get("transformation_class_path"),
             transformation_package_path=prep_output_state.get("transformation_package_path"),

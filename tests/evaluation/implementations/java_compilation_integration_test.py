@@ -157,7 +157,7 @@ class TestJavaCompilationWithMapperAndNode(TestCase):
                 "transformation_package_path": "",
                 "transformation_class_path": None,
                 "bxtool_path": None,
-                "required_commands": [],
+                "required_tools": [],
                 "written_files": [],
                 "latest_evaluation_runs": [],
             }
@@ -218,7 +218,7 @@ class TestJavaCompilationWithMapperAndNode(TestCase):
                 "transformation_package_path": "",
                 "transformation_class_path": None,
                 "bxtool_path": None,
-                "required_commands": [],
+                "required_tools": [],
                 "written_files": [],
                 "latest_evaluation_runs": [],
             }
@@ -257,7 +257,7 @@ class TestJavaCompilationWithMapperAndNode(TestCase):
             "transformation_package_path": "",
             "transformation_class_path": None,
             "bxtool_path": None,
-            "required_commands": [],
+            "required_tools": [],
             "written_files": [],
             "latest_evaluation_runs": [],
         }
@@ -321,7 +321,7 @@ class TestJavaCompilationWithRealMavenProject(TestCase):
                 "transformation_package_path": "",
                 "transformation_class_path": None,
                 "bxtool_path": None,
-                "required_commands": [],
+                "required_tools": [],
                 "written_files": [],
                 "latest_evaluation_runs": [],
             }

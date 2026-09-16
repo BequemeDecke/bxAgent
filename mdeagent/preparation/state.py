@@ -16,7 +16,7 @@ class PreparationState(TypedDict):
     
     # === Direct copy of MDEAgentState ===
     workspace_path: Path        
-    required_commands: list[str] # List of required commands to be available in the system PATH in order to run the agent properly
+    required_tools: list[str] # List of required tools to be available in the system PATH in order to run the agent properly
 
     # === Required (Set by user) ===
     group_id: str | None = None  # Maven groupId for the generated project
