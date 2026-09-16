@@ -10,7 +10,8 @@ from unittest.mock import Mock
 
 import openai
 
-from tests.llm_test_support import LLMTransientError, invoke_with_resilience
+from mdeagent.models import invoke_with_resilience
+from mdeagent.models import LLMTransientError
 
 
 def _fake_httpx_response() -> Mock:
