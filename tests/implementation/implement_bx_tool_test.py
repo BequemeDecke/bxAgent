@@ -90,8 +90,11 @@ class TestImplementBxTool(TestCase):
         )
 
         # --- Node ---
+        # ``benchmarx_path`` is a required parameter of ``create_implement_bx_tool_node``
+        # (it is wired through from ``build_implementation_graph`` when BenchmarX is in
+        # use). For this unit test a fake path is sufficient — the node does not read it.
         self.implement_bx_tool = create_implement_bx_tool_node(
-            mocked_llm, Path("/tmp/workspace")
+            mocked_llm, Path("/tmp/workspace"), Path("/tmp/benchmarx")
         )
 
     @patch("pathlib.Path.write_text")

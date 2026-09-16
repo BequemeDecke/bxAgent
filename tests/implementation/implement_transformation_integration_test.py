@@ -10,10 +10,32 @@ from mdeagent.implementation.implement_transformation import (
 )
 from mdeagent.implementation.state import ImplementationState
 from mdeagent.models import build_coding_model
+from tests.llm_test_support import LLMTransientError, invoke_with_resilience
 
 TEST_ENVIRONMENT = Path(".mdeagent-tests")
 
 logger = logging.getLogger(__name__)
+
+# --- LLM call resilience tuning ----------------------------------------------
+#
+# The ``.env`` configures a 20s request timeout with 4 SDK retries. That is too short
+# for ``with_structured_output`` on the nested ``TransformationClassSpec`` schema (the
+# endpoint regularly needs >20s) and the 4 retries compound a single timeout into a
+# ~100s silent hang — which is exactly why this test used to get "stuck".
+#
+# For the integration test we instead want:
+#   * one *generous* call per attempt (enough time to produce structured output),
+#   * no SDK-internal retry (so a single attempt fails fast and observably), and
+#   * a bounded overall budget with a clear skip-vs-fail policy handled by
+#     ``invoke_with_resilience``.
+LLM_REQUEST_TIMEOUT_S = 120  # per-call timeout (was 20s in .env -> too short). The
+#   gateway in front of ``lisa-pro`` itself cuts requests at ~107s, so 120s lets any
+#   call that the gateway *would* allow actually finish.
+LLM_MAX_RETRIES = 0  # disable SDK retry; ``invoke_with_resilience`` handles retries
+#   (was 4 -> a single 20s timeout compounded into a ~108s silent hang).
+OVERALL_TIMEOUT_S = 220  # hard cap across all attempts; never hang indefinitely.
+#   ~2x the gateway limit so the 2nd attempt still gets a fair window.
+MAX_ATTEMPTS = 2  # retry once on a transient timeout / 5xx / rate-limit
 
 
 class TestImplementTransformationIntegration(TestCase):
@@ -65,8 +87,13 @@ class TestImplementTransformationIntegration(TestCase):
         self.source_model_path = self.setup_files / "Families"
         self.target_model_path = self.setup_files / "Persons"
 
-        # Initialize the coding model
+        # Initialize the coding model. Override the request timeout / retry settings so
+        # a single ``with_structured_output`` call gets enough time to finish and does not
+        # silently compound into a ~100s hang (see LLM_* constants above for details).
+        # Transient flakiness is handled at the test level by ``invoke_with_resilience``.
         self.llm = build_coding_model()
+        self.llm.request_timeout = LLM_REQUEST_TIMEOUT_S
+        self.llm.max_retries = LLM_MAX_RETRIES
 
     def _create_transformation_plan_factory(self):
         """
@@ -172,8 +199,23 @@ Requirements:
             "implementation_iteration": 1,
         }
 
-        # Invoke the node
-        output_state = asyncio.run(implement_transformation(initial_state))
+        # Invoke the node. The call is guarded against the inherent flakiness of real
+        # LLM endpoints: a bounded overall timeout plus retry-on-transient-error. If the
+        # endpoint is genuinely unavailable we skip (infrastructure issue) instead of
+        # reporting a false logic failure.
+        try:
+            output_state = asyncio.run(
+                invoke_with_resilience(
+                    lambda: implement_transformation(initial_state),
+                    overall_timeout=OVERALL_TIMEOUT_S,
+                    max_attempts=MAX_ATTEMPTS,
+                )
+            )
+        except LLMTransientError as exc:
+            self.skipTest(
+                f"Skipped: LLM endpoint unavailable ({exc}). "
+                "This is a transient infrastructure issue, not a test-logic failure."
+            )
 
         # Verify: Exactly one transformation class file was created
         java_files_in_workspace = list(self.workspace_path.glob("*.java"))
@@ -236,8 +278,21 @@ Focus on extracting FamilyMembers as Person instances in the forward direction.
             "implementation_iteration": 1,
         }
 
-        # Invoke the node
-        output_state = asyncio.run(implement_transformation(initial_state))
+        # Invoke the node, guarded against transient LLM flakiness (see first test for
+        # the full rationale).
+        try:
+            output_state = asyncio.run(
+                invoke_with_resilience(
+                    lambda: implement_transformation(initial_state),
+                    overall_timeout=OVERALL_TIMEOUT_S,
+                    max_attempts=MAX_ATTEMPTS,
+                )
+            )
+        except LLMTransientError as exc:
+            self.skipTest(
+                f"Skipped: LLM endpoint unavailable ({exc}). "
+                "This is a transient infrastructure issue, not a test-logic failure."
+            )
 
         # Verify: transformation_md is set (either from state or created by factory)
         self.assertIsNotNone(
