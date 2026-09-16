@@ -13,7 +13,7 @@ from mdeagent.preparation.prepare_workspace import (
     create_prepare_workspace_node,
     workspace_structure_is_clean,
 )
-from mdeagent.preparation.state import PreparationState
+from mdeagent.preparation.state import ModelImplementation, PreparationState
 from mdeagent.util import copy_workspace, log_workspace_structure
 
 
@@ -141,7 +141,9 @@ class TestPrepareWorkspace(TestCase):
         
         self.fix_strategy = Mock(spec=StructureFixStrategy)
         self.fix_strategy.fix_structure.side_effect = fix_structure_side_effect
-        self.prepare_workspace_node = create_prepare_workspace_node(self.fix_strategy)
+        self.prepare_workspace_node = create_prepare_workspace_node(
+            self.fix_strategy
+        )
         self.fake_data = TransformationPlanData(
             iteration=0,
             source_model_package="de.example.mdeagent",
@@ -153,7 +155,7 @@ class TestPrepareWorkspace(TestCase):
             implementation_steps="",
         )
         self.template_path = Path.cwd() / "templates"
-    
+
     def _mock_subprocess_run(self, args, **kwargs):
         """Helper to mock subprocess.run and create minimal Maven project structure."""
         import subprocess
@@ -506,8 +508,11 @@ class TestPrepareWorkspace(TestCase):
                 "The bxtool_path should be None when benchmarx_path is provided.",
             )
 
-            # Verify that the BxToolAdapter.java file was NOT created
-            bxtool_file = (
+            # Verify that no BxTool adapter file was created (name-agnostic:
+            # the adapter name is derived from the model folder names, which are
+            # not set in this test, so just assert no ``*BxToolAdapter.java``
+            # file exists in the package path).
+            package_dir = (
                 workspace_path
                 / "mdeagent"
                 / "src"
@@ -516,11 +521,12 @@ class TestPrepareWorkspace(TestCase):
                 / "de"
                 / "example"
                 / "mdeagent"
-                / "MDEAgentTransformationBxToolAdapter.java"
             )
-            self.assertFalse(
-                bxtool_file.exists(),
-                "The BxToolAdapter.java file should NOT be created when benchmarx_path is provided.",
+            adapter_files = list(package_dir.glob("*BxToolAdapter.java"))
+            self.assertEqual(
+                adapter_files,
+                [],
+                "No BxToolAdapter.java file should be created when benchmarx_path is provided.",
             )
 
             # But transformation_class_path should still be set (user will implement it)
@@ -701,6 +707,145 @@ class TestPrepareWorkspace(TestCase):
                 workspace_path / "mdeagent",
             )
 
+    # ------------------------------------------------------------------ #
+    # The transformation class name (and the BxTool adapter name) are derived
+    # deterministically from the source/target model folder names
+    # (``<Source>To<Target>Transformation`` / ``<Source>To<Target>BxToolAdapter``).
+    # ------------------------------------------------------------------ #
+
+    @patch(
+        "subprocess.run",
+        side_effect=lambda *args, **kwargs: None,
+    )
+    def test_prepare_workspace__derives_transformation_class_name_from_model_paths(
+        self, mock_run: Mock
+    ):
+        """The transformation class name is derived deterministically from the
+        source/target model folder names (``<Source>To<Target>Transformation``)."""
+        mock_run.side_effect = self._mock_subprocess_run
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            workspace_path = Path(temp_dir) / "workspace"
+            input_state = PreparationState(
+                required_tools=[],
+                workspace_path=workspace_path,
+                group_id="de.example",
+                artifact_id="mdeagent",
+                source_model=ModelImplementation(
+                    name="Families",
+                    path=Path(temp_dir) / "Families",
+                    implementation=None,
+                ),
+                target_model=ModelImplementation(
+                    name="Persons",
+                    path=Path(temp_dir) / "Persons",
+                    implementation=None,
+                ),
+            )
+
+            output_state: PreparationState = self.prepare_workspace_node(input_state)
+
+            self.assertEqual(
+                output_state.get("transformation_class_path").name,
+                "FamiliesToPersonsTransformation.java",
+            )
+
+    @patch(
+        "subprocess.run",
+        side_effect=lambda *args, **kwargs: None,
+    )
+    def test_prepare_workspace__derives_bxtool_adapter_name_from_model_paths(
+        self, mock_run: Mock
+    ):
+        """The BxTool adapter file name follows ``<Source>To<Target>BxToolAdapter``."""
+        mock_run.side_effect = self._mock_subprocess_run
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            workspace_path = Path(temp_dir) / "workspace"
+            input_state = PreparationState(
+                required_tools=[],
+                workspace_path=workspace_path,
+                group_id="de.example",
+                artifact_id="mdeagent",
+                source_model=ModelImplementation(
+                    name="Families",
+                    path=Path(temp_dir) / "Families",
+                    implementation=None,
+                ),
+                target_model=ModelImplementation(
+                    name="Persons",
+                    path=Path(temp_dir) / "Persons",
+                    implementation=None,
+                ),
+            )
+
+            output_state: PreparationState = self.prepare_workspace_node(input_state)
+
+            bxtool_path = output_state.get("bxtool_path")
+            self.assertIsNotNone(bxtool_path)
+            self.assertEqual(bxtool_path.name, "FamiliesToPersonsBxToolAdapter.java")
+            self.assertTrue(
+                bxtool_path.exists(),
+                "The BxTool adapter file should be created with the derived name.",
+            )
+
+    @patch(
+        "subprocess.run",
+        side_effect=lambda *args, **kwargs: None,
+    )
+    def test_prepare_workspace__naming_defaults_when_models_missing(
+        self, mock_run: Mock
+    ):
+        """When no source/target model is set, the names fall back to
+        ``UnknownToUnknown...`` so the naming never fails."""
+        mock_run.side_effect = self._mock_subprocess_run
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            workspace_path = Path(temp_dir) / "workspace"
+            input_state = PreparationState(
+                required_tools=[],
+                workspace_path=workspace_path,
+                group_id="de.example",
+                artifact_id="mdeagent",
+            )
+
+            output_state: PreparationState = self.prepare_workspace_node(input_state)
+
+            self.assertEqual(
+                output_state.get("transformation_class_path").name,
+                "UnknownToUnknownTransformation.java",
+            )
+            bxtool_path = output_state.get("bxtool_path")
+            self.assertIsNotNone(bxtool_path)
+            self.assertEqual(
+                bxtool_path.name, "UnknownToUnknownBxToolAdapter.java"
+            )
+
+    def test_prepare_workspace__clean_workspace_skips_naming(self):
+        """Early return: when the workspace is already clean no naming/Maven work
+        happens (the transformation class path is left unset)."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            (Path(temp_dir) / "leftover.txt").write_text("leftover")
+
+            input_state = PreparationState(
+                required_tools=[],
+                workspace_path=Path(temp_dir),
+                group_id="de.example",
+                artifact_id="mdeagent",
+                iteration=1,
+                latest_evaluation_runs={
+                    "workspace_structure": _clean_workspace_structure_run()
+                },
+            )
+
+            with patch("subprocess.run") as mock_run:
+                output_state = self.prepare_workspace_node(input_state)
+
+            self.assertEqual(mock_run.call_count, 0)
+            self.assertIsNone(output_state.get("transformation_class_path"))
+            self.assertIsNone(output_state.get("bxtool_path"))
+
+
 
 class TestMavenIntegration(TestCase):
     def setUp(self):
@@ -714,11 +859,21 @@ class TestMavenIntegration(TestCase):
                 workspace_path=Path(temp_dir),
                 group_id="de.example",
                 artifact_id="mdeagent",
+                source_model=ModelImplementation(
+                    name="Families",
+                    path=Path(temp_dir) / "Families",
+                    implementation=None,
+                ),
+                target_model=ModelImplementation(
+                    name="Persons",
+                    path=Path(temp_dir) / "Persons",
+                    implementation=None,
+                ),
             )
 
             try:
                 output = create_prepare_workspace_node(
-                    fix_strategy=Mock(spec=StructureFixStrategy)
+                    fix_strategy=Mock(spec=StructureFixStrategy),
                 )(input_state)
 
                 self.assertEqual(
@@ -751,7 +906,8 @@ class TestMavenIntegration(TestCase):
                 "The 'src/main/java/de/example/mdeagent' folder should be created in the workspace.",
             )
 
-            # Check if the bxtool Java file is created
+            # Check if the bxtool Java file is created with the deterministically
+            # derived name (``<Source>To<Target>BxToolAdapter``).
             self.assertTrue(
                 (
                     Path(temp_dir)
@@ -762,7 +918,7 @@ class TestMavenIntegration(TestCase):
                     / "de"
                     / "example"
                     / "mdeagent"
-                    / "MDEAgentTransformationBxToolAdapter.java"
+                    / "FamiliesToPersonsBxToolAdapter.java"
                 ).exists(),
                 "The bxtool Java file should be created in the package path.",
             )
