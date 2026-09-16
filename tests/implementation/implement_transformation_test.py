@@ -19,6 +19,7 @@ from langchain.chat_models import BaseChatModel
 
 from mdeagent.comprehension.plan import TransformationPlan, TransformationPlanParser
 from mdeagent.implementation.generator import (
+    ImplementationTransformationSpec,
     TransformationClassSpec,
     TransformationClassTemplateResolver,
 )
@@ -78,7 +79,7 @@ class TestImplementTransformation(TestCase):
             },
             "forward_body": "System.out.println(source);",
             "backward_body": "System.out.println(target);",
-            "synch_body": "System.out.println(\"synced\");",
+            "synch_body": 'System.out.println("synced");',
             "transform_source_to_target_body": "forward(source, target, decisions);",
             "transform_target_to_source_body": "backward(target, source, decisions);",
         }
@@ -88,9 +89,12 @@ class TestImplementTransformation(TestCase):
         self.mocked_llm.with_structured_output.return_value = (
             self.mocked_llm_structured_output
         )
-        # The node awaits `structured_llm.ainvoke(...)`, so the mock must be async.
+        # The node is async (``await structured_llm.ainvoke(...)``), so the mock
+        # has to expose an awaitable ``ainvoke``. The structured output spec no
+        # longer carries a ``class_name`` field (see
+        # :class:`ImplementationTransformationSpec`).
         self.mocked_llm_structured_output.ainvoke = AsyncMock(
-            return_value=TransformationClassSpec(**self.fake_data)
+            return_value=ImplementationTransformationSpec(**self.fake_data)
         )
 
     @patch("pathlib.Path.touch")
@@ -184,7 +188,10 @@ class TestImplementTransformation(TestCase):
         actual_state = asyncio.run(implement_transformation(state))
 
         self.assertIn(existing_file, actual_state["written_java_files"])
-        self.assertIn(Path("/tmp/workspace/MyTransformation.java"), actual_state["written_java_files"])
+        self.assertIn(
+            Path("/tmp/workspace/MyTransformation.java"),
+            actual_state["written_java_files"],
+        )
         self.assertEqual(len(actual_state["written_java_files"]), 2)
         self.assertNotIn("iteration", actual_state)
 
@@ -210,8 +217,10 @@ class TestImplementTransformation(TestCase):
 
         mocked_parser = Mock(spec=TransformationPlanParser)
         mocked_transformation_plan = Mock(spec=TransformationPlan)
-        mocked_transformation_plan.__str__ = Mock(return_value="This is the transformation plan.")
-        
+        mocked_transformation_plan.__str__ = Mock(
+            return_value="This is the transformation plan."
+        )
+
         implement_transformation = create_implement_transformation_node(
             llm=self.mocked_llm,
             optional_plan_factory=lambda: mocked_transformation_plan,
@@ -258,7 +267,7 @@ class TestImplementTransformation(TestCase):
         mocked_parser = Mock(spec=TransformationPlanParser)
         mocked_transformation_plan = Mock(spec=TransformationPlan)
         mocked_transformation_plan.__str__ = Mock(return_value=plan_content)
-        
+
         implement_transformation = create_implement_transformation_node(
             llm=self.mocked_llm,
             optional_plan_factory=lambda: mocked_transformation_plan,
@@ -284,6 +293,57 @@ class TestImplementTransformation(TestCase):
         self.assertIn(plan_content, prompt)
         self.assertNotIn("iteration", actual_state)
 
+    @patch("pathlib.Path.touch")
+    @patch("pathlib.Path.write_text")
+    @patch(
+        "mdeagent.implementation.generator.TransformationClassTemplateResolver.get_raw_template"
+    )
+    @patch(
+        "mdeagent.implementation.generator.TransformationClassTemplateResolver.render_template"
+    )
+    def test_implement_transformation__derives_class_name_from_path_and_does_not_ask_llm(
+        self,
+        mock_render_template: Mock,
+        mock_get_raw_template: Mock,
+        mock_write_text: Mock,
+        mock_touch: Mock,
+    ):
+        """Anforderung 2: ``implement_transformation`` must not ask the LLM for a
+        class name. The structured-output spec has no ``class_name`` field, and
+        the name is derived from the ``transformation_class_path`` stem (set by
+        ``prepare_workspace``) and forwarded to the template renderer.
+        """
+        mock_touch.return_value = None
+        mock_write_text.return_value = None
+        mock_get_raw_template.return_value = "Raw template content"
+        mock_render_template.return_value = "Rendered transformation content"
+
+        implement_transformation = create_implement_transformation_node(
+            llm=self.mocked_llm,
+            optional_plan_factory=lambda: None,
+        )
+
+        state: ImplementationState = {
+            "task_specification": "Implement the transformation from model Anton to model Berta.",
+            "transformation_md": None,
+            "written_java_files": [],
+            "bxtool_path": Path("/tmp/workspace"),
+            "transformation_class_path": Path("/tmp/workspace/MyTransformation.java"),
+            "transformation_implementation": "",
+            "latest_evaluation_results": {},
+            "implementation_iteration": 1,
+        }
+
+        asyncio.run(implement_transformation(state))
+
+        # The LLM is asked with a spec that does NOT contain a class_name field.
+        self.mocked_llm.with_structured_output.assert_called_once_with(
+            ImplementationTransformationSpec
+        )
+        # The class name passed to the renderer is derived from the path stem.
+        _, kwargs = mock_render_template.call_args
+        self.assertEqual(kwargs.get("class_name"), "MyTransformation")
+
 
 class TestTransformationClassTemplateResolver(TestCase):
     def test_transformation_class_template_resolver__renders_emf_interface(self):
@@ -301,7 +361,7 @@ class TestTransformationClassTemplateResolver(TestCase):
             },
             "forward_body": "System.out.println(source);",
             "backward_body": "System.out.println(target);",
-            "synch_body": "System.out.println(\"synced\");",
+            "synch_body": 'System.out.println("synced");',
             "transform_source_to_target_body": "forward(source, target, decisions);",
             "transform_target_to_source_body": "backward(target, source, decisions);",
         }

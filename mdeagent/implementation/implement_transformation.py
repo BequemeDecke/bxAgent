@@ -4,7 +4,7 @@ from typing import Callable
 from langchain.chat_models import BaseChatModel
 
 from mdeagent.implementation.generator import (
-    TransformationClassSpec,
+    ImplementationTransformationSpec,
     TransformationClassTemplateResolver,
 )
 from mdeagent.implementation.state import ImplementationState
@@ -59,7 +59,7 @@ def create_implement_transformation_node(
     Returns:
         A node function that generates the transformation class and updates the state.
     """
-    structured_llm = llm.with_structured_output(TransformationClassSpec)
+    structured_llm = llm.with_structured_output(ImplementationTransformationSpec)
     resolver = TransformationClassTemplateResolver(template_path=template_path)
 
     async def implement_transformation(state: ImplementationState) -> ImplementationState:
@@ -81,11 +81,20 @@ def create_implement_transformation_node(
             template=raw_template,
         )
 
-        # 3. Invoke the structured LLM to generate the transformation class
-        response: TransformationClassSpec = await structured_llm.ainvoke(input=input_prompt)
+        # 3. Invoke the structured LLM to generate the transformation class.
+        #    The class *name* is no longer asked from the LLM: it is determined
+        #    in the ``prepare_workspace`` node and reaches this node encoded in
+        #    the ``transformation_class_path`` state field.
+        response: ImplementationTransformationSpec = await structured_llm.ainvoke(input=input_prompt)
 
-        # 4. Render the template with the generated specification
-        rendered_code = resolver.render_template(response)
+        # 4. Render the template with the generated specification. The class
+        #    name is derived from the transformation class path (set by
+        #    ``prepare_workspace``) so that the file name and the declared class
+        #    always stay consistent.
+        transformation_class_name = transformation_class_path.stem
+        rendered_code = resolver.render_template(
+            response, class_name=transformation_class_name
+        )
 
         # 5. Write the generated code to a file
         transformation_class_path.touch(exist_ok=True)
