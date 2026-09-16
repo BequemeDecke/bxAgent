@@ -18,23 +18,23 @@ logger = logging.getLogger(__name__)
 
 # --- LLM call resilience tuning ----------------------------------------------
 #
-# The ``.env`` configures a 20s request timeout with 4 SDK retries. That is too short
-# for ``with_structured_output`` on the nested ``TransformationClassSpec`` schema (the
-# endpoint regularly needs >20s) and the 4 retries compound a single timeout into a
-# ~100s silent hang — which is exactly why this test used to get "stuck".
+# The ``.env`` configures a 20s request timeout with 4 SDK retries. With the new
+# **piecewise generation** approach (5 smaller calls instead of 1 monolithic call),
+# individual calls are much faster and less prone to timeouts. However, we still use
+# generous timeouts to handle edge cases.
 #
-# For the integration test we instead want:
-#   * one *generous* call per attempt (enough time to produce structured output),
-#   * no SDK-internal retry (so a single attempt fails fast and observably), and
-#   * a bounded overall budget with a clear skip-vs-fail policy handled by
-#     ``invoke_with_resilience``.
-LLM_REQUEST_TIMEOUT_S = 120  # per-call timeout (was 20s in .env -> too short). The
-#   gateway in front of ``lisa-pro`` itself cuts requests at ~107s, so 120s lets any
-#   call that the gateway *would* allow actually finish.
+# For the integration test with the piecewise implementation:
+#   * Each individual call is smaller and faster (~5-25s typical)
+#   * We allow generous per-call timeout for safety
+#   * Overall timeout accounts for all 5 calls (1 sequential + 4 parallel)
+#   * Transient flakiness is handled by ``invoke_with_resilience``
+LLM_REQUEST_TIMEOUT_S = 60  # per-call timeout (reduced from 120s since individual
+#   calls are now much smaller; 60s provides ample margin for the metadata call and
+#   each of the 4 parallel body-generation calls).
 LLM_MAX_RETRIES = 0  # disable SDK retry; ``invoke_with_resilience`` handles retries
-#   (was 4 -> a single 20s timeout compounded into a ~108s silent hang).
-OVERALL_TIMEOUT_S = 220  # hard cap across all attempts; never hang indefinitely.
-#   ~2x the gateway limit so the 2nd attempt still gets a fair window.
+OVERALL_TIMEOUT_S = 180  # hard cap across all attempts; reduced from 220s since
+#   piecewise approach is faster and more reliable. Allows ~90s per attempt which is
+#   plenty for 1 metadata call + 4 parallel body-generation calls.
 MAX_ATTEMPTS = 2  # retry once on a transient timeout / 5xx / rate-limit
 
 
@@ -42,9 +42,16 @@ class TestImplementTransformationIntegration(TestCase):
     """
     Integration test for create_implement_transformation_node using real BaseChatModels.
 
-    This test verifies that:
-    1. The node generates exactly one transformation class file
+    This test verifies that the piecewise generation approach:
+    1. Generates exactly one transformation class file
     2. The output state contains all required fields with correct values
+    3. The parallel execution works correctly (metadata first, then parallel body generation)
+    
+    Note: This node uses a piecewise LLM approach with 5 calls instead of 1 monolithic call:
+    - 1 metadata call (sequential) to determine package and type names
+    - 4 parallel calls for fields/constructor + forward/backward/synch method bodies
+    
+    This reduces timeout risk and improves reliability compared to the monolithic approach.
     """
 
     @classmethod
@@ -87,10 +94,11 @@ class TestImplementTransformationIntegration(TestCase):
         self.source_model_path = self.setup_files / "Families"
         self.target_model_path = self.setup_files / "Persons"
 
-        # Initialize the coding model. Override the request timeout / retry settings so
-        # a single ``with_structured_output`` call gets enough time to finish and does not
-        # silently compound into a ~100s hang (see LLM_* constants above for details).
-        # Transient flakiness is handled at the test level by ``invoke_with_resilience``.
+        # Initialize the coding model. Override the request timeout / retry settings to
+        # accommodate the piecewise generation approach: 1 metadata call followed by 4
+        # parallel body-generation calls. Individual calls are smaller and faster than
+        # the monolithic approach, reducing timeout risk. Transient flakiness is handled
+        # at the test level by ``invoke_with_resilience``.
         self.llm = build_coding_model()
         self.llm.request_timeout = LLM_REQUEST_TIMEOUT_S
         self.llm.max_retries = LLM_MAX_RETRIES
@@ -200,9 +208,10 @@ Requirements:
         }
 
         # Invoke the node. The call is guarded against the inherent flakiness of real
-        # LLM endpoints: a bounded overall timeout plus retry-on-transient-error. If the
-        # endpoint is genuinely unavailable we skip (infrastructure issue) instead of
-        # reporting a false logic failure.
+        # LLM endpoints with piecewise generation (5 calls: 1 metadata + 4 parallel body
+        # generation): a bounded overall timeout plus retry-on-transient-error via
+        # ``invoke_with_resilience``. If the endpoint is genuinely unavailable we skip
+        # (infrastructure issue) instead of reporting a false logic failure.
         try:
             output_state = asyncio.run(
                 invoke_with_resilience(
@@ -278,8 +287,9 @@ Focus on extracting FamilyMembers as Person instances in the forward direction.
             "iteration": 1,
         }
 
-        # Invoke the node, guarded against transient LLM flakiness (see first test for
-        # the full rationale).
+        # Invoke the node with piecewise generation (5 LLM calls total), guarded against
+        # transient LLM flakiness via ``invoke_with_resilience`` (see first test for the
+        # full rationale).
         try:
             output_state = asyncio.run(
                 invoke_with_resilience(

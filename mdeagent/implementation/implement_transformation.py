@@ -1,11 +1,17 @@
+import asyncio
 from pathlib import Path
 from typing import Callable
 
 from langchain.chat_models import BaseChatModel
 
 from mdeagent.implementation.generator import (
+    BackwardMethodBody,
+    ForwardMethodBody,
     ImplementationTransformationSpec,
+    SynchMethodBody,
+    TransformationClassMetadata,
     TransformationClassTemplateResolver,
+    TransformationFieldsAndConstructor,
 )
 from mdeagent.implementation.state import ImplementationState
 
@@ -30,12 +36,244 @@ The implementation must use the EMF interface methods and the Java generic types
 """
 
 
+# Specialized prompts for piecewise generation
+METADATA_PROMPT_TEMPLATE = """
+You are a Java transformation code generator for EMF-based model transformations.
+Extract the metadata (package names and type names) for the transformation class.
+
+--- BEGIN TASK SPECIFICATION ---
+{task_specification}
+--- END TASK SPECIFICATION ---
+
+--- BEGIN TRANSFORMATION PLAN ---
+{transformation_plan}
+--- END TRANSFORMATION PLAN ---
+
+--- BEGIN TEMPLATE ---
+{template}
+--- END TEMPLATE ---
+
+Return the package name, source type, target type, decision type, and the transformation package where AgentTransformationForEMF is declared.
+"""
+
+FIELDS_AND_CONSTRUCTOR_PROMPT_TEMPLATE = """
+You are a Java transformation code generator for EMF-based model transformations.
+Define the fields and constructor for the transformation class.
+
+--- BEGIN TASK SPECIFICATION ---
+{task_specification}
+--- END TASK SPECIFICATION ---
+
+--- BEGIN TRANSFORMATION PLAN ---
+{transformation_plan}
+--- END TRANSFORMATION PLAN ---
+
+--- BEGIN METADATA ---
+Package: {package_name}
+Source Type: {source_type}
+Target Type: {target_type}
+Decision Type: {decision_type}
+--- END METADATA ---
+
+--- BEGIN TEMPLATE ---
+{template}
+--- END TEMPLATE ---
+
+Return the field declarations and constructor definition for the transformation class.
+Fields should be a list of objects with 'type' and 'name'.
+The constructor should have 'parameters' (string) and 'assignments' (list of {{target, value}}).
+If no fields or constructor are needed, return empty/null values.
+"""
+
+FORWARD_BODY_PROMPT_TEMPLATE = """
+You are a Java transformation code generator for EMF-based model transformations.
+Implement the forward transformation method body.
+
+--- BEGIN TASK SPECIFICATION ---
+{task_specification}
+--- END TASK SPECIFICATION ---
+
+--- BEGIN TRANSFORMATION PLAN ---
+{transformation_plan}
+--- END TRANSFORMATION PLAN ---
+
+--- BEGIN METADATA ---
+Package: {package_name}
+Source Type: {source_type}
+Target Type: {target_type}
+Decision Type: {decision_type}
+--- END METADATA ---
+
+--- BEGIN FIELDS ---
+{fields_info}
+--- END FIELDS ---
+
+--- BEGIN TEMPLATE ---
+{template}
+--- END TEMPLATE ---
+
+Return only the Java code for the forward method body (no method signature, just the body content).
+The forward method transforms from {source_type} to {target_type}.
+"""
+
+BACKWARD_BODY_PROMPT_TEMPLATE = """
+You are a Java transformation code generator for EMF-based model transformations.
+Implement the backward transformation method body.
+
+--- BEGIN TASK SPECIFICATION ---
+{task_specification}
+--- END TASK SPECIFICATION ---
+
+--- BEGIN TRANSFORMATION PLAN ---
+{transformation_plan}
+--- END TRANSFORMATION PLAN ---
+
+--- BEGIN METADATA ---
+Package: {package_name}
+Source Type: {source_type}
+Target Type: {target_type}
+Decision Type: {decision_type}
+--- END METADATA ---
+
+--- BEGIN FIELDS ---
+{fields_info}
+--- END FIELDS ---
+
+--- BEGIN TEMPLATE ---
+{template}
+--- END TEMPLATE ---
+
+Return only the Java code for the backward method body (no method signature, just the body content).
+The backward method transforms from {target_type} to {source_type}.
+"""
+
+SYNCH_BODY_PROMPT_TEMPLATE = """
+You are a Java transformation code generator for EMF-based model transformations.
+Implement the synchronization method body.
+
+--- BEGIN TASK SPECIFICATION ---
+{task_specification}
+--- END TASK SPECIFICATION ---
+
+--- BEGIN TRANSFORMATION PLAN ---
+{transformation_plan}
+--- END TRANSFORMATION PLAN ---
+
+--- BEGIN METADATA ---
+Package: {package_name}
+Source Type: {source_type}
+Target Type: {target_type}
+Decision Type: {decision_type}
+--- END METADATA ---
+
+--- BEGIN FIELDS ---
+{fields_info}
+--- END FIELDS ---
+
+--- BEGIN TEMPLATE ---
+{template}
+--- END TEMPLATE ---
+
+Return only the Java code for the synch method body (no method signature, just the body content).
+The synch method handles incremental updates between {source_type} and {target_type}.
+"""
+
+
 def create_input_prompt(
     task_specification: str, transformation_plan: str, template: str
 ) -> str:
     return PROMPT_TEMPLATE_WITH_PLAN.format(
         task_specification=task_specification,
         transformation_plan=transformation_plan,
+        template=template,
+    )
+
+
+def create_metadata_prompt(
+    task_specification: str, transformation_plan: str, template: str
+) -> str:
+    """Create prompt for generating transformation metadata (package and type names)."""
+    return METADATA_PROMPT_TEMPLATE.format(
+        task_specification=task_specification,
+        transformation_plan=transformation_plan,
+        template=template,
+    )
+
+
+def create_fields_and_constructor_prompt(
+    task_specification: str,
+    transformation_plan: str,
+    template: str,
+    metadata: TransformationClassMetadata,
+) -> str:
+    """Create prompt for generating fields and constructor."""
+    return FIELDS_AND_CONSTRUCTOR_PROMPT_TEMPLATE.format(
+        task_specification=task_specification,
+        transformation_plan=transformation_plan,
+        package_name=metadata.package_name,
+        source_type=metadata.source_type,
+        target_type=metadata.target_type,
+        decision_type=metadata.decision_type,
+        template=template,
+    )
+
+
+def create_forward_body_prompt(
+    task_specification: str,
+    transformation_plan: str,
+    template: str,
+    metadata: TransformationClassMetadata,
+    fields_info: str,
+) -> str:
+    """Create prompt for generating forward method body."""
+    return FORWARD_BODY_PROMPT_TEMPLATE.format(
+        task_specification=task_specification,
+        transformation_plan=transformation_plan,
+        package_name=metadata.package_name,
+        source_type=metadata.source_type,
+        target_type=metadata.target_type,
+        decision_type=metadata.decision_type,
+        fields_info=fields_info,
+        template=template,
+    )
+
+
+def create_backward_body_prompt(
+    task_specification: str,
+    transformation_plan: str,
+    template: str,
+    metadata: TransformationClassMetadata,
+    fields_info: str,
+) -> str:
+    """Create prompt for generating backward method body."""
+    return BACKWARD_BODY_PROMPT_TEMPLATE.format(
+        task_specification=task_specification,
+        transformation_plan=transformation_plan,
+        package_name=metadata.package_name,
+        source_type=metadata.source_type,
+        target_type=metadata.target_type,
+        decision_type=metadata.decision_type,
+        fields_info=fields_info,
+        template=template,
+    )
+
+
+def create_synch_body_prompt(
+    task_specification: str,
+    transformation_plan: str,
+    template: str,
+    metadata: TransformationClassMetadata,
+    fields_info: str,
+) -> str:
+    """Create prompt for generating synch method body."""
+    return SYNCH_BODY_PROMPT_TEMPLATE.format(
+        task_specification=task_specification,
+        transformation_plan=transformation_plan,
+        package_name=metadata.package_name,
+        source_type=metadata.source_type,
+        target_type=metadata.target_type,
+        decision_type=metadata.decision_type,
+        fields_info=fields_info,
         template=template,
     )
 
@@ -48,8 +286,20 @@ def create_implement_transformation_node(
     """
     Creates the implement_transformation node for the implementation graph.
 
-    This node uses a structured LLM approach to generate the transformation class.
-    It reads the transformation plan and includes it in the prompt sent to the LLM.
+    This node uses a **piecewise structured LLM approach** to generate the
+    transformation class. Instead of generating everything in one large call,
+    it breaks down the generation into smaller steps:
+
+    1. First, generate metadata (package and type names) - this is needed as context
+    2. Then, in parallel, generate:
+       - Fields and constructor
+       - Forward method body
+       - Backward method body
+       - Synch method body
+    3. Finally, combine all parts and render the template
+
+    This approach reduces timeout risk by using smaller, focused prompts and
+    processing independent parts in parallel.
 
     Args:
         llm: The base chat model to use for generation.
@@ -59,49 +309,122 @@ def create_implement_transformation_node(
     Returns:
         A node function that generates the transformation class and updates the state.
     """
-    structured_llm = llm.with_structured_output(ImplementationTransformationSpec)
+    # Create separate structured LLMs for each generation step
+    metadata_llm = llm.with_structured_output(TransformationClassMetadata)
+    fields_constructor_llm = llm.with_structured_output(
+        TransformationFieldsAndConstructor
+    )
+    forward_llm = llm.with_structured_output(ForwardMethodBody)
+    backward_llm = llm.with_structured_output(BackwardMethodBody)
+    synch_llm = llm.with_structured_output(SynchMethodBody)
+
     resolver = TransformationClassTemplateResolver(template_path=template_path)
 
-    async def implement_transformation(state: ImplementationState) -> ImplementationState:
+    async def implement_transformation(
+        state: ImplementationState,
+    ) -> ImplementationState:
         transformation_class_path = state.get("transformation_class_path")
         if transformation_class_path is None:
             raise ValueError(
                 "Transformation class path is required to write the generated code."
             )
-        
+
         # 1. Read the transformation plan from the state or create one
         transformation_plan = state.get("transformation_md") or optional_plan_factory()
 
-        # 2. Build the prompt for the LLM based on the transformation plan and task specification
+        # 2. Build the base inputs
         task_specification = state.get("task_specification")
         raw_template = resolver.get_raw_template()
-        input_prompt = create_input_prompt(
+
+        # STEP 1: Generate metadata first (needed as context for other parts)
+        metadata_prompt = create_metadata_prompt(
             task_specification=task_specification,
             transformation_plan=str(transformation_plan),
             template=raw_template,
         )
-
-        # 3. Invoke the structured LLM to generate the transformation class.
-        #    The class *name* is no longer asked from the LLM: it is determined
-        #    in the ``prepare_workspace`` node and reaches this node encoded in
-        #    the ``transformation_class_path`` state field.
-        response: ImplementationTransformationSpec = await structured_llm.ainvoke(input=input_prompt)
-
-        # 4. Render the template with the generated specification. The class
-        #    name is derived from the transformation class path (set by
-        #    ``prepare_workspace``) so that the file name and the declared class
-        #    always stay consistent.
-        transformation_class_name = transformation_class_path.stem
-        rendered_code = resolver.render_template(
-            response, class_name=transformation_class_name
+        metadata_response: TransformationClassMetadata = await metadata_llm.ainvoke(
+            input=metadata_prompt
         )
 
-        # 5. Write the generated code to a file
+        # Prepare fields info string for context in method body generation
+        fields_info = f"Fields: {[f'{f.get("type", "Object")} {f.get("name", "field")}' for f in (metadata_response.model_dump().get('fields', []) or [])]}"
+
+        # STEP 2: Generate independent parts in PARALLEL
+        # Create all prompts for parallel generation
+        fields_prompt = create_fields_and_constructor_prompt(
+            task_specification=task_specification,
+            transformation_plan=str(transformation_plan),
+            template=raw_template,
+            metadata=metadata_response,
+        )
+
+        forward_prompt = create_forward_body_prompt(
+            task_specification=task_specification,
+            transformation_plan=str(transformation_plan),
+            template=raw_template,
+            metadata=metadata_response,
+            fields_info=fields_info,
+        )
+
+        backward_prompt = create_backward_body_prompt(
+            task_specification=task_specification,
+            transformation_plan=str(transformation_plan),
+            template=raw_template,
+            metadata=metadata_response,
+            fields_info=fields_info,
+        )
+
+        synch_prompt = create_synch_body_prompt(
+            task_specification=task_specification,
+            transformation_plan=str(transformation_plan),
+            template=raw_template,
+            metadata=metadata_response,
+            fields_info=fields_info,
+        )
+
+        # Execute all four calls in parallel
+        (
+            fields_result,
+            forward_result,
+            backward_result,
+            synch_result,
+        ) = await asyncio.gather(
+            fields_constructor_llm.ainvoke(input=fields_prompt),
+            forward_llm.ainvoke(input=forward_prompt),
+            backward_llm.ainvoke(input=backward_prompt),
+            synch_llm.ainvoke(input=synch_prompt),
+        )
+
+        # STEP 3: Combine all parts into the final spec
+        combined_spec = ImplementationTransformationSpec(
+            package_name=metadata_response.package_name,
+            source_type=metadata_response.source_type,
+            target_type=metadata_response.target_type,
+            decision_type=metadata_response.decision_type,
+            transformation_package=metadata_response.transformation_package,
+            fields=fields_result.fields or [],
+            constructor=fields_result.constructor,
+            forward_body=forward_result.forward_body,
+            backward_body=backward_result.backward_body,
+            synch_body=synch_result.synch_body,
+            transform_source_to_target_body=None,  # Will default to calling forward
+            transform_target_to_source_body=None,  # Will default to calling backward
+        )
+
+        # STEP 4: Render the template with the generated specification
+        transformation_class_name = transformation_class_path.stem
+        rendered_code = resolver.render_template(
+            combined_spec, class_name=transformation_class_name
+        )
+
+        # STEP 5: Write the generated code to a file
         transformation_class_path.touch(exist_ok=True)
         transformation_class_path.write_text(rendered_code, encoding="utf-8")
 
-        # 6. Retrieve the written files from the state and add the new one
-        written_java_files = state.get("written_java_files", []) + [transformation_class_path]
+        # STEP 6: Retrieve the written files from the state and add the new one
+        written_java_files = state.get("written_java_files", []) + [
+            transformation_class_path
+        ]
 
         # NOTE: The iteration counter is *not* advanced here. Unlike the
         # preparation subgraph (which has a single work node), the

@@ -57,6 +57,72 @@ class TransformationClassSpec(_TransformationClassFields):
     class_name: str = Field(description="The name of the transformation class.")
 
 
+class TransformationClassMetadata(BaseModel):
+    """Structured-output spec for transformation metadata (package and type names).
+
+    This is the first step in the piecewise generation approach. The metadata
+    determines the basic structure and is used as context for generating fields
+    and method bodies.
+    """
+
+    package_name: str = Field(
+        description="The Java package for the generated transformation class."
+    )
+    source_type: str = Field(
+        description="The source model type used in AgentTransformationForEMF."
+    )
+    target_type: str = Field(
+        description="The target model type used in AgentTransformationForEMF."
+    )
+    decision_type: str = Field(
+        description="The decision type used in AgentTransformationForEMF."
+    )
+    transformation_package: str = Field(
+        default="com.example",
+        description="The package where AgentTransformationForEMF is declared.",
+    )
+
+
+class TransformationFieldsAndConstructor(BaseModel):
+    """Structured-output spec for class fields and constructor.
+
+    Generated in parallel with method bodies, using metadata as context.
+    """
+
+    fields: list[dict] = Field(
+        default_factory=list,
+        description="List of field declarations with 'type' and 'name'.",
+    )
+    constructor: dict | None = Field(
+        default=None,
+        description="Constructor with 'parameters' and 'assignments', or null if no constructor needed.",
+    )
+
+
+class ForwardMethodBody(BaseModel):
+    """Structured-output spec for the forward method body."""
+
+    forward_body: str = Field(
+        description="Java code for the forward transformation method body."
+    )
+
+
+class BackwardMethodBody(BaseModel):
+    """Structured-output spec for the backward method body."""
+
+    backward_body: str = Field(
+        description="Java code for the backward transformation method body."
+    )
+
+
+class SynchMethodBody(BaseModel):
+    """Structured-output spec for the synch method body."""
+
+    synch_body: str = Field(
+        description="Java code for the synchronization method body."
+    )
+
+
 class ImplementationTransformationSpec(_TransformationClassFields):
     """Structured-output spec for the ``implement_transformation`` node.
 
@@ -66,6 +132,10 @@ class ImplementationTransformationSpec(_TransformationClassFields):
     node and reaches this node encoded in the ``transformation_class_path``
     state field. It is passed to
     :meth:`TransformationClassTemplateResolver.render_template` separately.
+
+    DEPRECATED: Use the piecewise generation approach with separate specs instead.
+    This class is kept for backwards compatibility but should not be used for new
+    implementations.
     """
 
 
