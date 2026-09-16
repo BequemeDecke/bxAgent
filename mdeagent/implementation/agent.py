@@ -17,7 +17,7 @@ from mdeagent.implementation.implement_transformation import (
     create_implement_transformation_node,
 )
 from mdeagent.implementation.state import ImplementationState
-from mdeagent.mapping import map_coding_to_file
+from mdeagent.mapping import implementation_to_java_files
 from mdeagent.models import build_base_model
 
 
@@ -54,8 +54,8 @@ def build_implementation_graph(
     evaluation_agentic_work = create_evaluation_node(
         evaluation_executor=evaluation_executor,
         mapper={
-            "file_existence": map_coding_to_file,
-            "java_compilation": map_coding_to_file,
+            "file_existence": implementation_to_java_files,
+            "java_compilation": implementation_to_java_files,
         },
         execution_mode="specific",
     )
