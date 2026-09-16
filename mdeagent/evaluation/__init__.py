@@ -5,7 +5,7 @@ from .types import Evaluation, EvaluationError, EvaluationResult, EvaluationRun
 
 __all__ = [
     "ToolInstalledEvaluation",
-    "ToolInstalledEvaluationConfig",
+    "ToolInstalledSchema",
     "Evaluation",
     "EvaluationError",
     "EvaluationExecutor",
@@ -14,9 +14,9 @@ __all__ = [
     "EvaluationResult",
     "EvaluationRun",
     "FileExistenceEvaluation",
-    "FileExistenceEvaluationConfig",
+    "FileExistenceSchema",
     "JavaCompilationEvaluation",
-    "JavaCompilationEvaluationConfig",
+    "JavaCompilationSchema",
     "StateToEvaluationMapper",
     "WorkspaceStructureEvaluation",
     "WorkspaceStructureSchema",

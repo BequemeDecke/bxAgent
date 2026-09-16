@@ -70,7 +70,7 @@ def _default_executor() -> EvaluationExecutor:
             },
             "tools_installed": {
                 "evaluation": implementations.ToolInstalledEvaluation(),
-                "evaluation_schema": implementations.ToolInstalledEvaluationConfig,
+                "evaluation_schema": implementations.ToolInstalledSchema,
             },
         }
     )
@@ -392,7 +392,7 @@ class TestPreparationLoop(TestCase):
                 },
                 "tools_installed": {
                     "evaluation": _StatefulEvaluation(fail_until=2),
-                    "evaluation_schema": implementations.ToolInstalledEvaluationConfig,
+                    "evaluation_schema": implementations.ToolInstalledSchema,
                 },
             }
         )
@@ -452,7 +452,7 @@ class TestPreparationLoop(TestCase):
                 },
                 "tools_installed": {
                     "evaluation": _StatefulEvaluation(fail_until=0),
-                    "evaluation_schema": implementations.ToolInstalledEvaluationConfig,
+                    "evaluation_schema": implementations.ToolInstalledSchema,
                 },
             }
         )

@@ -1,8 +1,8 @@
-from .file_existence import FileExistenceEvaluation, FileExistenceEvaluationConfig
-from .java_compilation import JavaCompilationEvaluation, JavaCompilationEvaluationConfig
+from .file_existence import FileExistenceEvaluation, FileExistenceSchema
+from .java_compilation import JavaCompilationEvaluation, JavaCompilationSchema
 from .tool_installed import (
     ToolInstalledEvaluation,
-    ToolInstalledEvaluationConfig,
+    ToolInstalledSchema,
 )
 from .workspace_structure import (
     WorkspaceStructureEvaluation,
@@ -11,11 +11,11 @@ from .workspace_structure import (
 
 __all__ = [
     "FileExistenceEvaluation",
-    "FileExistenceEvaluationConfig",
+    "FileExistenceSchema",
     "JavaCompilationEvaluation",
-    "JavaCompilationEvaluationConfig",
+    "JavaCompilationSchema",
     "ToolInstalledEvaluation",
-    "ToolInstalledEvaluationConfig",
+    "ToolInstalledSchema",
     "WorkspaceStructureEvaluation",
     "WorkspaceStructureSchema",
 ]

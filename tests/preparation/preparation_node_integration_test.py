@@ -81,7 +81,7 @@ class TestPreparationNodeIntegration(TestCase):
                 },
                 "tools_installed": {
                     "evaluation": implementations.ToolInstalledEvaluation(),
-                    "evaluation_schema": implementations.ToolInstalledEvaluationConfig,
+                    "evaluation_schema": implementations.ToolInstalledSchema,
                 },
             }
         )

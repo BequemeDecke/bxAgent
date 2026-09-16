@@ -2,10 +2,10 @@ import shutil
 
 from pydantic import BaseModel
 
-from ..types import Evaluation, EvaluationError, EvaluationResult
+from mdeagent.evaluation.types import Evaluation, EvaluationError, EvaluationResult
 
 
-class ToolInstalledEvaluationConfig(BaseModel):
+class ToolInstalledSchema(BaseModel):
     tools: list[str]
 
 

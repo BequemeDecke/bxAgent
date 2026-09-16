@@ -2,7 +2,6 @@ import logging
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
 
 from pydantic import BaseModel
 
@@ -23,7 +22,7 @@ class JavaCompilationMetadata:
     error_type: str | None = None
 
 
-class JavaCompilationEvaluationConfig(BaseModel):
+class JavaCompilationSchema(BaseModel):
     project_path: Path
 
 

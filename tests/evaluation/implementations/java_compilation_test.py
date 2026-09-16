@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 
 from mdeagent.evaluation.implementations.java_compilation import (
     JavaCompilationEvaluation,
-    JavaCompilationEvaluationConfig,
+    JavaCompilationSchema,
     parse_mvn_compile_output,
 )
 from mdeagent.preparation.maven import MavenProject
@@ -20,9 +20,9 @@ class TestJavaCompilationEvaluationConfig(TestCase):
         from pydantic import ValidationError
         
         with self.assertRaises(ValidationError):
-            JavaCompilationEvaluationConfig()
+            JavaCompilationSchema()
 
-        config = JavaCompilationEvaluationConfig(project_path=Path("/test"))
+        config = JavaCompilationSchema(project_path=Path("/test"))
         self.assertEqual(config.project_path, Path("/test"))
 
 

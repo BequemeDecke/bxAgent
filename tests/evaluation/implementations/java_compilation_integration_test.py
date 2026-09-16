@@ -14,7 +14,7 @@ from unittest.mock import MagicMock, patch
 from mdeagent.evaluation import (
     EvaluationExecutor,
     JavaCompilationEvaluation,
-    JavaCompilationEvaluationConfig,
+    JavaCompilationSchema,
 )
 from mdeagent.evaluation.node import create_evaluation_node
 from mdeagent.mapping.mde_to_maven_project import mde_to_maven_project
@@ -48,7 +48,7 @@ class TestJavaCompilationWithExecutor(TestCase):
                 evaluations={
                     "java_compilation": {
                         "evaluation": evaluation,
-                        "evaluation_schema": JavaCompilationEvaluationConfig,
+                        "evaluation_schema": JavaCompilationSchema,
                     }
                 }
             )
@@ -90,7 +90,7 @@ class TestJavaCompilationWithExecutor(TestCase):
                 evaluations={
                     "java_compilation": {
                         "evaluation": evaluation,
-                        "evaluation_schema": JavaCompilationEvaluationConfig,
+                        "evaluation_schema": JavaCompilationSchema,
                     }
                 }
             )
@@ -134,7 +134,7 @@ class TestJavaCompilationWithMapperAndNode(TestCase):
                 evaluations={
                     "java_compilation": {
                         "evaluation": evaluation,
-                        "evaluation_schema": JavaCompilationEvaluationConfig,
+                        "evaluation_schema": JavaCompilationSchema,
                     }
                 }
             )
@@ -196,7 +196,7 @@ class TestJavaCompilationWithMapperAndNode(TestCase):
                 evaluations={
                     "java_compilation": {
                         "evaluation": evaluation,
-                        "evaluation_schema": JavaCompilationEvaluationConfig,
+                        "evaluation_schema": JavaCompilationSchema,
                     }
                 }
             )
@@ -235,7 +235,7 @@ class TestJavaCompilationWithMapperAndNode(TestCase):
             evaluations={
                 "java_compilation": {
                     "evaluation": evaluation,
-                    "evaluation_schema": JavaCompilationEvaluationConfig,
+                    "evaluation_schema": JavaCompilationSchema,
                 }
             }
         )
@@ -299,7 +299,7 @@ class TestJavaCompilationWithRealMavenProject(TestCase):
                 evaluations={
                     "java_compilation": {
                         "evaluation": evaluation,
-                        "evaluation_schema": JavaCompilationEvaluationConfig,
+                        "evaluation_schema": JavaCompilationSchema,
                     }
                 }
             )

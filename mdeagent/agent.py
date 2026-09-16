@@ -7,11 +7,11 @@ from mdeagent.comprehension.node import create_comprehension_node
 from mdeagent.evaluation import (
     EvaluationExecutor,
     FileExistenceEvaluation,
-    FileExistenceEvaluationConfig,
+    FileExistenceSchema,
     JavaCompilationEvaluation,
-    JavaCompilationEvaluationConfig,
+    JavaCompilationSchema,
     ToolInstalledEvaluation,
-    ToolInstalledEvaluationConfig,
+    ToolInstalledSchema,
     WorkspaceStructureEvaluation,
     WorkspaceStructureSchema,
 )
@@ -48,17 +48,17 @@ def build_mdeagent(
             },
             "tools_installed": {
                 "evaluation": ToolInstalledEvaluation(),
-                "evaluation_schema": ToolInstalledEvaluationConfig,
+                "evaluation_schema": ToolInstalledSchema,
                 "category": "preparation",
             },
             "file_existence": {
                 "evaluation": FileExistenceEvaluation(),
-                "evaluation_schema": FileExistenceEvaluationConfig,
+                "evaluation_schema": FileExistenceSchema,
                 "category": "execution",
             },
             "java_compilation": {
                 "evaluation": JavaCompilationEvaluation(),
-                "evaluation_schema": JavaCompilationEvaluationConfig,
+                "evaluation_schema": JavaCompilationSchema,
                 "category": "execution",
             },
         }

@@ -2,10 +2,10 @@ from pathlib import Path
 
 from pydantic import BaseModel
 
-from ..types import Evaluation, EvaluationError, EvaluationResult
+from mdeagent.evaluation.types import Evaluation, EvaluationError, EvaluationResult
 
 
-class FileExistenceEvaluationConfig(BaseModel):
+class FileExistenceSchema(BaseModel):
     files: list[Path]
 
 
@@ -16,7 +16,7 @@ class FileExistenceEvaluation(Evaluation):
     async def run(
         self, **kwargs
     ) -> tuple[list[EvaluationResult], list[EvaluationError]]:
-        config = FileExistenceEvaluationConfig(**kwargs)
+        config = FileExistenceSchema(**kwargs)
         files = config.files
 
         results = []
