@@ -1,21 +1,18 @@
-from unittest import TestCase
 from pathlib import Path
+from unittest import TestCase
 
-from mdeagent.implementation.state import (
-    ImplementationState,
-)  # Fix cyclic import from __init__ files
+from mdeagent.mapping import mde_to_workspace
 from mdeagent.state import MDEAgentState
-from mdeagent.mapping import map_workflow_to_workspace
 
 
-class TestWorkflowToWorkspaceMapping(TestCase):
+class TestMDEToWorkspace(TestCase):
     def test_mapping(self):
         state = MDEAgentState(
             workspace_path=Path("/path/to/workspace"),
             artifact_id="my-artifact",
             transformation_package_path="com.example.transformation",
         )
-        evaluation_params = map_workflow_to_workspace(state)
+        evaluation_params = mde_to_workspace(state)
         self.assertIn("workspace_path", evaluation_params)
         self.assertEqual(evaluation_params["workspace_path"], state["workspace_path"])
         self.assertIn("artifact_id", evaluation_params)

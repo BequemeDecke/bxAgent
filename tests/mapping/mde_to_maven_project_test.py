@@ -1,12 +1,12 @@
 from pathlib import Path
 from unittest import TestCase
 
-from mdeagent.mapping.workflow_to_maven_project import map_workflow_to_maven_project
+from mdeagent.mapping.mde_to_maven_project import mde_to_maven_project
 from mdeagent.state import MDEAgentState
 
 
-class TestMapWorkflowToMavenProject(TestCase):
-    """Test cases for map_workflow_to_maven_project function."""
+class TestMDEToMavenProject(TestCase):
+    """Test cases for mde_to_maven_project function."""
 
     def test_map_with_maven_project_path(self):
         """Test mapping when maven_project_path is set in state."""
@@ -22,7 +22,7 @@ class TestMapWorkflowToMavenProject(TestCase):
             artifact_id="my-artifact",
         )
         
-        result = map_workflow_to_maven_project(state)
+        result = mde_to_maven_project(state)
         
         self.assertEqual(result, {"project_path": maven_project_path})
         self.assertEqual(result["project_path"], maven_project_path)
@@ -46,7 +46,7 @@ class TestMapWorkflowToMavenProject(TestCase):
         }
         
         with self.assertRaises(KeyError) as context:
-            map_workflow_to_maven_project(state)
+            mde_to_maven_project(state)
         
         self.assertIn("maven_project_path", str(context.exception))
 
@@ -71,7 +71,7 @@ class TestMapWorkflowToMavenProject(TestCase):
             "latest_evaluation_runs": [],
         }
         
-        result = map_workflow_to_maven_project(state)
+        result = mde_to_maven_project(state)
         
         self.assertIsInstance(result["project_path"], Path)
         self.assertEqual(result["project_path"], maven_project_path)
@@ -96,7 +96,7 @@ class TestMapWorkflowToMavenProject(TestCase):
             "latest_evaluation_runs": [],
         }
         
-        result = map_workflow_to_maven_project(state)
+        result = mde_to_maven_project(state)
         
         self.assertEqual(result["project_path"], maven_project_path)
         self.assertEqual(

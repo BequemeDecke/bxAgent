@@ -17,7 +17,7 @@ from mdeagent.evaluation import (
     JavaCompilationEvaluationConfig,
 )
 from mdeagent.evaluation.node import create_evaluation_node
-from mdeagent.mapping.workflow_to_maven_project import map_workflow_to_maven_project
+from mdeagent.mapping.mde_to_maven_project import mde_to_maven_project
 from mdeagent.preparation.maven import MavenProject
 from mdeagent.state import MDEAgentState
 
@@ -141,7 +141,7 @@ class TestJavaCompilationWithMapperAndNode(TestCase):
             
             node = create_evaluation_node(
                 evaluation_executor=executor,
-                mapper={"java_compilation": map_workflow_to_maven_project},
+                mapper={"java_compilation": mde_to_maven_project},
                 execution_mode="all",
             )
             
@@ -203,7 +203,7 @@ class TestJavaCompilationWithMapperAndNode(TestCase):
             
             node = create_evaluation_node(
                 evaluation_executor=executor,
-                mapper={"java_compilation": map_workflow_to_maven_project},
+                mapper={"java_compilation": mde_to_maven_project},
                 execution_mode="all",
             )
             
@@ -242,7 +242,7 @@ class TestJavaCompilationWithMapperAndNode(TestCase):
         
         node = create_evaluation_node(
             evaluation_executor=executor,
-            mapper={"java_compilation": map_workflow_to_maven_project},
+            mapper={"java_compilation": mde_to_maven_project},
             execution_mode="all",
         )
         
@@ -306,7 +306,7 @@ class TestJavaCompilationWithRealMavenProject(TestCase):
             
             node = create_evaluation_node(
                 evaluation_executor=executor,
-                mapper={"java_compilation": map_workflow_to_maven_project},
+                mapper={"java_compilation": mde_to_maven_project},
                 execution_mode="all",
             )
             

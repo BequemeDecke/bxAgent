@@ -23,9 +23,9 @@ from mdeagent.implementation.agent import build_implementation_graph
 from mdeagent.implementation.node import create_implementation_node
 from mdeagent.mapping import (
     mde_to_tools,
-    map_workflow_to_file,
-    map_workflow_to_maven_project,
-    map_workflow_to_workspace,
+    mde_to_files,
+    mde_to_maven_project,
+    mde_to_workspace,
 )
 from mdeagent.models import build_base_model
 from mdeagent.preparation.agent import build_preparation_graph
@@ -90,10 +90,10 @@ def build_mdeagent(
     call_evaluation_node = create_evaluation_node(
         evaluation_executor=agent_evaluator,
         mapper={
-            "file_existence": map_workflow_to_file,
-            "java_compilation": map_workflow_to_maven_project,
+            "file_existence": mde_to_files,
+            "java_compilation": mde_to_maven_project,
             "tools_installed": mde_to_tools,
-            "workspace_structure": map_workflow_to_workspace,
+            "workspace_structure": mde_to_workspace,
         },
     )
 

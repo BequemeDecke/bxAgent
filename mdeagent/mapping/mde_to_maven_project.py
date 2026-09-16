@@ -3,7 +3,7 @@ from typing import Any
 from mdeagent.state import MDEAgentState
 
 
-def map_workflow_to_maven_project(state: MDEAgentState) -> dict[str, Any]:
+def mde_to_maven_project(state: MDEAgentState) -> dict[str, Any]:
     """
     Map the workflow state to the schema required for Java compilation evaluation.
 
