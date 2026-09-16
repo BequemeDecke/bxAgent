@@ -133,13 +133,10 @@ class TestBuildImplementationGraph(TestCase):
         mock_create_evaluation_node.return_value = Mock(name="evaluate_implementation")
         mock_evaluate_transformation_implementation.return_value = Mock(name="decision")
 
-        # Function under test (no benchmarx -> no implement_bx_tool node). ``benchmarx_path`` is provided so that the BenchmarX
-        # branch is taken and ``create_implement_bx_tool_node`` is actually invoked
-        # (the assertion below relies on it being called once).
+        # Function under test (no benchmarx -> no implement_bx_tool node).
         graph = build_implementation_graph(
             evaluation_executor=Mock(name="evaluation_executor"),
             workspace_path=Mock(name="workspace_path"),
-            benchmarx_path=Path("/fake/benchmarx"),
         )
 
         # Assertions
