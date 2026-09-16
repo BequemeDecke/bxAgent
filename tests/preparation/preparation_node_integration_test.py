@@ -72,7 +72,7 @@ class TestPreparationNodeIntegration(TestCase):
                 f"but found {target_file_count}."
             )
 
-        # Build the preparation agent with evaluation executor
+        # Build the preparation agent with evaluation executor.
         self.evaluation_executor = EvaluationExecutor(
             evaluations={
                 "workspace_structure": {
@@ -267,16 +267,17 @@ class TestPreparationNodeIntegration(TestCase):
                 f"Expected directory {dir_path} to exist.",
             )
 
-        # Check that the workspace contains the BXT tool file
-        bxtool_expected_name = "MDEAgentTransformationBxToolAdapter.java"
+        # Check that the workspace contains the BXT tool file. The adapter name is
+        # derived deterministically from the source/target model folder names
+        # (``Families`` -> ``Persons`` => ``FamiliesToPersonsBxToolAdapter``).
         bxtool_path = (
             self.workspace_path
             / "PreparationNodeIntegrationTest/src/main/java/de/hofuniversity/PreparationNodeIntegrationTest/"
-            / bxtool_expected_name
+            / "FamiliesToPersonsBxToolAdapter.java"
         )
         self.assertTrue(
             bxtool_path.exists(),
-            f"Expected BXT tool file {bxtool_expected_name} to exist in the workspace.",
+            f"Expected BXT tool file {bxtool_path.name} to exist in the workspace.",
         )
 
         # Check that the workspace contains the TRANSFORMATION.md file

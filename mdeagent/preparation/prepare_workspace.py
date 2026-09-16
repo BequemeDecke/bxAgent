@@ -2,9 +2,9 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 
 from mdeagent.comprehension import FileTransformationPlanParser, TransformationPlan
-from mdeagent.config import Config
 from mdeagent.evaluation.types import EvaluationRun
 from mdeagent.preparation.maven import MavenProject
+from mdeagent.preparation.naming import determine_transformation_class_name
 from mdeagent.preparation.pom import Dependency, Plugin
 from mdeagent.preparation.state import PreparationState
 
@@ -175,10 +175,20 @@ def create_prepare_workspace_node(
             parser=tp_parser
         )  # Transformation plan is created if not existing, else loaded
 
-        # Create the transformation Java file (bxtool)
-        transformation_class_name = (
-            Config.get_instance().VARIABLES.TRANSFORMATION_CLASS_NAME
+        # Derive the transformation class name (and the BxTool adapter name)
+        # deterministically from the *folder names* of the source and target
+        # model packages. Each model package folder carries the name of its
+        # metamodel, so the names follow the pattern
+        # ``<Source>To<Target>Transformation`` / ``<Source>To<Target>BxToolAdapter``
+        # (e.g. ``Families`` -> ``Persons`` yields ``FamiliesToPersonsTransformation``).
+        # This replaces the former LLM-based naming which was too error-prone.
+        source_model = state.get("source_model")
+        target_model = state.get("target_model")
+        naming = determine_transformation_class_name(
+            source_model_path=source_model.get("path") if source_model else None,
+            target_model_path=target_model.get("path") if target_model else None,
         )
+        transformation_class_name = naming.transformation_class_name
         # Calculate transformation class path but don't create the file (user will implement it)
         transformation_class_path = (
             project.get_package_path(full_package) / f"{transformation_class_name}.java"
@@ -189,7 +199,7 @@ def create_prepare_workspace_node(
         create_bxtool_adapter = state_benchmarx_path is None and not download_benchmarx
 
         if create_bxtool_adapter:
-            bxtool_class_name = f"{transformation_class_name}BxToolAdapter"
+            bxtool_class_name = naming.bxtool_adapter_class_name
             bxtool_path = project.add_java_class(
                 package=full_package,
                 class_name=bxtool_class_name,

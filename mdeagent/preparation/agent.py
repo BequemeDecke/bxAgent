@@ -54,7 +54,7 @@ def build_preparation_graph(
     prepare_workspace_node = create_prepare_workspace_node(
         fix_strategy=ClearWorkspaceStrategy(),
         benchmarx_path=benchmarx_path,
-        download_benchmarx=download_benchmarx
+        download_benchmarx=download_benchmarx,
     )
     if download_benchmarx:
         from mdeagent.preparation.benchmarx import create_download_benchmarx_node
