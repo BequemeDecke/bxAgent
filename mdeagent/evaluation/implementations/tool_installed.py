@@ -30,14 +30,14 @@ class ToolInstalledEvaluation(Evaluation):
                 if shutil.which(tool) is None:
                     results.append(
                         EvaluationResult(
-                            content=f"Command '{tool}' is not installed on the system.",
+                            content=f"Tool '{tool}' is not installed on the system.",
                             metadata={"success": False, "include_in_report": False},
                         )
                     )
                 else:
                     results.append(
                         EvaluationResult(
-                            content=f"Command '{tool}' is installed on the system.",
+                            content=f"Tool '{tool}' is installed on the system.",
                             metadata={"success": True, "include_in_report": False},
                         )
                     )

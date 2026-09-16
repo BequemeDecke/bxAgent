@@ -43,7 +43,7 @@ class ToolInstalled(TestCase):
             "There should be no errors occurred during evaluation.",
         )
         self.assertIn(
-            "Command 'python' is installed on the system.",
+            "Tool 'python' is installed on the system.",
             [result.content for result in results],
             "Expected success message for 'python' was not returned.",
         )
