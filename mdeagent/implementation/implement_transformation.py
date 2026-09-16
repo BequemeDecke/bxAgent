@@ -4,6 +4,16 @@ from typing import Callable
 
 from langchain.chat_models import BaseChatModel
 
+from mdeagent.evaluation import (
+    EvaluationPipe,
+    EvaluationResult,
+    EvaluationRun,
+)
+from mdeagent.evaluation.filter import (
+    IsErrorFilter,
+    IsExecutionRunFilter,
+    IsReportCandidateFilter,
+)
 from mdeagent.implementation.generator import (
     BackwardMethodBody,
     ForwardMethodBody,
@@ -31,6 +41,10 @@ Generate a concrete implementation of the AgentTransformationForEMF interface ba
 {template}
 --- END TEMPLATE ---
 
+--- BEGIN EVALUATION RESULTS ---
+{evaluation_results_text}
+--- END EVALUATION RESULTS ---
+
 Return a valid structured result matching the required Java class structure.
 The implementation must use the EMF interface methods and the Java generic types for source, target, and decisions.
 """
@@ -52,6 +66,10 @@ Extract the metadata (package names and type names) for the transformation class
 --- BEGIN TEMPLATE ---
 {template}
 --- END TEMPLATE ---
+
+--- BEGIN EVALUATION RESULTS ---
+{evaluation_results_text}
+--- END EVALUATION RESULTS ---
 
 Return the package name, source type, target type, decision type, and the transformation package where AgentTransformationForEMF is declared.
 """
@@ -78,6 +96,10 @@ Decision Type: {decision_type}
 --- BEGIN TEMPLATE ---
 {template}
 --- END TEMPLATE ---
+
+--- BEGIN EVALUATION RESULTS ---
+{evaluation_results_text}
+--- END EVALUATION RESULTS ---
 
 Return the field declarations and constructor definition for the transformation class.
 Fields should be a list of objects with 'type' and 'name'.
@@ -112,6 +134,10 @@ Decision Type: {decision_type}
 {template}
 --- END TEMPLATE ---
 
+--- BEGIN EVALUATION RESULTS ---
+{evaluation_results_text}
+--- END EVALUATION RESULTS ---
+
 Return only the Java code for the forward method body (no method signature, just the body content).
 The forward method transforms from {source_type} to {target_type}.
 """
@@ -142,6 +168,10 @@ Decision Type: {decision_type}
 --- BEGIN TEMPLATE ---
 {template}
 --- END TEMPLATE ---
+
+--- BEGIN EVALUATION RESULTS ---
+{evaluation_results_text}
+--- END EVALUATION RESULTS ---
 
 Return only the Java code for the backward method body (no method signature, just the body content).
 The backward method transforms from {target_type} to {source_type}.
@@ -174,29 +204,120 @@ Decision Type: {decision_type}
 {template}
 --- END TEMPLATE ---
 
+--- BEGIN EVALUATION RESULTS ---
+{evaluation_results_text}
+--- END EVALUATION RESULTS ---
+
 Return only the Java code for the synch method body (no method signature, just the body content).
 The synch method handles incremental updates between {source_type} and {target_type}.
 """
 
 
+def _format_evaluation_results(results: list[EvaluationResult]) -> str:
+    """
+    Format a list of EvaluationResult objects into a human-readable text.
+
+    Args:
+        results: List of evaluation results to format.
+
+    Returns:
+        A formatted string representation of the evaluation results.
+    """
+    if not results:
+        return "No evaluation results available."
+
+    formatted_lines = []
+    for i, result in enumerate(results, start=1):
+        success_status = (
+            "SUCCESS" if result.metadata.get("success", True) else "FAILURE"
+        )
+        formatted_lines.append(f"{i}. [{success_status}] {result.content}")
+
+        # Add metadata details if present
+        metadata = result.metadata
+        if "file" in metadata:
+            formatted_lines.append(f"   File: {metadata['file']}")
+        if "line" in metadata:
+            line_info = f"Line: {metadata['line']}"
+            if "column" in metadata:
+                line_info += f", Column: {metadata['column']}"
+            formatted_lines.append(f"   {line_info}")
+
+    return "\n".join(formatted_lines)
+
+
+def _filter_execution_results(
+    latest_evaluation_runs: dict[str, EvaluationRun],
+) -> list[EvaluationResult]:
+    """
+    Filter evaluation results from execution runs (JavaCompilation and FileExistence).
+
+    Uses EvaluationPipe with IsErrorFilter to get error results and
+    IsReportCandidateFilter to get report-worthy results.
+    Both filters are applied separately and combined (OR logic).
+
+    Args:
+        latest_evaluation_runs: Dictionary of evaluation runs.
+
+    Returns:
+        A list of filtered evaluation results.
+    """
+    # Filter runs by category "execution" using IsExecutionRunFilter
+    execution_pipe = EvaluationPipe() | IsExecutionRunFilter
+    execution_runs = execution_pipe.filter_results(
+        list(latest_evaluation_runs.values())
+    )
+
+    # Collect all results from execution runs
+    all_execution_results: list[EvaluationResult] = []
+    for run in execution_runs:
+        all_execution_results.extend(run.results)
+
+    if not all_execution_results:
+        return []
+
+    # Use EvaluationPipe with IsErrorFilter to get error results
+    error_pipe = EvaluationPipe() | IsErrorFilter
+    error_results = error_pipe.filter_results(all_execution_results)
+
+    # Use EvaluationPipe with IsReportCandidateFilter to get report-worthy results
+    report_pipe = EvaluationPipe() | IsReportCandidateFilter
+    report_results = report_pipe.filter_results(all_execution_results)
+
+    # Combine both lists, avoiding duplicates (OR logic)
+    combined_results = list(
+        {id(result): result for result in error_results + report_results}.values()
+    )
+
+    return combined_results
+
+
 def create_input_prompt(
-    task_specification: str, transformation_plan: str, template: str
+    task_specification: str,
+    transformation_plan: str,
+    template: str,
+    evaluation_results_text: str = "No evaluation results available.",
 ) -> str:
     return PROMPT_TEMPLATE_WITH_PLAN.format(
         task_specification=task_specification,
         transformation_plan=transformation_plan,
         template=template,
+        evaluation_results_text=evaluation_results_text,
     )
 
 
 def create_metadata_prompt(
-    task_specification: str, transformation_plan: str, template: str
+    task_specification: str,
+    transformation_plan: str,
+    template: str,
+    evaluation_results_text: str = "No evaluation results available.",
 ) -> str:
     """Create prompt for generating transformation metadata (package and type names)."""
     return METADATA_PROMPT_TEMPLATE.format(
         task_specification=task_specification,
         transformation_plan=transformation_plan,
         template=template,
+        evaluation_results_text=evaluation_results_text,
     )
 
 
@@ -205,6 +326,7 @@ def create_fields_and_constructor_prompt(
     transformation_plan: str,
     template: str,
     metadata: TransformationClassMetadata,
+    evaluation_results_text: str = "No evaluation results available.",
 ) -> str:
     """Create prompt for generating fields and constructor."""
     return FIELDS_AND_CONSTRUCTOR_PROMPT_TEMPLATE.format(
@@ -215,6 +337,7 @@ def create_fields_and_constructor_prompt(
         target_type=metadata.target_type,
         decision_type=metadata.decision_type,
         template=template,
+        evaluation_results_text=evaluation_results_text,
     )
 
 
@@ -224,6 +347,7 @@ def create_forward_body_prompt(
     template: str,
     metadata: TransformationClassMetadata,
     fields_info: str,
+    evaluation_results_text: str = "No evaluation results available.",
 ) -> str:
     """Create prompt for generating forward method body."""
     return FORWARD_BODY_PROMPT_TEMPLATE.format(
@@ -235,6 +359,7 @@ def create_forward_body_prompt(
         decision_type=metadata.decision_type,
         fields_info=fields_info,
         template=template,
+        evaluation_results_text=evaluation_results_text,
     )
 
 
@@ -244,6 +369,7 @@ def create_backward_body_prompt(
     template: str,
     metadata: TransformationClassMetadata,
     fields_info: str,
+    evaluation_results_text: str = "No evaluation results available.",
 ) -> str:
     """Create prompt for generating backward method body."""
     return BACKWARD_BODY_PROMPT_TEMPLATE.format(
@@ -255,6 +381,7 @@ def create_backward_body_prompt(
         decision_type=metadata.decision_type,
         fields_info=fields_info,
         template=template,
+        evaluation_results_text=evaluation_results_text,
     )
 
 
@@ -264,6 +391,7 @@ def create_synch_body_prompt(
     template: str,
     metadata: TransformationClassMetadata,
     fields_info: str,
+    evaluation_results_text: str = "No evaluation results available.",
 ) -> str:
     """Create prompt for generating synch method body."""
     return SYNCH_BODY_PROMPT_TEMPLATE.format(
@@ -275,6 +403,7 @@ def create_synch_body_prompt(
         decision_type=metadata.decision_type,
         fields_info=fields_info,
         template=template,
+        evaluation_results_text=evaluation_results_text,
     )
 
 
@@ -332,7 +461,12 @@ def create_implement_transformation_node(
         # 1. Read the transformation plan from the state or create one
         transformation_plan = state.get("transformation_md") or optional_plan_factory()
 
-        # 2. Build the base inputs
+        # 2. Filter evaluation results from JavaCompilation and FileExistence runs
+        latest_evaluation_runs = state.get("latest_evaluation_runs", {})
+        filtered_results = _filter_execution_results(latest_evaluation_runs)
+        evaluation_results_text = _format_evaluation_results(filtered_results)
+
+        # 3. Build the base inputs
         task_specification = state.get("task_specification")
         raw_template = resolver.get_raw_template()
 
@@ -341,13 +475,18 @@ def create_implement_transformation_node(
             task_specification=task_specification,
             transformation_plan=str(transformation_plan),
             template=raw_template,
+            evaluation_results_text=evaluation_results_text,
         )
         metadata_response: TransformationClassMetadata = await metadata_llm.ainvoke(
             input=metadata_prompt
         )
 
         # Prepare fields info string for context in method body generation
-        fields_info = f"Fields: {[f'{f.get("type", "Object")} {f.get("name", "field")}' for f in (metadata_response.model_dump().get('fields', []) or [])]}"
+        fields_result_dict = metadata_response.model_dump()
+        fields_list = fields_result_dict.get("fields", []) or []
+        fields_info = "Fields: " + ", ".join(
+            f"{f.get('type', 'Object')} {f.get('name', 'field')}" for f in fields_list
+        )
 
         # STEP 2: Generate independent parts in PARALLEL
         # Create all prompts for parallel generation
@@ -356,6 +495,7 @@ def create_implement_transformation_node(
             transformation_plan=str(transformation_plan),
             template=raw_template,
             metadata=metadata_response,
+            evaluation_results_text=evaluation_results_text,
         )
 
         forward_prompt = create_forward_body_prompt(
@@ -364,6 +504,7 @@ def create_implement_transformation_node(
             template=raw_template,
             metadata=metadata_response,
             fields_info=fields_info,
+            evaluation_results_text=evaluation_results_text,
         )
 
         backward_prompt = create_backward_body_prompt(
@@ -372,6 +513,7 @@ def create_implement_transformation_node(
             template=raw_template,
             metadata=metadata_response,
             fields_info=fields_info,
+            evaluation_results_text=evaluation_results_text,
         )
 
         synch_prompt = create_synch_body_prompt(
@@ -380,6 +522,7 @@ def create_implement_transformation_node(
             template=raw_template,
             metadata=metadata_response,
             fields_info=fields_info,
+            evaluation_results_text=evaluation_results_text,
         )
 
         # Execute all four calls in parallel
