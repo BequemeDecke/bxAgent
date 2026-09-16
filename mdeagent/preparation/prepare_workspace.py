@@ -191,6 +191,7 @@ def create_prepare_workspace_node(
             bxtool_path=bxtool_path,
             transformation_class_path=transformation_class_path,
             maven_project_path=project.workspace,
+            transformation_package_path=full_package,
         )
         new_state.update(fixed_state)
         return new_state

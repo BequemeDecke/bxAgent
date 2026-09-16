@@ -151,6 +151,11 @@ class TestPrepareWorkspace(TestCase):
                 output_state.get("maven_project_path"),
                 workspace_path / "mdeagent",
             )
+            self.assertEqual(
+                output_state.get("transformation_package_path"),
+                "de.example.mdeagent",
+                "The output state should contain the transformation package path.",
+            )
 
             # Check if subprocess.run was called for creating child project with archetype and for validating
             self.assertEqual(mock_run.call_count, 2)
@@ -212,6 +217,11 @@ class TestPrepareWorkspace(TestCase):
             self.assertEqual(
                 output_state.get("maven_project_path"),
                 Path(temp_dir) / "mdeagent",
+            )
+            self.assertEqual(
+                output_state.get("transformation_package_path"),
+                "de.example.mdeagent",
+                "The output state should contain the transformation package path.",
             )
             # Check if subprocess.run was called for creating child project with archetype and for validating
             self.assertEqual(mock_run.call_count, 2)

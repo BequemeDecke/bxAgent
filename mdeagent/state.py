@@ -33,7 +33,7 @@ class MDEAgentState(TypedDict):
 
     # === Transformation ===
     transformation_plan: SerializedTransformationPlan | None
-    transformation_package_path: str  # deprecated
+    transformation_package_path: str | None     # This will be set by the preparation_node and used for quick evaluation
 
     # === Implementation ===
     group_id: str                               # This has to be set by the user, and is used to identify the group of the generated artifacts.

@@ -225,6 +225,11 @@ class TestPreparationNodeIntegration(TestCase):
             "Persons",
             "Target model package name should be 'Persons'.",
         )
+        self.assertEqual(
+            output.get("transformation_package_path"),
+            "de.hofuniversity.PreparationNodeIntegrationTest",
+            "Transformation package path should be 'de.hofuniversity.PreparationNodeIntegrationTest'.",
+        )
 
         # Verify model implementations contain content from actual files
         source_files_content = [

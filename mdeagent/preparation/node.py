@@ -80,6 +80,7 @@ def create_preparation_node(
             required_commands=required_commands,
             transformation_plan=transformation_plan.to_dict(),
             transformation_class_path=prep_output_state.get("transformation_class_path"),
+            transformation_package_path=prep_output_state.get("transformation_package_path"),
             bxtool_path=prep_output_state.get("bxtool_path"),
         )
 
