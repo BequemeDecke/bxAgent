@@ -15,6 +15,7 @@ from mdeagent.evaluation.types import (
 class EvaluationInit(TypedDict):
     evaluation: Evaluation
     evaluation_schema: BaseModel
+    category: str | None = None
 
 
 class LinkedEvaluation(Evaluation):
@@ -54,6 +55,7 @@ class EvaluationExecutor:
             "evaluation_schema": self.evaluations[existing_evaluation_id][
                 "evaluation_schema"
             ],
+            "category": self.evaluations[existing_evaluation_id].get("category", None)
         }
         self.iterations[new_evaluation_id] = []
 
@@ -110,6 +112,7 @@ class EvaluationExecutor:
             started_at=started_at,
             execution_time_ms=execution_time_ms,
             iteration=iteration,
+            category=evaluation_init.get("category", None),
             results=run_tuple[0],
             errors=run_tuple[1],
         )

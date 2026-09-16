@@ -1,19 +1,18 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Callable, TypedDict, Unpack
+from typing import Any, Callable
 
 
-class EvaluationMetadata(TypedDict):
-    success: bool
+@dataclass
+class EvaluationMetadata:
+    success: bool = True
 
 
 @dataclass
 class EvaluationResult:
     content: str
-    metadata: Unpack[EvaluationMetadata] = field(
-        default_factory=lambda: {"success": True}
-    )
+    metadata: EvaluationMetadata = field(default_factory=EvaluationMetadata)
 
 
 @dataclass
@@ -30,6 +29,7 @@ class EvaluationRun:
     iteration: int
     results: list[EvaluationResult]
     errors: list[EvaluationError]
+    category: str | None = None
 
 
 StateToEvaluationMapper = Callable[[dict[str, Any]], dict[str, Any]]

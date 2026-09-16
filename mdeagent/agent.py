@@ -27,7 +27,6 @@ from mdeagent.mapping import (
     mde_to_tools,
     mde_to_workspace,
 )
-from mdeagent.models import build_base_model
 from mdeagent.preparation.agent import build_preparation_graph
 from mdeagent.preparation.node import create_preparation_node
 from mdeagent.state import MDEAgentState
@@ -39,25 +38,28 @@ def build_mdeagent(
     download_benchmarx: bool = False,
 ) -> StateGraph[MDEAgentState]:
     # 1. Initialize the core components of the MDEAgent
-    llm = build_base_model()
-    check_transformation_iteration = create_check_transformation_iteration_function(llm)
+    check_transformation_iteration = create_check_transformation_iteration_function()
     agent_evaluator = EvaluationExecutor(
         evaluations={
             "workspace_structure": {
                 "evaluation": WorkspaceStructureEvaluation(),
                 "evaluation_schema": WorkspaceStructureSchema,
+                "category": "preparation",
             },
             "tools_installed": {
                 "evaluation": ToolInstalledEvaluation(),
                 "evaluation_schema": ToolInstalledEvaluationConfig,
+                "category": "preparation",
             },
             "file_existence": {
                 "evaluation": FileExistenceEvaluation(),
                 "evaluation_schema": FileExistenceEvaluationConfig,
+                "category": "execution",
             },
             "java_compilation": {
                 "evaluation": JavaCompilationEvaluation(),
                 "evaluation_schema": JavaCompilationEvaluationConfig,
+                "category": "execution",
             },
         }
     )
@@ -113,8 +115,10 @@ def build_mdeagent(
         "evaluation",
         check_transformation_iteration,
         {
-            "stop": END,
-            "continue": "comprehension",
+            "design_failed": "comprehension",
+            "execution_failed": "implementation",
+            "max_iteration_reached": END,
+            "design_passed": END,
             "error": END,
         },
     )

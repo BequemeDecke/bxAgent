@@ -3,56 +3,42 @@ This test checks if the transformation iteration control node correctly limits t
 """
 
 import asyncio
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from unittest import TestCase
 from unittest.mock import Mock
 
-from langchain.chat_models import BaseChatModel
-from langchain.messages import SystemMessage, HumanMessage
+from langchain.messages import HumanMessage, SystemMessage
 
-from mdeagent.state import MDEAgentState
+from mdeagent.evaluation.types import EvaluationError, EvaluationResult, EvaluationRun
 from mdeagent.guardrails.transformation_iteration_control import (
     IterationRoute,
     create_check_transformation_iteration_function,
 )
-from mdeagent.evaluation.types import EvaluationError, EvaluationResult, EvaluationRun
+from mdeagent.state import MDEAgentState
 
 
 class TestTransformationIterationControl(TestCase):
     def setUp(self):
-        import asyncio
-        mocked_llm = Mock(spec=BaseChatModel)
-        mocked_llm_structured_output = Mock(spec=BaseChatModel)
-        self.mocked_llm = mocked_llm_structured_output
-        mocked_llm.with_structured_output.return_value = mocked_llm_structured_output
-        # Make ainvoke return a coroutine that yields IterationRoute
-        async def fake_ainvoke(*args, **kwargs):
-            return IterationRoute(decision="stop")
-        mocked_llm_structured_output.ainvoke = Mock(side_effect=fake_ainvoke)
         self.check_transformation_iteration = (
-            create_check_transformation_iteration_function(llm=mocked_llm)
+            create_check_transformation_iteration_function()
         )
 
     def test_transformation_iteration_control__stop_on_max_iterations(self):
         max_iterations = 3
         state: MDEAgentState = {
-            "transformation_source_model_description": "A model that needs to be transformed.",
-            "transformation_target_model_description": "The desired model after transformation.",
             "iteration": 3,
             "latest_evaluation_runs": [],
         }
         result = asyncio.run(self.check_transformation_iteration(state, max_iterations))
-        self.assertEqual(result, "stop")
+        self.assertEqual(result, "max_iteration_reached")
 
-    def test_transformation_iteration_control__run_results_have_errors(self):
+    def test_transformation_iteration_control__run_results_have_execution_errors(self):
         max_iterations = 3
         state: MDEAgentState = {
-            "transformation_source_model_description": "A model that needs to be transformed.",
-            "transformation_target_model_description": "The desired model after transformation.",
             "iteration": 2,
             "latest_evaluation_runs": [
                 EvaluationRun(
-                    started_at=datetime.now() - timedelta(minutes=5),
+                    started_at=datetime.now(tz=UTC) - timedelta(minutes=5),
                     execution_time_ms=200,
                     iteration=1,
                     results=[
@@ -76,6 +62,29 @@ class TestTransformationIterationControl(TestCase):
         result = asyncio.run(self.check_transformation_iteration(state, max_iterations))
         self.assertEqual(result, "error")
 
+    def test_transformation_iteration_control__run_results_have_design_errors(self):
+        max_iterations = 3
+        state: MDEAgentState = {
+            "iteration": 2,
+            "latest_evaluation_runs": [
+                EvaluationRun(
+                    started_at=datetime.now(tz=UTC) - timedelta(minutes=5),
+                    execution_time_ms=200,
+                    iteration=1,
+                    category="design",
+                    results=[
+                        EvaluationResult(
+                            content="Evaluation result content",
+                            metadata={"success": False}
+                        )
+                    ],
+                    errors=[],
+                )
+            ],
+        }
+        result = asyncio.run(self.check_transformation_iteration(state, max_iterations))
+        self.assertEqual(result, "error")
+
     def test_transformation_iteration_control__run_results_no_errors(self):
         max_iterations = 3
         state: MDEAgentState = {
@@ -84,7 +93,7 @@ class TestTransformationIterationControl(TestCase):
             "iteration": 2,
             "latest_evaluation_runs": [
                 EvaluationRun(
-                    started_at=datetime.now() - timedelta(minutes=5),
+                    started_at=datetime.now(tz=UTC) - timedelta(minutes=5),
                     execution_time_ms=200,
                     iteration=1,
                     results=[
@@ -106,7 +115,7 @@ class TestTransformationIterationControl(TestCase):
             ],
         }
         result = asyncio.run(self.check_transformation_iteration(state, max_iterations))
-        self.assertEqual(result, "stop")
+        self.assertEqual(result, "max_iteration_reached")
 
         called_args = self.mocked_llm.ainvoke.call_args[0][0]
         self.assertIsInstance(called_args[0], SystemMessage)

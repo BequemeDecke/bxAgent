@@ -68,10 +68,12 @@ class TestEvaluationExecutor__execute_specific(unittest.TestCase):
                         errors=self.errors,
                     ),
                     "evaluation_schema": MockedEvaluationSchema(param1="value1"),
+                    "category": "execution"
                 },
                 "evaluation2": {
                     "evaluation": FailingEvaluationCaseImplementation(),
                     "evaluation_schema": MockedEvaluationSchema(param1="value2"),
+                    "category": "execution"
                 },
             }
         )
@@ -86,6 +88,7 @@ class TestEvaluationExecutor__execute_specific(unittest.TestCase):
             started_at=datetime.now(tz=UTC),
             execution_time_ms=100,
             iteration=1,
+            category="execution",
             results=self.results,
             errors=self.errors,
         )
@@ -107,6 +110,11 @@ class TestEvaluationExecutor__execute_specific(unittest.TestCase):
             len(run.errors),
             0,
             "There should be no errors for this evaluation case.",
+        )
+        self.assertEqual(
+            run.category,
+            expected_run.category,
+            "Category should match the expected category.",
         )
 
     def test_execute_specific__non_existent_evaluation(self):
@@ -184,6 +192,7 @@ class TestEvaluationExecutor__execute_all(unittest.TestCase):
                         errors=self.run_1.errors,
                     ),
                     "evaluation_schema": MockedEvaluationSchema(param1="value1"),
+                    "category": "execution"
                 },
                 "evaluation2": {
                     "evaluation": MockedEvaluationCaseImplementation(
@@ -191,10 +200,12 @@ class TestEvaluationExecutor__execute_all(unittest.TestCase):
                         errors=self.run_2.errors,
                     ),
                     "evaluation_schema": MockedEvaluationSchema(param1="value2"),
+                    "category": "execution"
                 },
                 "evaluation3": {
                     "evaluation": FailingEvaluationCaseImplementation(),
                     "evaluation_schema": MockedEvaluationSchema(param1="value3"),
+                    "category": "execution"
                 },
             }
         )
@@ -211,6 +222,7 @@ class TestEvaluationExecutor__execute_all(unittest.TestCase):
                 started_at=datetime.now(tz=UTC),
                 execution_time_ms=100,
                 iteration=1,
+                category="execution",
                 results=self.run_1.results,
                 errors=self.run_1.errors,
             ),
@@ -218,6 +230,7 @@ class TestEvaluationExecutor__execute_all(unittest.TestCase):
                 started_at=datetime.now(tz=UTC),
                 execution_time_ms=100,
                 iteration=1,
+                category="execution",
                 results=self.run_2.results,
                 errors=self.run_2.errors,
             ),
@@ -225,6 +238,7 @@ class TestEvaluationExecutor__execute_all(unittest.TestCase):
                 started_at=datetime.now(tz=UTC),
                 execution_time_ms=100,
                 iteration=1,
+                category="execution",
                 results=[],
                 errors=[
                     EvaluationError(
@@ -260,6 +274,7 @@ class TestEvaluationExecutor__get_latest_results(unittest.TestCase):
         self.run_1 = EvaluationRun(
             started_at=datetime.now(tz=UTC),
             execution_time_ms=100,
+            category="execution",
             iteration=1,
             results=[EvaluationResult(content="result1")],
             errors=[],
@@ -268,6 +283,7 @@ class TestEvaluationExecutor__get_latest_results(unittest.TestCase):
             started_at=datetime.now(tz=UTC),
             execution_time_ms=100,
             iteration=1,
+            category="execution",
             results=[],
             errors=[
                 EvaluationError(
@@ -285,6 +301,7 @@ class TestEvaluationExecutor__get_latest_results(unittest.TestCase):
                         errors=self.run_1.errors,
                     ),
                     "evaluation_schema": MockedEvaluationSchema(param1="value1"),
+                    "category": "execution",
                 },
                 "evaluation2": {
                     "evaluation": MockedEvaluationCaseImplementation(
@@ -292,6 +309,7 @@ class TestEvaluationExecutor__get_latest_results(unittest.TestCase):
                         errors=self.run_2.errors,
                     ),
                     "evaluation_schema": MockedEvaluationSchema(param1="value2"),
+                    "category": "execution",
                 },
             }
         )
@@ -375,6 +393,7 @@ class TestEvaluationExecutor__register_linked_evaluation(unittest.TestCase):
                 "evaluation1": {
                     "evaluation": MockedEvaluationCaseImplementation(),
                     "evaluation_schema": MockedEvaluationSchema(param1="value1"),
+                    "category": "execution"
                 },
                 "evaluation2": {
                     "evaluation": MockedEvaluationCaseImplementation(
@@ -382,6 +401,7 @@ class TestEvaluationExecutor__register_linked_evaluation(unittest.TestCase):
                         errors=self.errors,
                     ),
                     "evaluation_schema": MockedEvaluationSchema(param1="value2"),
+                    "category": "execution"
                 },
             }
         )
@@ -408,6 +428,11 @@ class TestEvaluationExecutor__register_linked_evaluation(unittest.TestCase):
             self.executor.iterations["linked_evaluation"],
             [],
             "Linked evaluation should have its own iteration list initialized to an empty list.",
+        )
+        self.assertEqual(
+            self.executor.evaluations["linked_evaluation"]["category"],
+            self.executor.evaluations["evaluation1"]["category"],
+            "Linked evaluation should inherit the category from the existing evaluation.",
         )
 
     def test_register_linked_evaluation__non_existent_existing_evaluation(self):

@@ -1,8 +1,6 @@
 from typing import Callable
 
-from mdeagent.evaluation.types import EvaluationResult
-
-EvaluationFilter = Callable[[list[EvaluationResult]], list[EvaluationResult]]
+EvaluationFilter = Callable[[list], list]
 
 
 class EvaluationPipe:
@@ -11,7 +9,7 @@ class EvaluationPipe:
     def __init__(self):
         self.filters = []
 
-    def filter_results(self, results: list[EvaluationResult]) -> list[EvaluationResult]:
+    def filter_results[T](self, results: list[T]) -> list[T]:
         for filter in self.filters:
             results = filter(results)
         return results
