@@ -1,17 +1,109 @@
 import shutil
 import tempfile
+from datetime import UTC, datetime
 from pathlib import Path
 from unittest import TestCase
 from unittest.mock import Mock, patch
 
 from mdeagent.comprehension import TransformationPlanData
 from mdeagent.comprehension.plan import TransformationPlan
+from mdeagent.evaluation.types import EvaluationError, EvaluationResult, EvaluationRun
 from mdeagent.preparation.prepare_workspace import (
     StructureFixStrategy,
     create_prepare_workspace_node,
+    workspace_structure_is_clean,
 )
 from mdeagent.preparation.state import PreparationState
 from mdeagent.util import copy_workspace, log_workspace_structure
+
+
+# --------------------------------------------------------------------------- #
+# Helpers for building evaluation runs/results used by the tests below.
+# --------------------------------------------------------------------------- #
+def _eval_run(results=None, errors=None) -> EvaluationRun:
+    return EvaluationRun(
+        started_at=datetime.now(tz=UTC),
+        execution_time_ms=0,
+        iteration=1,
+        results=results or [],
+        errors=errors or [],
+    )
+
+
+def _eval_result(success: bool) -> EvaluationResult:
+    return EvaluationResult(
+        content="some content",
+        metadata={"success": success, "include_in_report": False},
+    )
+
+
+def _clean_workspace_structure_run() -> EvaluationRun:
+    """A WorkspaceStructureEvaluation run that reported no problems."""
+    return _eval_run()
+
+
+def _dirty_workspace_structure_run() -> EvaluationRun:
+    """A WorkspaceStructureEvaluation run that reported a problem (success=False)."""
+    return _eval_run(results=[_eval_result(success=False)])
+
+
+class TestWorkspaceStructureIsClean(TestCase):
+    """Unit tests for the eval-result-based ``workspace_structure_is_clean`` helper
+    that replaces the former filesystem-based ``is_workspace_structure_correct``.
+    """
+
+    def test_clean__no_evaluation_results_returns_false(self):
+        # No evaluation results at all -> conservative default: not clean.
+        self.assertFalse(workspace_structure_is_clean(PreparationState()))
+
+    def test_clean__workspace_structure_run_missing_returns_false(self):
+        # Results present but no workspace_structure run -> not clean.
+        state = PreparationState(
+            latest_evaluation_runs={"tools_installed": _clean_workspace_structure_run()}
+        )
+        self.assertFalse(workspace_structure_is_clean(state))
+
+    def test_clean__run_without_results_and_without_errors(self):
+        state = PreparationState(
+            latest_evaluation_runs={
+                "workspace_structure": _clean_workspace_structure_run()
+            }
+        )
+        self.assertTrue(workspace_structure_is_clean(state))
+
+    def test_clean__run_with_success_true_result(self):
+        state = PreparationState(
+            latest_evaluation_runs={
+                "workspace_structure": _eval_run(results=[_eval_result(success=True)])
+            }
+        )
+        self.assertTrue(workspace_structure_is_clean(state))
+
+    def test_clean__run_with_success_false_result(self):
+        state = PreparationState(
+            latest_evaluation_runs={
+                "workspace_structure": _dirty_workspace_structure_run()
+            }
+        )
+        self.assertFalse(workspace_structure_is_clean(state))
+
+    def test_clean__run_with_error_returns_false(self):
+        state = PreparationState(
+            latest_evaluation_runs={
+                "workspace_structure": _eval_run(
+                    errors=[EvaluationError(message="boom", type="ValueError")]
+                )
+            }
+        )
+        self.assertFalse(workspace_structure_is_clean(state))
+
+    def test_clean__list_form_returns_false(self):
+        # execution_mode="all" returns a flat list; the workspace_structure run
+        # cannot be identified by id -> conservative default: not clean.
+        state = PreparationState(
+            latest_evaluation_runs=[_clean_workspace_structure_run()]
+        )
+        self.assertFalse(workspace_structure_is_clean(state))
 
 
 class TestPrepareWorkspace(TestCase):
@@ -436,6 +528,177 @@ class TestPrepareWorkspace(TestCase):
                 output_state.get("transformation_class_path"),
                 Path,
                 "The transformation_class_path should still be set.",
+            )
+
+    # ------------------------------------------------------------------ #
+    # Requirements: prepare_workspace uses the latest WorkspaceStructureEvaluation
+    # results (instead of the former is_workspace_structure_correct) to decide
+    # what to do.
+    # ------------------------------------------------------------------ #
+
+    def test_prepare_workspace__clean_workspace_does_nothing(self):
+        """Anforderung 1: an existing workspace whose latest
+        ``WorkspaceStructureEvaluation`` is clean must not be touched.
+        ``prepare_workspace`` returns early and only advances the iteration.
+        """
+        with tempfile.TemporaryDirectory() as temp_dir:
+            # Non-empty workspace from a previous iteration. The actual contents
+            # are irrelevant because the decision is based on the evaluation
+            # results, not on a filesystem check.
+            (Path(temp_dir) / "leftover.txt").write_text("leftover")
+
+            input_state = PreparationState(
+                required_tools=[],
+                workspace_path=Path(temp_dir),
+                group_id="de.example",
+                artifact_id="mdeagent",
+                iteration=2,
+                latest_evaluation_runs={
+                    "workspace_structure": _clean_workspace_structure_run()
+                },
+            )
+
+            with patch("subprocess.run") as mock_run:
+                output_state = self.prepare_workspace_node(input_state)
+
+            # The fix strategy must not be invoked ...
+            self.fix_strategy.fix_structure.assert_not_called()
+            # ... and no Maven subprocess must be executed.
+            self.assertEqual(
+                mock_run.call_count,
+                0,
+                "No Maven command must be executed when the workspace is clean.",
+            )
+            # Only the iteration counter is advanced; nothing else is set.
+            self.assertEqual(
+                output_state.get("iteration"),
+                3,
+                "The iteration counter must be advanced even when nothing is done.",
+            )
+            self.assertIsNone(
+                output_state.get("transformation_plan"),
+                "No transformation plan must be (re)loaded when the workspace is clean.",
+            )
+            self.assertIsNone(
+                output_state.get("maven_project_path"),
+                "No maven project path must be set when the workspace is clean.",
+            )
+            # The workspace is left untouched.
+            self.assertTrue(
+                (Path(temp_dir) / "leftover.txt").exists(),
+                "The workspace must not be modified when it is clean.",
+            )
+
+    @patch(
+        "subprocess.run",
+        side_effect=lambda *args, **kwargs: None,
+    )
+    def test_prepare_workspace__not_clean_workspace_applies_fix_strategy(
+        self, mock_run: Mock
+    ):
+        """Anforderung 2: an existing workspace whose latest
+        ``WorkspaceStructureEvaluation`` reports problems must be repaired via
+        the ``StructureFixStrategy``.
+        """
+        mock_run.side_effect = self._mock_subprocess_run
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            # Non-empty workspace with an incorrect structure (no pom.xml).
+            (Path(temp_dir) / "mdeagent").mkdir(parents=True)
+            (Path(temp_dir) / "mdeagent" / "TRANSFORMATION.md").touch()
+
+            input_state = PreparationState(
+                required_tools=[],
+                workspace_path=Path(temp_dir),
+                group_id="de.example",
+                artifact_id="mdeagent",
+                iteration=1,
+                latest_evaluation_runs={
+                    "workspace_structure": _dirty_workspace_structure_run()
+                },
+            )
+
+            self.prepare_workspace_node(input_state)
+
+            self.fix_strategy.fix_structure.assert_called_once_with(input_state)
+
+    @patch(
+        "subprocess.run",
+        side_effect=lambda *args, **kwargs: None,
+    )
+    def test_prepare_workspace__empty_workspace_creates_even_when_evaluation_reports_problems(
+        self, mock_run: Mock
+    ):
+        """Anforderung 3: an empty workspace is created as usual. The empty check
+        takes precedence over the evaluation results, so a 'not clean' evaluation
+        must NOT trigger the fix strategy.
+        """
+        mock_run.side_effect = self._mock_subprocess_run
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            workspace_path = Path(temp_dir) / "workspace"
+
+            input_state = PreparationState(
+                required_tools=[],
+                workspace_path=workspace_path,
+                group_id="de.example",
+                artifact_id="mdeagent",
+                iteration=0,
+                latest_evaluation_runs={
+                    "workspace_structure": _dirty_workspace_structure_run()
+                },
+            )
+
+            output_state = self.prepare_workspace_node(input_state)
+
+            # Empty workspace -> create, NOT fix strategy.
+            self.fix_strategy.fix_structure.assert_not_called()
+            self.assertEqual(
+                output_state.get("maven_project_path"),
+                workspace_path / "mdeagent",
+            )
+            self.assertTrue(
+                (workspace_path / "pom.xml").exists(),
+                "The parent pom.xml should be created for an empty workspace.",
+            )
+            self.assertTrue(
+                (workspace_path / "mdeagent" / "TRANSFORMATION.md").exists(),
+                "The TRANSFORMATION.md file should be created for an empty workspace.",
+            )
+
+    @patch(
+        "subprocess.run",
+        side_effect=lambda *args, **kwargs: None,
+    )
+    def test_prepare_workspace__empty_workspace_creates_even_when_evaluation_is_clean(
+        self, mock_run: Mock
+    ):
+        """Anforderung 3: an empty workspace is created as usual even when the
+        evaluation already reports a clean state (e.g. iteration == 0 where the
+        conditional edge routes to prepare_workspace unconditionally).
+        """
+        mock_run.side_effect = self._mock_subprocess_run
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            workspace_path = Path(temp_dir) / "workspace"
+
+            input_state = PreparationState(
+                required_tools=[],
+                workspace_path=workspace_path,
+                group_id="de.example",
+                artifact_id="mdeagent",
+                iteration=0,
+                latest_evaluation_runs={
+                    "workspace_structure": _clean_workspace_structure_run()
+                },
+            )
+
+            output_state = self.prepare_workspace_node(input_state)
+
+            self.fix_strategy.fix_structure.assert_not_called()
+            self.assertEqual(
+                output_state.get("maven_project_path"),
+                workspace_path / "mdeagent",
             )
 
 

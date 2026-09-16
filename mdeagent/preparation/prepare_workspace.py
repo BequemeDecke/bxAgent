@@ -3,6 +3,7 @@ from pathlib import Path
 
 from mdeagent.comprehension import FileTransformationPlanParser, TransformationPlan
 from mdeagent.config import Config
+from mdeagent.evaluation.types import EvaluationRun
 from mdeagent.preparation.maven import MavenProject
 from mdeagent.preparation.pom import Dependency, Plugin
 from mdeagent.preparation.state import PreparationState
@@ -54,29 +55,56 @@ class StructureFixStrategy(ABC):
         pass
 
 
-def is_workspace_structure_correct(
-    workspace: Path, group_id: str, artifact_id: str
-) -> bool:
+# Evaluation id under which the ``WorkspaceStructureEvaluation`` is registered
+# in the preparation graph (see ``mdeagent.preparation.agent.build_preparation_graph``).
+# The preparation graph runs in ``execution_mode="specific"`` which stores the
+# evaluation runs as a ``dict[str, EvaluationRun]`` keyed by this id.
+WORKSPACE_STRUCTURE_EVALUATION_ID = "workspace_structure"
+
+
+def _latest_workspace_structure_run(
+    state: PreparationState,
+) -> EvaluationRun | None:
+    """Return the latest ``WorkspaceStructureEvaluation`` run stored in the state.
+
+    The preparation graph stores its evaluation results in
+    ``latest_evaluation_runs``. With ``execution_mode="specific"`` (the mode used
+    by the preparation graph) the value is a ``dict[str, EvaluationRun]`` keyed by
+    evaluation id, where the workspace structure evaluation is stored under
+    :data:`WORKSPACE_STRUCTURE_EVALUATION_ID`. The ``"all"`` execution mode returns
+    a flat ``list[EvaluationRun]`` in which the workspace structure run cannot be
+    identified reliably by id; in that case ``None`` is returned so that callers
+    fall back to the safe default (treat the structure as *not* clean).
     """
-    Check if the workspace structure is valid.
-    Returns True if the structure is valid, False otherwise.
+    latest_results = state.get("latest_evaluation_runs") or {}
+    if isinstance(latest_results, dict):
+        return latest_results.get(WORKSPACE_STRUCTURE_EVALUATION_ID)
+    return None
+
+
+def workspace_structure_is_clean(state: PreparationState) -> bool:
+    """Return ``True`` if the latest ``WorkspaceStructureEvaluation`` is clean.
+
+    This replaces the former filesystem-based ``is_workspace_structure_correct``
+    helper which was only a weak duplicate of the
+    :class:`mdeagent.evaluation.implementations.workspace_structure.WorkspaceStructureEvaluation`.
+    Instead of re-checking the workspace on disk, the decision is now based on the
+    latest evaluation results produced by the ``evaluate_preparation`` node.
+
+    A run is considered *clean* when it has no ``EvaluationError`` entries and none
+    of its ``EvaluationResult`` entries carries ``success=False``. When no
+    workspace_structure run is available yet (e.g. on a direct node invocation
+    without a preceding evaluation), the structure is treated as *not* clean so
+    that the :class:`StructureFixStrategy` gets a chance to repair the workspace.
     """
-    # Check for the existence of the parent pom.xml
-    parent_pom_path = workspace / "pom.xml"
-    if not parent_pom_path.exists():
+    run = _latest_workspace_structure_run(state)
+    if run is None:
         return False
-
-    # Check for the existence of the transformation module (Maven project)
-    transformation_module_path = workspace / artifact_id
-    if not transformation_module_path.exists():
+    if len(run.errors) > 0:
         return False
-
-    # Check for the existence of the TRANSFORMATION.md file
-    transformation_md_path = transformation_module_path / "TRANSFORMATION.md"
-    if not transformation_md_path.exists():
-        return False
-
-    return True
+    return not any(
+        result.metadata.get("success", True) is False for result in run.results
+    )
 
 
 def create_prepare_workspace_node(
@@ -103,11 +131,14 @@ def create_prepare_workspace_node(
         # Create workspace if directory does not exist
         workspace.mkdir(parents=True, exist_ok=True)
 
-        # Check if the folder is empty => Create the Parent project, else execute the strategy
+        # Decide what to do based on the current workspace state. The decision
+        # relies on the latest ``WorkspaceStructureEvaluation`` results stored in
+        # the state (produced by the ``evaluate_preparation`` node) instead of a
+        # separate filesystem check. See :func:`workspace_structure_is_clean`.
         fixed_state = {}  # State to overwrite
         if not any(workspace.iterdir()):
-            # Create the parent Maven project in the workspace
-            # artifact_id in parent project must not be the same as the child project
+            # Anforderung 3: The workspace is empty (only the parent folder
+            # exists) -> create the workspace as usual.
             parent_artifact_id = workspace.name
             parent_project = MavenProject.create(
                 workspace, group_id, parent_artifact_id, None
@@ -115,17 +146,22 @@ def create_prepare_workspace_node(
             project = MavenProject.create(
                 workspace, group_id, artifact_id, parent_project
             )
-        elif any(workspace.iterdir()) and not is_workspace_structure_correct(
-            workspace, group_id, artifact_id
-        ):
-            # Project structure is incorrect, apply the fix strategy
+        elif workspace_structure_is_clean(state):
+            # Anforderung 1: A workspace from a previous iteration already exists
+            # and the latest ``WorkspaceStructureEvaluation`` reported no problems.
+            # There is nothing to do within this node, so return early without
+            # touching the workspace. The previously prepared state
+            # (transformation plan, paths, ...) is preserved in the LangGraph
+            # state and only the iteration counter is advanced.
+            current_iteration = state.get("iteration", 0)
+            return PreparationState(iteration=current_iteration + 1)
+        else:
+            # Anforderung 2: The workspace is not clean -> apply the
+            # ``StructureFixStrategy`` to repair the workspace structure.
             fixed_state = fix_strategy.fix_structure(state)
             project = MavenProject.load(
                 workspace / artifact_id
             )  # Workspace should be fixed
-        else:
-            # Project structure is correct, load the existing Maven project
-            project = MavenProject.load(workspace / artifact_id)
 
         # Create the transformation module (Maven project) inside the workspace
         # Package path includes artifact_id as subpackage (e.g., de.example.mdeagent)
