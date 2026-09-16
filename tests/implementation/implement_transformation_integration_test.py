@@ -195,8 +195,8 @@ Requirements:
             "bxtool_path": self.workspace_path,
             "transformation_class_path": transformation_class_path,
             "transformation_implementation": "",
-            "latest_evaluation_results": {},
-            "implementation_iteration": 1,
+            "latest_evaluation_runs": {},
+            "iteration": 1,
         }
 
         # Invoke the node. The call is guarded against the inherent flakiness of real
@@ -274,8 +274,8 @@ Focus on extracting FamilyMembers as Person instances in the forward direction.
             "bxtool_path": self.workspace_path,
             "transformation_class_path": transformation_class_path,
             "transformation_implementation": "",
-            "latest_evaluation_results": {},
-            "implementation_iteration": 1,
+            "latest_evaluation_runs": {},
+            "iteration": 1,
         }
 
         # Invoke the node, guarded against transient LLM flakiness (see first test for

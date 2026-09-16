@@ -6,7 +6,7 @@ This node is part of the coding agent built with langgraph and is responsible fo
 It should read the `TRANSFORMATION.md` file for necessary information and use that to generate the appropriate java code for the transformation.
 
 This component uses a few llm calls which will make testing more difficult. Therefore the tests consists of two types:
-1. Unit tests: These tests will mock the llm calls and test the logic of the node in isolation.
+1. Unit tests: These will mock the llm calls and test the logic of the node in isolation.
 2. Agent Evaluation: This will be an end-to-end test where the node is tested as part of the entire agent.
 """
 
@@ -129,8 +129,8 @@ class TestImplementTransformation(TestCase):
             "bxtool_path": Path("/tmp/workspace"),
             "transformation_class_path": Path("/tmp/workspace/MyTransformation.java"),
             "transformation_implementation": "",
-            "latest_evaluation_results": {},
-            "implementation_iteration": 1,
+            "latest_evaluation_runs": {},
+            "iteration": 1,
         }
 
         actual_state = asyncio.run(implement_transformation(state))
@@ -142,6 +142,9 @@ class TestImplementTransformation(TestCase):
             [Path("/tmp/workspace/MyTransformation.java")],
         )
         self.assertIn("transformation_implementation", actual_state)
+        # The iteration counter is advanced by the `evaluate_implementation`
+        # node, NOT by this work node (see `agent.py`).
+        self.assertNotIn("iteration", actual_state)
         mock_get_raw_template.assert_called_once()
         mock_render_template.assert_called_once()
 
@@ -178,8 +181,8 @@ class TestImplementTransformation(TestCase):
             "bxtool_path": Path("/tmp/workspace"),
             "transformation_class_path": Path("/tmp/workspace/MyTransformation.java"),
             "transformation_implementation": "",
-            "latest_evaluation_results": {},
-            "implementation_iteration": 1,
+            "latest_evaluation_runs": {},
+            "iteration": 1,
         }
 
         actual_state = asyncio.run(implement_transformation(state))
@@ -190,6 +193,7 @@ class TestImplementTransformation(TestCase):
             actual_state["written_java_files"],
         )
         self.assertEqual(len(actual_state["written_java_files"]), 2)
+        self.assertNotIn("iteration", actual_state)
 
     @patch("pathlib.Path.touch")
     @patch("pathlib.Path.write_text")
@@ -229,14 +233,15 @@ class TestImplementTransformation(TestCase):
             "bxtool_path": Path("/tmp/workspace"),
             "transformation_class_path": Path("/tmp/workspace/MyTransformation.java"),
             "transformation_implementation": "",
-            "latest_evaluation_results": {},
-            "implementation_iteration": 1,
+            "latest_evaluation_runs": {},
+            "iteration": 1,
         }
 
         actual_state = asyncio.run(implement_transformation(state))
 
         self.assertEqual(actual_state["transformation_md"], mocked_transformation_plan)
         self.assertTrue(mocked_transformation_plan.__str__.called)
+        self.assertNotIn("iteration", actual_state)
 
     @patch("pathlib.Path.touch")
     @patch("pathlib.Path.write_text")
@@ -275,8 +280,8 @@ class TestImplementTransformation(TestCase):
             "bxtool_path": Path("/tmp/workspace"),
             "transformation_class_path": Path("/tmp/workspace/MyTransformation.java"),
             "transformation_implementation": "",
-            "latest_evaluation_results": {},
-            "implementation_iteration": 1,
+            "latest_evaluation_runs": {},
+            "iteration": 1,
         }
 
         actual_state = asyncio.run(implement_transformation(state))
@@ -286,6 +291,7 @@ class TestImplementTransformation(TestCase):
         prompt = call_args.kwargs.get("input") or call_args.args[0]
         self.assertIn("--- BEGIN TRANSFORMATION PLAN ---", prompt)
         self.assertIn(plan_content, prompt)
+        self.assertNotIn("iteration", actual_state)
 
     @patch("pathlib.Path.touch")
     @patch("pathlib.Path.write_text")

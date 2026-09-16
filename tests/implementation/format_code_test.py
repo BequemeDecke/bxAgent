@@ -36,8 +36,8 @@ class TestFormatCodeNode(TestCase):
                 "written_java_files": [],
                 "bxtool_path": bxtool_path,
                 "transformation_implementation": "test implementation",
-                "latest_evaluation_results": {},
-                "implementation_iteration": 1,
+                "latest_evaluation_runs": {},
+                "iteration": 1,
                 "maven_project_path": workspace_path,
             }
 

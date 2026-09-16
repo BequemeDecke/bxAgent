@@ -22,11 +22,9 @@ class ImplementationState(TypedDict):
     transformation_implementation: str  # This field will be used by a higher component
 
     # === Evaluation ===
-    latest_evaluation_results: dict[
+    latest_evaluation_runs: dict[
         str, EvaluationRun
     ]  # Store the results of the latest evaluations
 
     # === Tracking ===
-    implementation_iteration: (
-        int  # Keep track of the number of implementation iterations
-    )
+    iteration: int = 0  # Keep track of the number of implementation iterations; used by the conditional edge as a safety guard
