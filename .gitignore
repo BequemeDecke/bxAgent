@@ -1,10 +1,11 @@
-# --- BxAgent ---
+# --- MDEAgent ---
 agent_data/
 exclude/
 .mdeagent-workspace/
 
 notebooks/*/test_results/
 notebooks/*/templates/
+notebooks/graph_prints/
 
 .mdeagent-tests/test-executions/
 

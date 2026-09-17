@@ -81,8 +81,8 @@ def build_preparation_graph(
         "evaluate_preparation",
         evaluate_preparation_decision,
         {
-            "prepare_workspace": "prepare_workspace",
-            "end": END,
+            "structure_incomplete": "prepare_workspace",
+            "workspace_prepared": END,
         },
     )
 

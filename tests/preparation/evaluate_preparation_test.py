@@ -115,11 +115,11 @@ class TestEvaluatePreparationDecision(TestCase):
                 "tools_installed": _run(errors=[EvaluationError(message="boom", type="ValueError")]),
             },
         )
-        self.assertEqual(self.decide(state), "prepare_workspace")
+        self.assertEqual(self.decide(state), "structure_incomplete")
 
     def test_decision__first_iteration_with_empty_results(self):
         state = PreparationState(iteration=0, latest_evaluation_runs={})
-        self.assertEqual(self.decide(state), "prepare_workspace")
+        self.assertEqual(self.decide(state), "structure_incomplete")
 
     def test_decision__subsequent_iteration_clean_results_routes_to_end(self):
         state = PreparationState(
@@ -129,14 +129,14 @@ class TestEvaluatePreparationDecision(TestCase):
                 "tools_installed": _run(),
             },
         )
-        self.assertEqual(self.decide(state), "end")
+        self.assertEqual(self.decide(state), "workspace_prepared")
 
     def test_decision__subsequent_iteration_no_results_no_errors_routes_to_end(self):
         state = PreparationState(
             iteration=1,
             latest_evaluation_runs={"workspace_structure": _run()},
         )
-        self.assertEqual(self.decide(state), "end")
+        self.assertEqual(self.decide(state), "workspace_prepared")
 
     def test_decision__subsequent_iteration_with_errors_routes_to_prepare_workspace(self):
         state = PreparationState(
@@ -145,7 +145,7 @@ class TestEvaluatePreparationDecision(TestCase):
                 "workspace_structure": _run(errors=[EvaluationError(message="boom", type="ValueError")]),
             },
         )
-        self.assertEqual(self.decide(state), "prepare_workspace")
+        self.assertEqual(self.decide(state), "structure_incomplete")
 
     def test_decision__subsequent_iteration_with_failing_result_routes_to_prepare_workspace(self):
         """Preparation evaluations signal problems via results with success=False."""
@@ -155,7 +155,7 @@ class TestEvaluatePreparationDecision(TestCase):
                 "workspace_structure": _run(results=[_result(success=False)]),
             },
         )
-        self.assertEqual(self.decide(state), "prepare_workspace")
+        self.assertEqual(self.decide(state), "structure_incomplete")
 
     def test_decision__list_form_of_latest_results_is_supported(self):
         """execution_mode='all' returns a list instead of a dict."""
@@ -163,13 +163,13 @@ class TestEvaluatePreparationDecision(TestCase):
             iteration=1,
             latest_evaluation_runs=[_run(results=[_result(success=False)])],
         )
-        self.assertEqual(self.decide(state), "prepare_workspace")
+        self.assertEqual(self.decide(state), "structure_incomplete")
 
         state_clean = PreparationState(
             iteration=1,
             latest_evaluation_runs=[_run()],
         )
-        self.assertEqual(self.decide(state_clean), "end")
+        self.assertEqual(self.decide(state_clean), "workspace_prepared")
 
     def test_decision__max_iterations_routes_to_end(self):
         """The safety guard must terminate the loop even with failing results."""
@@ -179,7 +179,7 @@ class TestEvaluatePreparationDecision(TestCase):
                 "workspace_structure": _run(results=[_result(success=False)]),
             },
         )
-        self.assertEqual(self.decide(state), "end")
+        self.assertEqual(self.decide(state), "workspace_prepared")
 
     def test_decision__custom_max_iterations(self):
         # With failing results the decision keeps routing to prepare_workspace
@@ -191,9 +191,9 @@ class TestEvaluatePreparationDecision(TestCase):
             },
         )
         # iteration (2) >= max_iterations (2) -> terminate.
-        self.assertEqual(self.decide(state, max_iterations=2), "end")
+        self.assertEqual(self.decide(state, max_iterations=2), "workspace_prepared")
         # iteration (2) < max_iterations (10) and there are problems -> retry.
-        self.assertEqual(self.decide(state, max_iterations=10), "prepare_workspace")
+        self.assertEqual(self.decide(state, max_iterations=10), "structure_incomplete")
 
 
 # --------------------------------------------------------------------------- #
@@ -255,12 +255,12 @@ class TestPreparationGraphStructure(TestCase):
             {"prepare_workspace", "__end__"},
             "evaluate_preparation must conditionally route to prepare_workspace or END.",
         )
-        # The 'end' branch must carry the 'end' data label.
+        # The 'workspace_prepared' branch must carry the 'end' data label.
         end_branches = [
             data for s, t, cond, data in edges
             if s == "evaluate_preparation" and cond and t == "__end__"
         ]
-        self.assertIn("end", end_branches)
+        self.assertIn("workspace_prepared", end_branches)
 
     def test_graph__prepare_workspace_edges_to_explore_models(self):
         graph = self._compile()
