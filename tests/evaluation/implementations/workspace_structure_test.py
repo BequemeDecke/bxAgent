@@ -137,7 +137,12 @@ class TestWorkspaceStructure(TestCase):
             )
 
     def test_workspace_structure__module_not_loadable(self):
-        """If the module pom.xml is missing, MavenProject.load fails."""
+        """If the module pom.xml is missing, MavenProject.load fails.
+        
+        This is expected behavior in early iterations when the Maven project
+        hasn't been created yet. The evaluation should return a result with
+        include_in_report=True so it's visible in the report.
+        """
         with tempfile.TemporaryDirectory() as temp_dir:
             workspace_path = Path(temp_dir) / "workspace"
             module_path = _create_valid_workspace(workspace_path)
@@ -164,11 +169,18 @@ class TestWorkspaceStructure(TestCase):
                 0,
                 "There should be no errors when the Maven project cannot be loaded.",
             )
+            # Check that the error message indicates Maven project not found
             self.assertTrue(
-                results[0].content.startswith(
-                    f"Failed to load Maven project at '{module_path}'"
+                "Maven project" in results[0].content and (
+                    results[0].content.startswith(f"Maven project not found at '{module_path}'") or
+                    results[0].content.startswith(f"Failed to load Maven project at '{module_path}'")
                 ),
                 "Expected Maven project load error was not returned.",
+            )
+            # Verify this is marked for reporting (expected behavior, not a system error)
+            self.assertTrue(
+                results[0].metadata.get("include_in_report", False),
+                "Maven project load failure should be included in report as expected behavior.",
             )
 
     def test_workspace_structure__module_not_registered_in_parent_pom(self):

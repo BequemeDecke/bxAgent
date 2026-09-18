@@ -53,15 +53,26 @@ class WorkspaceStructureEvaluation(Evaluation):
         # 2. The transformation module (workspace/[artifact_id]) must be loadable as a
         #    Maven project. If this fails, something is fundamentally wrong with the
         #    workspace structure already.
+        #    Note: In early iterations the Maven project may not exist yet, which is
+        #    expected behavior. We handle this gracefully without logging an error.
         maven_project: MavenProject | None = None
         try:
             maven_project = MavenProject.load(module_path)
+        except FileNotFoundError as e:
+            # Expected in early iterations when Maven project hasn't been created yet
+            results.append(
+                EvaluationResult(
+                    content=f"Maven project not found at '{module_path}': {e}",
+                    metadata={"success": False, "include_in_report": True},
+                )
+            )
         except Exception as e:
-            logger.exception(f"Failed to load Maven project at {module_path}")
+            # Unexpected error - log it but still return as evaluation result
+            logger.debug(f"Unexpected error loading Maven project at {module_path}: {e}")
             results.append(
                 EvaluationResult(
                     content=f"Failed to load Maven project at '{module_path}': {e}",
-                    metadata={"success": False, "include_in_report": False},
+                    metadata={"success": False, "include_in_report": True},
                 )
             )
 
