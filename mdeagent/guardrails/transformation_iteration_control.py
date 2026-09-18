@@ -3,6 +3,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
+from mdeagent.comprehension.plan import TransformationPlan
 from mdeagent.config import Config
 from mdeagent.evaluation import EvaluationPipe
 from mdeagent.evaluation.filter import (
@@ -39,15 +40,22 @@ def create_check_transformation_iteration_function():
         state: MDEAgentState, max_iterations: int = WORKFLOW_MAX_ITERATIONS
     ) -> IterationDecision:
         """
-        Gate function to check if the transformation needs another iteration or not.
+        Gate function to check if the transformation needs another iteration or not. Iteration is protocolled in TransformationPlan
         """
-        if state["iteration"] >= max_iterations:
+        tp = state.get("transformation_plan")
+        if not tp:
+            logger.error("No transformation plan found in state. Cannot check iteration.")
+            return "error"
+
+        plan = TransformationPlan.from_dict(tp)
+        iteration = plan.data.get("iteration", 0)
+        if iteration >= max_iterations:
             return "max_iteration_reached"
 
         runs = state["latest_evaluation_runs"]
         all_results: list[EvaluationResult] = []
         logger.info(
-            f"Checking transformation iteration for state: {state['iteration']}"
+            f"Checking transformation iteration for state: {iteration}"
         )
 
         for run in runs:

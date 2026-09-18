@@ -81,6 +81,7 @@ def build_implementation_graph(
         mapper={
             "file_existence": implementation_to_java_files,
             "java_compilation": implementation_to_java_files,
+            "integration_compilation": implementation_to_java_files,
         },
         execution_mode="specific",
     )

@@ -42,6 +42,14 @@ class FailingEvaluationCaseImplementation(Evaluation):
         raise Exception("This evaluation case is designed to fail.")
 
 
+class FailingSetupEvaluationCaseImplementation(Evaluation):
+    async def setup(self):
+        raise Exception("This evaluation setup is designed to fail.")
+
+    async def run(self, **kwargs):
+        return ([], [])
+
+
 def assert_evaluation_run_equal_except(
     equal_method, actual: EvaluationRun, expected: EvaluationRun
 ):
@@ -268,6 +276,37 @@ class TestEvaluationExecutor__execute_all(unittest.TestCase):
                 self.assertEqual, actual_run, expected_run
             )
 
+    def test_execute_all__ignores_linked_evaluations(self):
+        # Register a linked evaluation
+        self.executor.register_linked_evaluation("linked_eval", "evaluation1")
+        
+        # Execute all - should only execute non-linked evaluations (3 runs, not 4)
+        actual: list[EvaluationRun] = asyncio.run(
+            self.executor.execute_all(
+                input={
+                    "evaluation1": {"param1": "value1"},
+                    "evaluation2": {"param1": "value2"},
+                    "evaluation3": {"param1": "value3"},
+                    # Note: No input for "linked_eval" - it should be ignored
+                }
+            )
+        )
+        
+        self.assertEqual(
+            len(actual), 3, 
+            "Should return runs for only non-linked evaluations (linked_eval should be ignored)."
+        )
+        
+        # Verify that iteration lists were created only for non-linked evaluations
+        self.assertEqual(
+            len(self.executor.iterations["evaluation1"]), 1,
+            "Non-linked evaluation should have one iteration."
+        )
+        self.assertEqual(
+            len(self.executor.iterations["linked_eval"]), 0,
+            "Linked evaluation should have no iterations after execute_all."
+        )
+
 
 class TestEvaluationExecutor__get_latest_results(unittest.TestCase):
     def setUp(self):
@@ -466,4 +505,49 @@ class TestEvaluationExecutor__register_linked_evaluation(unittest.TestCase):
             run.errors,
             self.errors,
             "Linked evaluation should return the same errors as the original evaluation.",
+        )
+
+
+class TestEvaluationExecutor__setup_error_handling(unittest.TestCase):
+    def setUp(self):
+        self.executor = EvaluationExecutor(
+            evaluations={
+                "failing_setup": {
+                    "evaluation": FailingSetupEvaluationCaseImplementation(),
+                    "evaluation_schema": MockedEvaluationSchema(param1="value1"),
+                    "category": "setup_failure"
+                },
+            }
+        )
+
+    def test_execute_specific__setup_raises_exception(self):
+        # Edge case: execution of an evaluation where setup() raises an exception
+        # Should return an EvaluationRun with an appropriate EvaluationError instead of propagating the exception
+        run = asyncio.run(
+            self.executor.execute_specific("failing_setup", input={"param1": "value1"})
+        )
+        self.assertEqual(
+            len(run.errors),
+            1,
+            "Should return an evaluation run with a single error.",
+        )
+        self.assertEqual(
+            run.errors[0].message,
+            "This evaluation setup is designed to fail.",
+            "Error message should match the expected error message.",
+        )
+        self.assertEqual(
+            run.errors[0].type,
+            "Exception",
+            "Error type should be 'Exception'.",
+        )
+        self.assertEqual(
+            run.iteration,
+            1,
+            "Iteration should be 1 even when setup fails.",
+        )
+        self.assertEqual(
+            len(run.results),
+            0,
+            "Should have no results when setup fails.",
         )

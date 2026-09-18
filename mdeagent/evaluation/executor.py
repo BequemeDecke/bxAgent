@@ -63,9 +63,16 @@ class EvaluationExecutor:
         self, input: dict[str, dict[str, Any]]
     ) -> list[EvaluationRun]:
         results = []
+        # Filter out LinkedEvaluations as they are managed by other nodes
+        # and may not have corresponding input mappers in the calling node
+        non_linked_evaluations = [
+            evaluation_id
+            for evaluation_id in self.evaluations
+            if not isinstance(self.evaluations[evaluation_id]["evaluation"], LinkedEvaluation)
+        ]
         tasks = [
             self.execute_specific(evaluation_id, input=input[evaluation_id])
-            for evaluation_id in self.evaluations
+            for evaluation_id in non_linked_evaluations
         ]
         results = await asyncio.gather(*tasks)
         return results
@@ -82,14 +89,40 @@ class EvaluationExecutor:
 
         validated_params = evaluation_schema.model_validate(input)
 
-        await evaluation.setup()
-
         started_at = datetime.now(tz=UTC)
         iteration = (
             self.iterations[evaluation_id][-1].iteration + 1
             if self.iterations[evaluation_id]
             else 1
         )
+
+        try:
+            await evaluation.setup()
+        except Exception as e:
+            run_tuple = (
+                [],
+                [
+                    EvaluationError(
+                        message=str(e),
+                        type=type(e).__name__,
+                        details={"exception_type": type(e).__name__},
+                    )
+                ],
+            )
+            execution_time_ms = int(
+                (datetime.now(tz=UTC) - started_at).total_seconds() * 1000
+            )
+
+            run = EvaluationRun(
+                started_at=started_at,
+                execution_time_ms=execution_time_ms,
+                iteration=iteration,
+                category=evaluation_init.get("category", None),
+                results=run_tuple[0],
+                errors=run_tuple[1],
+            )
+            self.iterations[evaluation_id].append(run)
+            return run
 
         try:
             run_tuple = await evaluation.run(**validated_params.model_dump())
