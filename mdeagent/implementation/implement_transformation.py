@@ -458,6 +458,7 @@ def create_implement_transformation_node(
             raise ValueError(
                 "Transformation class path is required to write the generated code."
             )
+        transformation_package_path = state.get("transformation_package_path")
 
         # 1. Read the transformation plan from the state or create one
         transformation_plan = state.get("transformation_md") or optional_plan_factory()
@@ -541,7 +542,7 @@ def create_implement_transformation_node(
 
         # STEP 3: Combine all parts into the final spec
         combined_spec = ImplementationTransformationSpec(
-            package_name=metadata_response.package_name,
+            package_name=transformation_package_path,
             source_type=metadata_response.source_type,
             target_type=metadata_response.target_type,
             decision_type=metadata_response.decision_type,

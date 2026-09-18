@@ -32,6 +32,11 @@ def create_implementation_node(agent: CompiledStateGraph, benchmarx_path: str | 
             raise ValueError(
                 "Transformation class path is required for the implementation agent."
             )
+        transformation_package_path = state.get("transformation_package_path")
+        if transformation_package_path is None:
+            raise ValueError(
+                "Transformation package path is required for the implementation agent."
+            )
         # BxTool adapter is only created when BenchmarX is NOT being used
         # So if benchmarx_path is None, we need bxtool_path; otherwise it's None
         if benchmarx_path is None:
@@ -56,6 +61,7 @@ def create_implementation_node(agent: CompiledStateGraph, benchmarx_path: str | 
             transformation_md=tp,
             task_specification="", # TODO: This field will be used by a higher component to provide instructions for the implementation agent
             transformation_class_path=transformation_class_path,
+            transformation_package_path=transformation_package_path,
             bxtool_path=bxtool_path,
             maven_project_path=maven_project_path
         )
