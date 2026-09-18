@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
 from pathlib import Path
 
+from jinja2 import Environment, FileSystemLoader
+
 from mdeagent.comprehension import FileTransformationPlanParser, TransformationPlan
 from mdeagent.evaluation.types import EvaluationRun
 from mdeagent.preparation.maven import MavenProject
@@ -210,13 +212,13 @@ def create_prepare_workspace_node(
             bxtool_path = None
 
         # Copy the AgentTransformationForEMF.java file into the package path
-        agent_transformation_source = (
-            Path.cwd() / "context" / "AgentTransformationForEMF.java"
-        )
+        agent_transformation_template = Environment(
+            loader=FileSystemLoader(Path.cwd() / "templates")
+        ).get_template("agent_transformation_interface.jinja")
         project.add_java_class(
             package=full_package,
             class_name="AgentTransformationForEMF",
-            content=agent_transformation_source.read_text(),
+            content=agent_transformation_template.render(package_path=full_package),
         )
 
         # Delete the App.java file created by the Maven archetype
