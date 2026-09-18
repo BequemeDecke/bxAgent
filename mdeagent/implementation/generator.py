@@ -1,7 +1,9 @@
 import json
 import re
+from abc import ABC, abstractmethod
+from collections.abc import Callable
 from pathlib import Path
-from typing import TypeVar
+from typing import Generic, TypeVar
 
 from jinja2 import Environment, FileSystemLoader, Template
 from langchain.chat_models import BaseChatModel
@@ -10,89 +12,165 @@ from pydantic import BaseModel, Field
 T = TypeVar("T", bound=BaseModel)
 
 
-def _parse_yaml_like_response(
-    response_content: str, model_class: type[T]
-) -> T:
+class StructuredResponseParser(ABC):
+    """Interface for parsing LLM responses into structured Pydantic models.
+    
+    This abstraction allows handling different response formats (JSON, YAML-like)
+    from various LLM providers.
     """
-    Parse a YAML-like or JSON response into a Pydantic model.
     
-    This handles cases where the LLM returns key:value pairs instead of proper JSON.
-    
-    Args:
-        response_content: The raw response content from the LLM.
-        model_class: The Pydantic model class to parse into.
+    @abstractmethod
+    def parse(self, response_content: str, model_class: type[T]) -> T:
+        """Parse response content into a Pydantic model instance.
         
-    Returns:
-        A validated instance of the Pydantic model.
-    """
-    # First try parsing as JSON directly
-    try:
+        Args:
+            response_content: Raw text response from the LLM.
+            model_class: The Pydantic model class to parse into.
+            
+        Returns:
+            A validated instance of the Pydantic model.
+            
+        Raises:
+            ValueError: If the response cannot be parsed into the target model.
+        """
+        pass
+
+
+class JsonParser(StructuredResponseParser):
+    """Parser for JSON-formatted LLM responses."""
+    
+    def parse(self, response_content: str, model_class: type[T]) -> T:
+        """Parse JSON response into a Pydantic model."""
         data = json.loads(response_content)
         return model_class.model_validate(data)
-    except (json.JSONDecodeError, ValueError):
-        pass
+
+
+class YamlLikeParser(StructuredResponseParser):
+    """Parser for YAML-like or plain text LLM responses.
     
-    # Try to extract JSON from markdown code blocks
-    json_match = re.search(r'```(?:json)?\s*({.*?})\s*```', response_content, re.DOTALL)
-    if json_match:
+    Handles cases where the LLM returns key:value pairs instead of proper JSON,
+    including markdown formatting, bold keys, and code blocks.
+    """
+    
+    def parse(self, response_content: str, model_class: type[T]) -> T:
+        """Parse YAML-like response into a Pydantic model with fallback strategies."""
+        # First try parsing as JSON directly
         try:
-            data = json.loads(json_match.group(1))
+            data = json.loads(response_content)
             return model_class.model_validate(data)
         except (json.JSONDecodeError, ValueError):
             pass
-    
-    # Get expected field names from the Pydantic model
-    model_fields = set(model_class.model_fields.keys())
-    
-    # Convert various text formats to dict
-    data = {}
-    for line in response_content.strip().split('\n'):
-        line = line.strip()
-        if not line or line.startswith('#'):
-            continue
         
-        # Pattern 1: **Key:** value or **Key:** `value`
-        bold_match = re.match(r'^\*\*([^:]+):\*\*\s*(.+)$', line)
-        if bold_match:
-            key = bold_match.group(1).strip().lower().replace(' ', '_')
-            value = bold_match.group(2).strip()
-            value = re.sub(r'`([^`]*)`', r'\1', value)
-            value = re.sub(r'\([^)]*\)$', '', value).strip()
-            value = value.rstrip('.,;:')
-            if key in model_fields:
-                data[key] = value
-            continue
+        # Try to extract JSON from markdown code blocks
+        json_match = re.search(r'```(?:json)?\s*({.*?})\s*```', response_content, re.DOTALL)
+        if json_match:
+            try:
+                data = json.loads(json_match.group(1))
+                return model_class.model_validate(data)
+            except (json.JSONDecodeError, ValueError):
+                pass
         
-        # Pattern 2: Key: value (simple YAML style)
-        yaml_match = re.match(r'^([A-Za-z][A-Za-z0-9_ ]*):\s*(.+)$', line)
-        if yaml_match:
-            key = yaml_match.group(1).strip().lower().replace(' ', '_')
-            value = yaml_match.group(2).strip()
-            value = re.sub(r'`([^`]*)`', r'\1', value)
-            value = re.sub(r'\([^)]*\)$', '', value).strip()
-            value = value.rstrip('.,;:')
-            if key in model_fields:
-                data[key] = value
-            continue
-    
-    if data:
-        return model_class.model_validate(data)
-    
-    # Special handling for single-field models
-    if len(model_fields) == 1:
-        field_name = list(model_fields)[0]
-        code_match = re.search(r'```(?:\w+)?\s*([\s\S]*?)```', response_content)
-        if code_match:
-            data[field_name] = code_match.group(1).strip()
+        # Get expected field names from the Pydantic model
+        model_fields = set(model_class.model_fields.keys())
+        
+        # Convert various text formats to dict
+        data = {}
+        for line in response_content.strip().split('\n'):
+            line = line.strip()
+            if not line or line.startswith('#'):
+                continue
+            
+            # Pattern 1: **Key:** value or **Key:** `value`
+            bold_match = re.match(r'^\*\*([^:]+):\*\*\s*(.+)$', line)
+            if bold_match:
+                key = bold_match.group(1).strip().lower().replace(' ', '_')
+                value = bold_match.group(2).strip()
+                value = re.sub(r'`([^`]*)`', r'\1', value)
+                value = re.sub(r'\([^)]*\)$', '', value).strip()
+                value = value.rstrip('.,;:')
+                if key in model_fields:
+                    data[key] = value
+                continue
+            
+            # Pattern 2: Key: value (simple YAML style)
+            yaml_match = re.match(r'^([A-Za-z][A-Za-z0-9_ ]*):\s*(.+)$', line)
+            if yaml_match:
+                key = yaml_match.group(1).strip().lower().replace(' ', '_')
+                value = yaml_match.group(2).strip()
+                value = re.sub(r'`([^`]*)`', r'\1', value)
+                value = re.sub(r'\([^)]*\)$', '', value).strip()
+                value = value.rstrip('.,;:')
+                if key in model_fields:
+                    data[key] = value
+                continue
+        
+        if data:
             return model_class.model_validate(data)
-        data[field_name] = response_content.strip()
-        return model_class.model_validate(data)
+        
+        # Special handling for single-field models
+        if len(model_fields) == 1:
+            field_name = list(model_fields)[0]
+            code_match = re.search(r'```(?:\w+)?\s*([\s\S]*?)```', response_content)
+            if code_match:
+                data[field_name] = code_match.group(1).strip()
+                return model_class.model_validate(data)
+            data[field_name] = response_content.strip()
+            return model_class.model_validate(data)
+        
+        raise ValueError(
+            f"Failed to parse response into {model_class.__name__}. "
+            f"Raw content: {response_content[:500]}..."
+        )
+
+
+class FallbackParser(StructuredResponseParser):
+    """Parser that tries multiple parsers in sequence until one succeeds.
     
-    raise ValueError(f"Failed to parse response into {model_class.__name__}. Raw content: {response_content[:500]}...")
+    This is the default parser used by the CodeGenerator, providing maximum
+    flexibility for handling different LLM response formats.
+    """
+    
+    def __init__(self, parsers: list[StructuredResponseParser] | None = None):
+        """Initialize with a list of parsers to try in order.
+        
+        Args:
+            parsers: List of parsers to try. Defaults to [JsonParser(), YamlLikeParser()].
+        """
+        self.parsers = parsers or [JsonParser(), YamlLikeParser()]
+    
+    def parse(self, response_content: str, model_class: type[T]) -> T:
+        """Try each parser in sequence until one succeeds."""
+        last_error: Exception | None = None
+        for parser in self.parsers:
+            try:
+                return parser.parse(response_content, model_class)
+            except Exception as e:
+                last_error = e
+                continue
+        
+        if last_error:
+            raise last_error
+        raise ValueError(f"All parsers failed for {model_class.__name__}")
 
 
-def _invoke_and_parse(llm, prompt: str, model_class: type[T]) -> T:
-    """Invoke an LLM and parse the response with fallback handling."""
+def invoke_and_parse(
+    llm: BaseChatModel,
+    prompt: str,
+    model_class: type[T],
+    parser: StructuredResponseParser | None = None,
+) -> T:
+    """Invoke an LLM synchronously and parse the response.
+    
+    Args:
+        llm: The chat model to invoke.
+        prompt: The prompt to send to the LLM.
+        model_class: The Pydantic model class to parse the response into.
+        parser: Parser to use. Defaults to FallbackParser().
+        
+    Returns:
+        Parsed Pydantic model instance.
+    """
+    parser = parser or FallbackParser()
     response = llm.invoke(prompt)
     
     # Handle cases where response is already a Pydantic model (e.g., in tests with mocks)
@@ -100,7 +178,187 @@ def _invoke_and_parse(llm, prompt: str, model_class: type[T]) -> T:
         return response
     
     content = response.content if hasattr(response, 'content') else str(response)
-    return _parse_yaml_like_response(content, model_class)
+    return parser.parse(content, model_class)
+
+
+async def ainvoke_and_parse(
+    llm: BaseChatModel,
+    prompt: str,
+    model_class: type[T],
+    parser: StructuredResponseParser | None = None,
+) -> T:
+    """Invoke an LLM asynchronously and parse the response.
+    
+    Args:
+        llm: The chat model to invoke.
+        prompt: The prompt to send to the LLM.
+        model_class: The Pydantic model class to parse the response into.
+        parser: Parser to use. Defaults to FallbackParser().
+        
+    Returns:
+        Parsed Pydantic model instance.
+    """
+    parser = parser or FallbackParser()
+    response = await llm.ainvoke(prompt)
+    
+    # Handle cases where response is already a Pydantic model (e.g., in tests with mocks)
+    if isinstance(response, model_class):
+        return response
+    
+    content = response.content if hasattr(response, 'content') else str(response)
+    return parser.parse(content, model_class)
+
+
+class CodeGenerator:
+    """Generator class for producing code from templates using structured LLM responses.
+    
+    This class coordinates the generation of code by:
+    1. Taking a template and schema (Pydantic model) as input
+    2. Using the LLM to fill in the template via structured output
+    3. Supporting both sync (invoke) and async (astream) generation
+    4. Using a pluggable parser interface for different response formats
+    
+    Attributes:
+        llm: The chat model used for generation.
+        parser: Parser for converting LLM responses to structured data.
+        template_resolver: Resolver for loading and rendering templates.
+    """
+    
+    def __init__(
+        self,
+        llm: BaseChatModel,
+        parser: StructuredResponseParser | None = None,
+        template_path: Path = Path.cwd() / "templates",
+    ):
+        """Initialize the code generator.
+        
+        Args:
+            llm: The chat model to use for generation.
+            parser: Parser for LLM responses. Defaults to FallbackParser().
+            template_path: Path to the templates directory.
+        """
+        self.llm = llm
+        self.parser = parser or FallbackParser()
+        self.template_path = template_path
+    
+    def generate(
+        self,
+        prompt: str,
+        model_class: type[T],
+        template_resolver: type,
+        **template_kwargs,
+    ) -> tuple[T, str]:
+        """Generate code synchronously.
+        
+        Args:
+            prompt: The prompt to send to the LLM.
+            model_class: The Pydantic model class for structured output.
+            template_resolver: Template resolver class (e.g., TransformationClassTemplateResolver).
+            **template_kwargs: Additional kwargs for template rendering.
+            
+        Returns:
+            Tuple of (parsed_model, rendered_code).
+        """
+        parsed_model = invoke_and_parse(self.llm, prompt, model_class, self.parser)
+        
+        # Handle class_name in template_kwargs or from model
+        if 'class_name' not in template_kwargs and hasattr(parsed_model, 'class_name'):
+            template_kwargs['class_name'] = parsed_model.class_name
+        
+        resolver = template_resolver(template_path=self.template_path)
+        rendered_code = resolver.render_template(parsed_model, **template_kwargs)
+        
+        return parsed_model, rendered_code
+    
+    async def generate_async(
+        self,
+        prompt: str,
+        model_class: type[T],
+        template_resolver: type,
+        **template_kwargs,
+    ) -> tuple[T, str]:
+        """Generate code asynchronously.
+        
+        Args:
+            prompt: The prompt to send to the LLM.
+            model_class: The Pydantic model class for structured output.
+            template_resolver: Template resolver class (e.g., TransformationClassTemplateResolver).
+            **template_kwargs: Additional kwargs for template rendering.
+            
+        Returns:
+            Tuple of (parsed_model, rendered_code).
+        """
+        parsed_model = await ainvoke_and_parse(self.llm, prompt, model_class, self.parser)
+        
+        # Handle class_name in template_kwargs or from model
+        if 'class_name' not in template_kwargs and hasattr(parsed_model, 'class_name'):
+            template_kwargs['class_name'] = parsed_model.class_name
+        
+        resolver = template_resolver(template_path=self.template_path)
+        rendered_code = resolver.render_template(parsed_model, **template_kwargs)
+        
+        return parsed_model, rendered_code
+    
+    async def generate_streaming(
+        self,
+        prompt: str,
+        model_class: type[T],
+        template_resolver: type,
+        on_chunk: Callable | None = None,
+        **template_kwargs,
+    ) -> tuple[T, str]:
+        """Generate code with streaming support.
+        
+        Args:
+            prompt: The prompt to send to the LLM.
+            model_class: The Pydantic model class for structured output.
+            template_resolver: Template resolver class.
+            on_chunk: Optional callback for each streamed chunk.
+            **template_kwargs: Additional kwargs for template rendering.
+            
+        Returns:
+            Tuple of (parsed_model, rendered_code).
+        """
+        # Collect streamed chunks
+        chunks = []
+        async for chunk in self.llm.astream(prompt):
+            content = chunk.content if hasattr(chunk, 'content') else str(chunk)
+            chunks.append(content)
+            if on_chunk:
+                on_chunk(content)
+        
+        # Parse the complete response
+        full_content = ''.join(chunks)
+        parsed_model = self.parser.parse(full_content, model_class)
+        
+        # Handle class_name in template_kwargs or from model
+        if 'class_name' not in template_kwargs and hasattr(parsed_model, 'class_name'):
+            template_kwargs['class_name'] = parsed_model.class_name
+        
+        resolver = template_resolver(template_path=self.template_path)
+        rendered_code = resolver.render_template(parsed_model, **template_kwargs)
+        
+        return parsed_model, rendered_code
+    
+    async def generate_parallel(
+        self,
+        prompts_with_models: list[tuple[str, type[T]]],
+    ) -> list[T]:
+        """Generate multiple structured responses in parallel.
+        
+        Args:
+            prompts_with_models: List of (prompt, model_class) tuples.
+            
+        Returns:
+            List of parsed Pydantic model instances.
+        """
+        import asyncio
+        
+        async def parse_one(prompt: str, model_class: type[T]) -> T:
+            return await ainvoke_and_parse(self.llm, prompt, model_class, self.parser)
+        
+        tasks = [parse_one(prompt, model_class) for prompt, model_class in prompts_with_models]
+        return await asyncio.gather(*tasks)
 
 
 class _TransformationClassFields(BaseModel):
@@ -296,7 +554,7 @@ def create_generate_transformation_node(llm: BaseChatModel, workspace: Path):
             template=raw_template,
         )
 
-        response: TransformationClassSpec = _invoke_and_parse(llm, input_prompt, TransformationClassSpec)
+        response: TransformationClassSpec = invoke_and_parse(llm, input_prompt, TransformationClassSpec)
         rendered_code = resolver.render_template(response)
 
         file_name = response.class_name + ".java"
