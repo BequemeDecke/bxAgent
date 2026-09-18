@@ -14,6 +14,7 @@ from mdeagent.implementation.state import ImplementationState
 
 class TestTransformationGeneration(TestCase):
     def setUp(self):
+        import json
         self.fake_data = {
             "package_name": "com.example.transformation",
             "class_name": "MyTransformation",
@@ -32,12 +33,12 @@ class TestTransformationGeneration(TestCase):
             "transform_target_to_source_body": "backward(target, source, decisions);",
         }
 
+        # Create a mock response with JSON content
+        from unittest.mock import AsyncMock
         mocked_llm = Mock(spec=BaseChatModel)
-        mocked_llm_structured_output = Mock(spec=BaseChatModel)
-        mocked_llm.with_structured_output.return_value = mocked_llm_structured_output
-        mocked_llm_structured_output.invoke.return_value = TransformationClassSpec(
-            **self.fake_data
-        )
+        mock_response = Mock()
+        mock_response.content = json.dumps(self.fake_data)
+        mocked_llm.invoke.return_value = mock_response
 
         self.generate_transformation = create_generate_transformation_node(
             mocked_llm, Path("/tmp/workspace")

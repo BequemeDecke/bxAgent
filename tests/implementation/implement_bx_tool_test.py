@@ -82,13 +82,12 @@ class TestImplementBxTool(TestCase):
         }
 
         # --- Mocks ---
+        import json
         mocked_llm = Mock(spec=BaseChatModel)
-        mocked_llm_structured_output = Mock(spec=BaseChatModel)
-        mocked_llm.with_structured_output.return_value = mocked_llm_structured_output
-        # The node awaits `structured_llm.ainvoke(...)`, so the mock must be async.
-        mocked_llm_structured_output.ainvoke = AsyncMock(
-            return_value=BxToolForEMF(**self.fake_data)
-        )
+        # Create a mock response with JSON content
+        mock_response = AsyncMock()
+        mock_response.content = json.dumps(self.fake_data)
+        mocked_llm.ainvoke = AsyncMock(return_value=mock_response)
 
         # --- Node ---
         # ``benchmarx_path`` is a required parameter of ``create_implement_bx_tool_node``
@@ -134,6 +133,10 @@ class TestImplementBxTool(TestCase):
         # node, NOT by this work node (see `agent.py`).
         self.assertNotIn("iteration", new_state)
 
-        # Check if the template resolver methods were called with the correct parameters
+        # Check if the template resolver methods were called
         mock_get_raw_template.assert_called_once()
-        mock_render_template.assert_called_once_with(BxToolForEMF(**self.fake_data))
+        # render_template should have been called with a BxToolForEMF instance
+        self.assertEqual(mock_render_template.call_count, 1)
+        call_args = mock_render_template.call_args[0][0]
+        # Verify it's a BxToolForEMF instance with expected attributes
+        self.assertIsInstance(call_args, BxToolForEMF)

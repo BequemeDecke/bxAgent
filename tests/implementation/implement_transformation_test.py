@@ -330,60 +330,42 @@ class TestImplementTransformation(TestCase):
 
         self.mocked_llm = Mock(spec=BaseChatModel)
 
-        # Create separate mocks for each structured output LLM
-        self.mocked_metadata_llm = Mock(spec=BaseChatModel)
-        self.mocked_fields_llm = Mock(spec=BaseChatModel)
-        self.mocked_forward_llm = Mock(spec=BaseChatModel)
-        self.mocked_backward_llm = Mock(spec=BaseChatModel)
-        self.mocked_synch_llm = Mock(spec=BaseChatModel)
+        # Track call order for assertions
+        self.llm_call_order = []
 
-        # Configure with_structured_output to return the appropriate mock based on schema
-        def mock_with_structured_output(schema):
-            from mdeagent.implementation.generator import (
-                BackwardMethodBody,
-                ForwardMethodBody,
-                SynchMethodBody,
-                TransformationClassMetadata,
-                TransformationFieldsAndConstructor,
-            )
+        # Helper to create a mock response with content attribute
+        def make_response(content_str):
+            mock_response = Mock()
+            mock_response.content = content_str
+            return mock_response
 
-            if schema == TransformationClassMetadata:
-                return self.mocked_metadata_llm
-            elif schema == TransformationFieldsAndConstructor:
-                return self.mocked_fields_llm
-            elif schema == ForwardMethodBody:
-                return self.mocked_forward_llm
-            elif schema == BackwardMethodBody:
-                return self.mocked_backward_llm
-            elif schema == SynchMethodBody:
-                return self.mocked_synch_llm
+        # Create JSON responses for each expected call
+        metadata_json = '{"package_name": "com.example.transformation", "source_type": "SourceModel", "target_type": "TargetModel", "decision_type": "TransformationDecisions", "transformation_package": "com.example"}'
+        fields_json = '{"fields": [{"type": "String", "name": "label"}], "constructor": {"parameters": "String label", "assignments": [{"target": "label", "value": "label"}]}}'
+        forward_json = '{"forward_body": "System.out.println(source);"}'
+        backward_json = '{"backward_body": "System.out.println(target);"}'
+        synch_json = '{"synch_body": "System.out.println(\\"synced\\");"}'
+
+        # Configure ainvoke to return appropriate responses based on prompt content
+        async def mock_ainvoke(prompt):
+            self.llm_call_order.append(prompt)
+            prompt_lower = str(prompt).lower()
+            
+            if "metadata" in prompt_lower or ("package" in prompt_lower and "source type" in prompt_lower):
+                return make_response(metadata_json)
+            elif "fields" in prompt_lower and "constructor" in prompt_lower:
+                return make_response(fields_json)
+            elif "forward" in prompt_lower and "body" in prompt_lower:
+                return make_response(forward_json)
+            elif "backward" in prompt_lower and "body" in prompt_lower:
+                return make_response(backward_json)
+            elif "synch" in prompt_lower or "synchronization" in prompt_lower:
+                return make_response(synch_json)
             else:
-                # Fallback for any other schema (e.g., ImplementationTransformationSpec)
-                fallback_mock = Mock(spec=BaseChatModel)
-                return fallback_mock
+                # Default to metadata response
+                return make_response(metadata_json)
 
-        self.mocked_llm.with_structured_output = Mock(
-            side_effect=mock_with_structured_output
-        )
-
-        # Set up ainvoke mocks for each LLM
-        self.mocked_metadata_llm.ainvoke = AsyncMock(
-            return_value=TransformationClassMetadata(**self.fake_metadata)
-        )
-        self.mocked_fields_llm.ainvoke = AsyncMock(
-            return_value=TransformationFieldsAndConstructor(
-                **self.fake_fields_constructor
-            )
-        )
-        self.mocked_forward_llm.ainvoke = AsyncMock(
-            return_value=ForwardMethodBody(**self.fake_forward_body)
-        )
-        self.mocked_backward_llm.ainvoke = AsyncMock(
-            return_value=BackwardMethodBody(**self.fake_backward_body)
-        )
-        self.mocked_synch_llm.ainvoke = AsyncMock(
-            return_value=SynchMethodBody(**self.fake_synch_body)
-        )
+        self.mocked_llm.ainvoke = AsyncMock(side_effect=mock_ainvoke)
 
     @patch("pathlib.Path.touch")
     @patch("pathlib.Path.write_text")
@@ -423,12 +405,8 @@ class TestImplementTransformation(TestCase):
 
         actual_state = asyncio.run(implement_transformation(state))
 
-        # Verify all 5 LLMs were called (metadata + 4 parallel calls)
-        self.assertTrue(self.mocked_metadata_llm.ainvoke.called)
-        self.assertTrue(self.mocked_fields_llm.ainvoke.called)
-        self.assertTrue(self.mocked_forward_llm.ainvoke.called)
-        self.assertTrue(self.mocked_backward_llm.ainvoke.called)
-        self.assertTrue(self.mocked_synch_llm.ainvoke.called)
+        # Verify LLM was called 5 times (metadata + 4 parallel calls)
+        self.assertEqual(self.mocked_llm.ainvoke.call_count, 5)
 
         self.assertIn("written_java_files", actual_state)
         self.assertEqual(
@@ -535,12 +513,8 @@ class TestImplementTransformation(TestCase):
 
         self.assertEqual(actual_state["transformation_md"], mocked_transformation_plan)
         self.assertTrue(mocked_transformation_plan.__str__.called)
-        # Verify all parallel LLM calls were made
-        self.assertTrue(self.mocked_metadata_llm.ainvoke.called)
-        self.assertTrue(self.mocked_fields_llm.ainvoke.called)
-        self.assertTrue(self.mocked_forward_llm.ainvoke.called)
-        self.assertTrue(self.mocked_backward_llm.ainvoke.called)
-        self.assertTrue(self.mocked_synch_llm.ainvoke.called)
+        # Verify all 5 parallel LLM calls were made
+        self.assertEqual(self.mocked_llm.ainvoke.call_count, 5)
         self.assertNotIn("iteration", actual_state)
 
     @patch("pathlib.Path.touch")
@@ -586,11 +560,11 @@ class TestImplementTransformation(TestCase):
 
         actual_state = asyncio.run(implement_transformation(state))
 
-        # Verify that the metadata LLM was called with a prompt that includes the transformation plan
-        call_args = self.mocked_metadata_llm.ainvoke.call_args
-        prompt = call_args.kwargs.get("input") or call_args.args[0]
-        self.assertIn("--- BEGIN TRANSFORMATION PLAN ---", prompt)
-        self.assertIn(plan_content, prompt)
+        # Verify that the LLM was called with a prompt that includes the transformation plan
+        self.assertGreaterEqual(len(self.llm_call_order), 1)
+        metadata_prompt = self.llm_call_order[0]  # First call is metadata
+        self.assertIn("--- BEGIN TRANSFORMATION PLAN ---", str(metadata_prompt))
+        self.assertIn(plan_content, str(metadata_prompt))
         self.assertNotIn("iteration", actual_state)
 
     @patch("pathlib.Path.touch")
@@ -636,13 +610,6 @@ class TestImplementTransformation(TestCase):
 
         asyncio.run(implement_transformation(state))
 
-        # The LLMs are asked with specs that do NOT contain a class_name field.
-        self.mocked_llm.with_structured_output.assert_any_call(
-            TransformationClassMetadata
-        )
-        self.mocked_llm.with_structured_output.assert_any_call(
-            TransformationFieldsAndConstructor
-        )
         # The class name passed to the renderer is derived from the path stem.
         _, kwargs = mock_render_template.call_args
         self.assertEqual(kwargs.get("class_name"), "MyTransformation")
@@ -708,14 +675,15 @@ class TestImplementTransformation(TestCase):
 
         asyncio.run(implement_transformation(state))
 
-        # Verify that the metadata LLM was called with a prompt that includes evaluation results
+        # Verify that the LLM was called with a prompt that includes evaluation results
         # (The metadata call happens first and includes the evaluation results)
-        call_args = self.mocked_metadata_llm.ainvoke.call_args
-        prompt = call_args.kwargs.get("input") or call_args.args[0]
-        self.assertIn("--- BEGIN EVALUATION RESULTS ---", prompt)
-        self.assertIn("[FAILURE]", prompt)
-        self.assertIn("File does not exist: /tmp/Test.java", prompt)
-        self.assertIn("File: /tmp/Test.java", prompt)
+        self.assertGreaterEqual(len(self.llm_call_order), 1)
+        metadata_prompt = self.llm_call_order[0]  # First call is metadata
+        prompt_str = str(metadata_prompt)
+        self.assertIn("--- BEGIN EVALUATION RESULTS ---", prompt_str)
+        self.assertIn("[FAILURE]", prompt_str)
+        self.assertIn("File does not exist: /tmp/Test.java", prompt_str)
+        self.assertIn("File: /tmp/Test.java", prompt_str)
 
 
 class TestTransformationClassTemplateResolver(TestCase):
@@ -857,69 +825,44 @@ class TestParallelExecution(TestCase):
             "transformation_package": "com.example",
         }
 
-        self.fake_fields_constructor = {
-            "fields": [{"type": "String", "name": "label"}],
-            "constructor": None,
-        }
-
-        self.fake_forward_body = {"forward_body": "// forward"}
-        self.fake_backward_body = {"backward_body": "// backward"}
-        self.fake_synch_body = {"synch_body": "// synch"}
-
         self.mocked_llm = Mock(spec=BaseChatModel)
+        self.llm_call_order = []
+        self.call_timestamps = []  # Track when each call happens
 
-        # Create separate mocks for each structured output LLM
-        self.mocked_metadata_llm = Mock(spec=BaseChatModel)
-        self.mocked_fields_llm = Mock(spec=BaseChatModel)
-        self.mocked_forward_llm = Mock(spec=BaseChatModel)
-        self.mocked_backward_llm = Mock(spec=BaseChatModel)
-        self.mocked_synch_llm = Mock(spec=BaseChatModel)
+        # Helper to create a mock response with content attribute
+        def make_response(content_str):
+            mock_response = Mock()
+            mock_response.content = content_str
+            return mock_response
 
-        def mock_with_structured_output(schema):
-            from mdeagent.implementation.generator import (
-                BackwardMethodBody,
-                ForwardMethodBody,
-                SynchMethodBody,
-                TransformationClassMetadata,
-                TransformationFieldsAndConstructor,
-            )
+        # JSON responses for each expected call
+        metadata_json = '{"package_name": "com.example.transformation", "source_type": "SourceModel", "target_type": "TargetModel", "decision_type": "TransformationDecisions", "transformation_package": "com.example"}'
+        fields_json = '{"fields": [{"type": "String", "name": "label"}], "constructor": null}'
+        forward_json = '{"forward_body": "// forward"}'
+        backward_json = '{"backward_body": "// backward"}'
+        synch_json = '{"synch_body": "// synch"}'
 
-            if schema == TransformationClassMetadata:
-                return self.mocked_metadata_llm
-            elif schema == TransformationFieldsAndConstructor:
-                return self.mocked_fields_llm
-            elif schema == ForwardMethodBody:
-                return self.mocked_forward_llm
-            elif schema == BackwardMethodBody:
-                return self.mocked_backward_llm
-            elif schema == SynchMethodBody:
-                return self.mocked_synch_llm
+        # Configure ainvoke to track calls and return appropriate responses
+        import time
+        async def mock_ainvoke(prompt):
+            self.llm_call_order.append(prompt)
+            self.call_timestamps.append(time.time())
+            prompt_lower = str(prompt).lower()
+            
+            if "metadata" in prompt_lower or ("package" in prompt_lower and "source type" in prompt_lower):
+                return make_response(metadata_json)
+            elif "fields" in prompt_lower and "constructor" in prompt_lower:
+                return make_response(fields_json)
+            elif "forward" in prompt_lower and "body" in prompt_lower:
+                return make_response(forward_json)
+            elif "backward" in prompt_lower and "body" in prompt_lower:
+                return make_response(backward_json)
+            elif "synch" in prompt_lower or "synchronization" in prompt_lower:
+                return make_response(synch_json)
             else:
-                fallback_mock = Mock(spec=BaseChatModel)
-                return fallback_mock
+                return make_response(metadata_json)
 
-        self.mocked_llm.with_structured_output = Mock(
-            side_effect=mock_with_structured_output
-        )
-
-        # Set up ainvoke mocks
-        self.mocked_metadata_llm.ainvoke = AsyncMock(
-            return_value=TransformationClassMetadata(**self.fake_metadata)
-        )
-        self.mocked_fields_llm.ainvoke = AsyncMock(
-            return_value=TransformationFieldsAndConstructor(
-                **self.fake_fields_constructor
-            )
-        )
-        self.mocked_forward_llm.ainvoke = AsyncMock(
-            return_value=ForwardMethodBody(**self.fake_forward_body)
-        )
-        self.mocked_backward_llm.ainvoke = AsyncMock(
-            return_value=BackwardMethodBody(**self.fake_backward_body)
-        )
-        self.mocked_synch_llm.ainvoke = AsyncMock(
-            return_value=SynchMethodBody(**self.fake_synch_body)
-        )
+        self.mocked_llm.ainvoke = AsyncMock(side_effect=mock_ainvoke)
 
     @patch("pathlib.Path.touch")
     @patch("pathlib.Path.write_text")
@@ -958,15 +901,13 @@ class TestParallelExecution(TestCase):
 
         asyncio.run(implement_transformation(state))
 
-        # Metadata should be called first
-        self.mocked_metadata_llm.ainvoke.assert_called_once()
-        metadata_call_order = self.mocked_metadata_llm.ainvoke.call_args_list[0]
-
-        # All four parallel LLMs should be called
-        self.assertEqual(self.mocked_fields_llm.ainvoke.call_count, 1)
-        self.assertEqual(self.mocked_forward_llm.ainvoke.call_count, 1)
-        self.assertEqual(self.mocked_backward_llm.ainvoke.call_count, 1)
-        self.assertEqual(self.mocked_synch_llm.ainvoke.call_count, 1)
+        # Should have exactly 5 calls (1 metadata + 4 parallel)
+        self.assertEqual(self.mocked_llm.ainvoke.call_count, 5)
+        
+        # First call should be metadata (happens before parallel calls)
+        self.assertGreaterEqual(len(self.llm_call_order), 5)
+        first_prompt = str(self.llm_call_order[0]).lower()
+        self.assertIn("metadata", first_prompt)
 
     @patch("pathlib.Path.touch")
     @patch("pathlib.Path.write_text")
@@ -1004,19 +945,14 @@ class TestParallelExecution(TestCase):
 
         asyncio.run(implement_transformation(state))
 
-        # Check that the fields prompt received metadata
-        fields_call = self.mocked_fields_llm.ainvoke.call_args
-        fields_prompt = fields_call.kwargs.get("input") or fields_call.args[0]
+        # Check that the fields prompt received metadata (call index 1, after metadata)
+        self.assertGreaterEqual(len(self.llm_call_order), 5)
+        fields_prompt = str(self.llm_call_order[1])
         self.assertIn("Package: com.example.transformation", fields_prompt)
         self.assertIn("Source Type: SourceModel", fields_prompt)
 
-        # Check that the body prompts received metadata
-        for llm_mock in [
-            self.mocked_forward_llm,
-            self.mocked_backward_llm,
-            self.mocked_synch_llm,
-        ]:
-            call = llm_mock.ainvoke.call_args
-            prompt = call.kwargs.get("input") or call.args[0]
-            self.assertIn("Source Type: SourceModel", prompt)
-            self.assertIn("Target Type: TargetModel", prompt)
+        # Check that the body prompts received metadata (calls 2-4)
+        for i in range(2, 5):
+            body_prompt = str(self.llm_call_order[i])
+            self.assertIn("Source Type: SourceModel", body_prompt)
+            self.assertIn("Target Type: TargetModel", body_prompt)
