@@ -7,7 +7,7 @@ from .bxtool.bxtool import (
     TransformationImplementation,
     TransformationModel,
 )
-from .transformation.generator import (
+from .transformation.template.generator import (
     BackwardMethodBody,
     CodeGenerator,
     FallbackParser,

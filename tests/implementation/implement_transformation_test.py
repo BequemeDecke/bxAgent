@@ -21,7 +21,7 @@ from langchain.chat_models import BaseChatModel
 from mdeagent.comprehension.plan import TransformationPlan, TransformationPlanParser
 from mdeagent.evaluation.types import EvaluationResult, EvaluationRun
 from mdeagent.evaluation.utils import _format_evaluation_results, filter_execution_results
-from mdeagent.implementation.transformation.generator import (
+from mdeagent.implementation.transformation.template.generator import (
     BackwardMethodBody,
     ForwardMethodBody,
     SynchMethodBody,
@@ -34,7 +34,7 @@ from mdeagent.implementation.transformation.implement_transformation import (
     create_implement_transformation_node,
 )
 from mdeagent.implementation.state import ImplementationState
-from mdeagent.implementation.transformation.prompts import create_backward_body_prompt, create_forward_body_prompt, create_input_prompt
+from mdeagent.implementation.transformation.template.prompts import create_backward_body_prompt, create_forward_body_prompt, create_input_prompt
 
 
 class TestCreateInputPrompt(TestCase):
@@ -718,7 +718,7 @@ class TestPiecewiseGenerationPrompts(TestCase):
     """Tests for the helper functions that create prompts for piecewise generation."""
 
     def test_create_metadata_prompt__includes_all_required_sections(self):
-        from mdeagent.implementation.transformation.prompts import (
+        from mdeagent.implementation.transformation.template.prompts import (
             create_metadata_prompt,
         )
 
@@ -737,8 +737,8 @@ class TestPiecewiseGenerationPrompts(TestCase):
         self.assertIn("Return the package name, source type, target type", prompt)
 
     def test_create_fields_and_constructor_prompt__includes_metadata_context(self):
-        from mdeagent.implementation.transformation.generator import TransformationClassMetadata
-        from mdeagent.implementation.transformation.prompts import (
+        from mdeagent.implementation.transformation.template.generator import TransformationClassMetadata
+        from mdeagent.implementation.transformation.template.prompts import (
             create_fields_and_constructor_prompt,
         )
 
@@ -764,8 +764,8 @@ class TestPiecewiseGenerationPrompts(TestCase):
         self.assertIn("Return the field declarations and constructor", prompt)
 
     def test_create_method_body_prompts__include_fields_info(self):
-        from mdeagent.implementation.transformation.generator import TransformationClassMetadata
-        from mdeagent.implementation.transformation.prompts import (
+        from mdeagent.implementation.transformation.template.generator import TransformationClassMetadata
+        from mdeagent.implementation.transformation.template.prompts import (
             create_synch_body_prompt,
         )
 

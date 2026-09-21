@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock, Mock, patch
 
 from langchain.chat_models import BaseChatModel
 
-from mdeagent.implementation.transformation.generator import (
+from mdeagent.implementation.transformation.template.generator import (
     BackwardMethodBody,
     CodeGenerator,
     FallbackParser,
@@ -388,7 +388,7 @@ transformation_package: com.custom"""
         mock_llm.invoke.return_value = mock_response
         
         # Use only YamlLikeParser
-        from mdeagent.implementation.transformation.generator import YamlLikeParser
+        from mdeagent.implementation.transformation.template.generator import YamlLikeParser
         custom_parser = YamlLikeParser()
         result = invoke_and_parse(mock_llm, "prompt", TransformationClassMetadata, custom_parser)
         
