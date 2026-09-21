@@ -19,6 +19,8 @@ class TestFormatCodeNode(TestCase):
     @patch("mdeagent.preparation.maven.MavenProject.format")
     def test_format_code_node__calls_format_java_files(self, mock_format):
         """Test that the format_code node calls MavenProject.format_code and returns the state unchanged"""
+        from mdeagent.implementation.types import TransformationClass
+        
         with tempfile.TemporaryDirectory() as temp_dir:
             workspace_path = Path(temp_dir) / "example"
             workspace_path.mkdir(parents=True, exist_ok=True)
@@ -29,16 +31,24 @@ class TestFormatCodeNode(TestCase):
             bxtool_path = project.add_java_class(
                 package="com.example", class_name="BxTool", content="public class BxTool {}"
             )
+            transformation_class_path = project.add_java_class(
+                package="com.example", class_name="Transformation", content="public class Transformation {}"
+            )
 
             state: ImplementationState = {
-                "transformation_md": None,  # type: ignore
+                "transformation_plan": None,  # type: ignore
+                "transformation_class": {
+                    "name": "Transformation",
+                    "package": "com.example",
+                    "path": transformation_class_path,
+                    "code": "public class Transformation { /* test */ }",
+                },
                 "task_specification": "Test task",
-                "written_java_files": [],
+                "maven_project_path": workspace_path,
                 "bxtool_path": bxtool_path,
-                "transformation_implementation": "test implementation",
+                "written_files": [],
                 "latest_evaluation_runs": {},
                 "iteration": 1,
-                "maven_project_path": workspace_path,
             }
 
             result = asyncio.run(self.format_code_node(state))

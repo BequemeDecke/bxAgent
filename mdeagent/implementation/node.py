@@ -5,18 +5,22 @@ from langgraph.types import GraphOutput
 
 from mdeagent.comprehension.plan import TransformationPlan
 from mdeagent.implementation.state import ImplementationState
+from mdeagent.implementation.types import TransformationClass
 from mdeagent.state import MDEAgentState
 
 logger = logging.getLogger(__name__)
 
 
-def create_implementation_node(agent: CompiledStateGraph, benchmarx_path: str | None = None):
+def create_implementation_node(
+    agent: CompiledStateGraph, benchmarx_path: str | None = None
+):
     """Creates a function that calls the implementation agent with the necessary state and returns the updated state after the implementation agent has done its work.
 
     TODO: Use the task_specification for the user to provide instructions on how to implement the transformation
 
     Args:
-        agent (CompiledStateGraph): _description_
+        agent (CompiledStateGraph): The implementation subgraph
+        benchmarx_path (str | None): The path to the BenchmarX tool, if used. If None, the bxtool_path from the state will be used.
     """
 
     async def implementation_node(state: MDEAgentState) -> MDEAgentState:
@@ -37,18 +41,14 @@ def create_implementation_node(agent: CompiledStateGraph, benchmarx_path: str | 
             raise ValueError(
                 "Transformation package path is required for the implementation agent."
             )
-        # BxTool adapter is only created when BenchmarX is NOT being used
-        # So if benchmarx_path is None, we need bxtool_path; otherwise it's None
-        if benchmarx_path is None:
-            bxtool_path = state.get("bxtool_path")
-            if bxtool_path is None:
-                raise ValueError(
-                    "BxTool file path is required for the implementation agent when BenchmarX is not being used."
-                ) 
-        else:
-            # BenchmarX is being used, no BxTool adapter needed
-            bxtool_path = None
-            
+        bxtool_path_from_state = state.get("bxtool_path")
+        # When BenchmarX is being used, we don't need a separate bxtool adapter
+        # The bxtool_path in state points to the adapter file location (used even with BenchmarX)
+        if benchmarx_path is None and bxtool_path_from_state is None:
+            raise ValueError(
+                "BxTool file path is required for the implementation agent when BenchmarX is not being used."
+            )
+
         maven_project_path = state.get("maven_project_path")
         if maven_project_path is None:
             raise ValueError(
@@ -57,13 +57,25 @@ def create_implementation_node(agent: CompiledStateGraph, benchmarx_path: str | 
 
         tp = TransformationPlan.from_dict(serialized_tp)
 
+        # Create a TransformationClass object from the preparation phase data
+        # The path and package information is stored in the TransformationClass
+
+        transformation_class: TransformationClass = {
+            "name": transformation_class_path.stem,
+            "package": transformation_package_path,
+            "path": transformation_class_path,
+            "code": None,  # Will be populated by implement_transformation node
+        }
+
         prep_invoke_state = ImplementationState(
-            transformation_md=tp,
-            task_specification="", # TODO: This field will be used by a higher component to provide instructions for the implementation agent
-            transformation_class_path=transformation_class_path,
-            transformation_package_path=transformation_package_path,
-            bxtool_path=bxtool_path,
-            maven_project_path=maven_project_path
+            transformation_plan=tp,
+            transformation_class=transformation_class,
+            task_specification="",  # TODO: This field will be used by a higher component to provide instructions for the implementation agent
+            maven_project_path=maven_project_path,
+            bxtool_path=bxtool_path_from_state,  # Always provided per state definition
+            written_files=[],
+            latest_evaluation_runs={},
+            iteration=0,
         )
         response: GraphOutput = await agent.ainvoke(prep_invoke_state, version="v2")
         prep_output_state: ImplementationState = response.value

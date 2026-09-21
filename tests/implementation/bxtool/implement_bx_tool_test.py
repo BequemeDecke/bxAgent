@@ -98,25 +98,102 @@ class TestImplementBxTool(TestCase):
         )
 
     @patch("pathlib.Path.write_text")
-    @patch("mdeagent.implementation.bxtool.BxToolTemplateResolver.get_raw_template")
-    @patch("mdeagent.implementation.bxtool.BxToolTemplateResolver.render_template")
+    @patch("mdeagent.implementation.bxtool.bxtool.BxToolTemplateResolver.get_raw_template")
+    @patch("mdeagent.implementation.bxtool.bxtool.BxToolTemplateResolver.render_template")
+    @patch("mdeagent.implementation.bxtool.implement_bx_tool.ainvoke_and_parse", new_callable=AsyncMock)
     def test_implement_bx_tool__write_bxtool_implementation(
         self,
+        mock_ainvoke_and_parse: AsyncMock,
         mock_render_template: Mock,
         mock_get_raw_template: Mock,
         mock_write_text: Mock,
     ):
+        """Test that implement_bx_tool generates and writes the bx tool adapter."""
+        import json
+        
         mock_write_text.return_value = None  # Mock the write_text method to do nothing
         mock_get_raw_template.return_value = "Raw template content"
         mock_render_template.return_value = "Rendered bx tool content"
+        
+        # Mock the LLM response parsing
+        fake_bxtool_data = {
+            "transformation_package": "com.example.transformation",
+            "transformation_implementation": {
+                "import_path": "com.example.transformation.TransformationImplementation",
+                "class_name": "TransformationImplementation",
+                "instance_name": "transformationImplementationInstance",
+                "decisions": {
+                    "import_path": "com.example.transformation.Decisions",
+                },
+                "initiation_dialogue": {
+                    "set_configuration": "setConfigurator();",
+                    "initiate_dialogue": "initiateDialogue();",
+                },
+                "perform_and_propagate_target_edit": "performAndPropagateTargetEdit();",
+                "perform_and_propagate_source_edit": "performAndPropagateSourceEdit();",
+                "perform_and_propagate_concurrent_edit": "performAndPropagateConcurrentEdit();",
+            },
+            "source_model": {
+                "name": "SourceModel",
+                "factory": {
+                    "import_path": "com.example.source.Factory",
+                    "class_name": "SourceFactory",
+                    "instance_name": "sourceFactoryInstance",
+                },
+                "registration": {
+                    "import_path": "com.example.source.Register",
+                    "class_name": "SourceRegister",
+                    "instance_name": "sourceRegisterInstance",
+                },
+                "comparator": {
+                    "import_path": "com.example.source.Comparator",
+                    "class_name": "SourceComparator",
+                    "instance_name": "sourceComparatorInstance",
+                },
+            },
+            "target_model": {
+                "name": "TargetModel",
+                "factory": {
+                    "import_path": "com.example.target.Factory",
+                    "class_name": "TargetFactory",
+                    "instance_name": "targetFactoryInstance",
+                },
+                "registration": {
+                    "import_path": "com.example.target.Register",
+                    "class_name": "TargetRegister",
+                    "instance_name": "targetRegisterInstance",
+                },
+                "comparator": {
+                    "import_path": "com.example.target.Comparator",
+                    "class_name": "TargetComparator",
+                    "instance_name": "targetComparatorInstance",
+                },
+            },
+            "additional_imports": [
+                "com.example.additional.Import1",
+                "com.example.additional.Import2",
+            ],
+        }
+        mock_bxtool_obj = BxToolForEMF(**fake_bxtool_data)
+        mock_ainvoke_and_parse.return_value = mock_bxtool_obj
 
         bxtool_path = Path("/tmp/workspace/TransformationImplementation.java")
+        transformation_class_path = Path("/tmp/workspace/MyTransformation.java")
 
         state = ImplementationState(
+            transformation_plan=None,  # type: ignore
+            transformation_class={
+                "name": "MyTransformation",
+                "package": "com.example",
+                "path": transformation_class_path,
+                "code": "public class MyTransformation { /* implementation */ }",
+            },
             task_specification="Implement the bx tool",
-            written_files=[],
-            transformation_implementation="public class MyTransformation { ... }",
+            maven_project_path=Path("/tmp/workspace"),
             bxtool_path=bxtool_path,
+            written_files=[],
+            latest_evaluation_runs={},
+            iteration=1,
         )
 
         new_state = asyncio.run(self.implement_bx_tool(state))
