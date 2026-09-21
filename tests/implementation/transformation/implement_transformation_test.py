@@ -22,26 +22,30 @@ from mdeagent.implementation.transformation.implement_transformation import (
 from mdeagent.implementation.types import TransformationClass, TransformationClassGenerator
 
 
-def _make_dummy_transformation_plan() -> MagicMock:
-    """Create a mock transformation plan for testing."""
-    mock_tp = MagicMock()
-    mock_tp.data = {
-        "source_model_implementation": "",
-        "target_model_implementation": "",
-        "transformation_direction": "",
-        "implementation_steps": "",
-        "difficulties": "",
-        "source_model_package": "",
-        "target_model_package": "",
-        "source_model_name": "",
-        "target_model_name": "",
+def _make_serialized_transformation_plan() -> dict:
+    """Create a serialized transformation plan dictionary for testing.
+    
+    This matches the SerializedTransformationPlan structure expected by
+    TransformationPlan.from_dict().
+    """
+    return {
+        "data": {
+            "source_model_implementation": "Source model implementation details",
+            "target_model_implementation": "Target model implementation details",
+            "transformation_direction": "bidirectional",
+            "implementation_steps": "Step 1: ... Step 2: ...",
+            "difficulties": "None",
+            "source_model_package": "com.example.source",
+            "target_model_package": "com.example.target",
+            "source_model_name": "SourceModel",
+            "target_model_name": "TargetModel",
+        },
+        "parser": {
+            "type": "FileTransformationPlanParser",
+            "args": {"file_path": "/tmp/plan.json"},
+        },
+        "template": Path("/tmp/templates"),
     }
-    mock_tp.to_dict.return_value = {
-        "data": mock_tp.data,
-        "parser": {"type": "MockParser", "args": {}},
-        "template": Path("/tmp/template.jinja"),
-    }
-    return mock_tp
 
 
 def _create_temp_java_file(content: str = "public class Dummy {}") -> Path:
@@ -67,7 +71,7 @@ def _make_dummy_state(
 ) -> ImplementationState:
     """Build an ImplementationState with sensible defaults for testing."""
     dummy_path = Path("/tmp/dummy")
-    dummy_tp = _make_dummy_transformation_plan()
+    serialized_tp = _make_serialized_transformation_plan()
     
     # Use provided path or create a temp file
     if transformation_class_path is None:
@@ -81,7 +85,7 @@ def _make_dummy_state(
     }
     
     return ImplementationState(
-        transformation_plan=dummy_tp,  # type: ignore
+        transformation_plan=serialized_tp,  # type: ignore
         transformation_class=dummy_tc,
         task_specification="Test task specification",
         maven_project_path=Path("/tmp/workspace"),
@@ -121,11 +125,29 @@ class TestImplementTransformationNode(TestCase):
     """Tests for the implement_transformation node."""
     
     def setUp(self):
-        """Cleanup temp files before each test."""
+        """Cleanup temp files and set up mocks before each test."""
         self.temp_files_to_cleanup: list[Path] = []
+        
+        # Patch TransformationPlan.from_dict to avoid Jinja template loading
+        from unittest.mock import patch, MagicMock
+        from mdeagent.comprehension.plan import TransformationPlan
+        
+        self._from_dict_patcher = patch.object(
+            TransformationPlan, 'from_dict', autospec=True
+        )
+        self.mock_from_dict = self._from_dict_patcher.start()
+        
+        # Make from_dict return a simple mock with .data attribute and .to_dict()
+        def fake_from_dict(plan_dict):
+            mock_tp = MagicMock(spec=TransformationPlan)
+            mock_tp.data = plan_dict.get("data", {})
+            mock_tp.to_dict.return_value = plan_dict
+            return mock_tp
+        
+        self.mock_from_dict.side_effect = fake_from_dict
     
     def tearDown(self):
-        """Cleanup temp files after each test."""
+        """Cleanup temp files and stop mocks after each test."""
         import os
         for f in self.temp_files_to_cleanup:
             try:
@@ -133,6 +155,9 @@ class TestImplementTransformationNode(TestCase):
                     f.unlink()
             except Exception:
                 pass
+        
+        # Stop the patcher
+        self._from_dict_patcher.stop()
     
     def test_node_is_created_correctly(self):
         """The node factory should return an async function."""
@@ -369,7 +394,8 @@ class TestTransformClassGeneratorIntegration(TestCase):
             written_files=[Path("/tmp/test1.java"), Path("/tmp/test2.java")]
         )
         
-        dummy_tp = _make_dummy_transformation_plan()
+        # Use serialized plan - the mock generator accepts any value
+        serialized_tp = _make_serialized_transformation_plan()
         dummy_tc: TransformationClass = {
             "name": "Test",
             "package": "com.test",
@@ -378,7 +404,7 @@ class TestTransformClassGeneratorIntegration(TestCase):
         }
         
         result = asyncio.run(generator.synthesize_transformation_class(
-            transformation_plan=dummy_tp,
+            transformation_plan=serialized_tp,
             transformation_class=dummy_tc,
         ))
         
