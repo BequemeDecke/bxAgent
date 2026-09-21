@@ -1,3 +1,5 @@
+from typing import TypedDict
+
 from langgraph.graph.state import CompiledStateGraph, RunnableConfig
 
 from mdeagent.comprehension.plan import TransformationPlan
@@ -8,7 +10,7 @@ from mdeagent.implementation.types import (
 )
 
 
-class TransformationClassAgentState:
+class TransformationClassAgentState(TypedDict):
     written_java_files: list[str]
     specific_task: str | None
     transformation_plan: str
@@ -21,6 +23,7 @@ class TransformationClassAgent(TransformationClassGenerator):
     config: RunnableConfig
 
     def __init__(self, graph: CompiledStateGraph[TransformationClassAgentState]):
+        super().__init__()
         self.graph = graph
         self.config = {
             "configurable": {"thread_id": "transformation_class_agent"},

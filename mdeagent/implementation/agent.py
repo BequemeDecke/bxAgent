@@ -1,11 +1,8 @@
 from pathlib import Path
+from typing import Literal
 
 from langgraph.graph import END, START, StateGraph
 
-from mdeagent.comprehension.plan import (
-    FileTransformationPlanParser,
-    TransformationPlan,
-)
 from mdeagent.evaluation.executor import EvaluationExecutor
 from mdeagent.evaluation.node import create_evaluation_node
 from mdeagent.implementation.bxtool.implement_bx_tool import (
@@ -16,6 +13,9 @@ from mdeagent.implementation.evaluation.evaluate_transformation_implementation i
 )
 from mdeagent.implementation.format_code import create_format_code_node
 from mdeagent.implementation.state import ImplementationState
+from mdeagent.implementation.transformation.factory import (
+    create_transformation_class_generator,
+)
 from mdeagent.implementation.transformation.implement_transformation import (
     create_implement_transformation_node,
 )
@@ -51,6 +51,9 @@ def _with_iteration_tracking(evaluation_node):
 def build_implementation_graph(
     evaluation_executor: EvaluationExecutor,
     workspace_path: Path,
+    implementation_strategy: Literal[
+        "deep_agent", "hybrid_agent", "template_based"
+    ] = "deep_agent",
     benchmarx_path: Path | None = None,
 ) -> StateGraph:
 
@@ -60,14 +63,11 @@ def build_implementation_graph(
     base_model = build_base_model()
 
     # Create implementations
-    implement_transformation = create_implement_transformation_node(
-        llm=base_model,
-        optional_plan_factory=lambda: (
-            TransformationPlan(  # Create a new transformation plan if none exists
-                parser=FileTransformationPlanParser(),
-            )
-        ),
+    generator = create_transformation_class_generator(
+        strategy=implementation_strategy,
+        workspace=workspace_path,
     )
+    implement_transformation = create_implement_transformation_node(generator=generator)
     # Implement BxTool adapter only when BenchmarX is being used (benchmarx_path=None)
     if benchmarx_path:
         implement_bx_tool = create_implement_bx_tool_node(
@@ -114,7 +114,6 @@ def build_implementation_graph(
     # Add edges between the nodes to define the workflow
     graph.add_edge(START, "implement_transformation")
     graph.add_edge("format_code", "evaluate_implementation")
-
 
     # BxTool adapter flow only when BenchmarX is being used
     if benchmarx_path:

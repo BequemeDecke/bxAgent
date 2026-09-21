@@ -64,7 +64,7 @@ def read_transformation_plan(runtime: ToolRuntime, section: Section) -> str:
     return tp.data[section]
 
 
-def build_coding_agent(workspace: Path, model: BaseChatModel | None = None):
+def build_deep_agent(workspace: Path, model: BaseChatModel | None = None):
     """Creates a coding agent that can write code for model to model transformations based on the provided transformation plan.
     The agent is created with a custom set of tools that allow it to read and write the transformation class files, as well as to read the transformation plan.
 
@@ -81,7 +81,7 @@ def build_coding_agent(workspace: Path, model: BaseChatModel | None = None):
     return create_deep_agent(
         model=model,
         system_prompt=SYSTEM_PROMPT,
-        backend=FilesystemBackend(root_path=workspace, virtual_mode=True),
+        backend=FilesystemBackend(root_dir=workspace, virtual_mode=True),
         state_schema=CodingAgentState,
-        tools=[read_transformation_plan],
+        tools=[],
     )
