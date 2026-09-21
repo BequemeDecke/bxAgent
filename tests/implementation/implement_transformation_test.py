@@ -30,7 +30,7 @@ from mdeagent.implementation.transformation.generator import (
     TransformationClassTemplateResolver,
     TransformationFieldsAndConstructor,
 )
-from mdeagent.implementation.implement_transformation import (
+from mdeagent.implementation.transformation.implement_transformation import (
     create_implement_transformation_node,
 )
 from mdeagent.implementation.state import ImplementationState
@@ -876,7 +876,7 @@ class TestParallelExecution(TestCase):
     ):
         """Verifies that the four body-generation LLMs are called AFTER metadata,
         and that they are all called (indicating parallel execution via asyncio.gather)."""
-        from mdeagent.implementation.implement_transformation import (
+        from mdeagent.implementation.transformation.implement_transformation import (
             create_implement_transformation_node,
         )
 
@@ -920,7 +920,7 @@ class TestParallelExecution(TestCase):
         self, mock_render, mock_get_raw, mock_write, mock_touch
     ):
         """Verifies that metadata values are passed to the field and body prompts."""
-        from mdeagent.implementation.implement_transformation import (
+        from mdeagent.implementation.transformation.implement_transformation import (
             create_implement_transformation_node,
         )
 

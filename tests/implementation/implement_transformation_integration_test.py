@@ -5,7 +5,7 @@ from pathlib import Path
 from unittest import TestCase
 
 from mdeagent.comprehension.plan import FileTransformationPlanParser, TransformationPlan
-from mdeagent.implementation.implement_transformation import (
+from mdeagent.implementation.transformation.implement_transformation import (
     create_implement_transformation_node,
 )
 from mdeagent.implementation.state import ImplementationState

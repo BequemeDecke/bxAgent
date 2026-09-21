@@ -13,7 +13,7 @@ from unittest.mock import AsyncMock, Mock, patch
 from langchain.chat_models import BaseChatModel
 
 from mdeagent.implementation.bxtool.bxtool import BxToolForEMF
-from mdeagent.implementation.implement_bx_tool import (
+from mdeagent.implementation.bxtool.implement_bx_tool import (
     create_implement_bx_tool_node,
 )
 from mdeagent.implementation.state import ImplementationState
