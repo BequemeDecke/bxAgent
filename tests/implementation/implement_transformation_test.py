@@ -20,6 +20,7 @@ from langchain.chat_models import BaseChatModel
 
 from mdeagent.comprehension.plan import TransformationPlan, TransformationPlanParser
 from mdeagent.evaluation.types import EvaluationResult, EvaluationRun
+from mdeagent.evaluation.utils import _format_evaluation_results, filter_execution_results
 from mdeagent.implementation.transformation.generator import (
     BackwardMethodBody,
     ForwardMethodBody,
@@ -30,12 +31,10 @@ from mdeagent.implementation.transformation.generator import (
     TransformationFieldsAndConstructor,
 )
 from mdeagent.implementation.implement_transformation import (
-    _filter_execution_results,
-    _format_evaluation_results,
     create_implement_transformation_node,
-    create_input_prompt,
 )
 from mdeagent.implementation.state import ImplementationState
+from mdeagent.implementation.transformation.prompts import create_backward_body_prompt, create_forward_body_prompt, create_input_prompt
 
 
 class TestCreateInputPrompt(TestCase):
@@ -159,7 +158,7 @@ class TestFormatEvaluationResults(TestCase):
 
 class TestFilterExecutionResults(TestCase):
     def test_filter_execution_results__empty_dict(self):
-        actual = _filter_execution_results({})
+        actual = filter_execution_results({})
         self.assertEqual(actual, [])
 
     def test_filter_execution_results__filters_by_execution_category(self):
@@ -209,7 +208,7 @@ class TestFilterExecutionResults(TestCase):
             "workspace_structure": design_run,
         }
 
-        actual = _filter_execution_results(latest_runs)
+        actual = filter_execution_results(latest_runs)
 
         # Should only include results from execution run (3 results with OR logic):
         # 1. Compilation failed (error + report candidate)
@@ -246,7 +245,7 @@ class TestFilterExecutionResults(TestCase):
         )
 
         latest_runs = {"java_compilation": execution_run}
-        actual = _filter_execution_results(latest_runs)
+        actual = filter_execution_results(latest_runs)
 
         # IsErrorFilter picks up the error result
         self.assertEqual(len(actual), 1)
@@ -274,7 +273,7 @@ class TestFilterExecutionResults(TestCase):
         )
 
         latest_runs = {"file_existence": execution_run}
-        actual = _filter_execution_results(latest_runs)
+        actual = filter_execution_results(latest_runs)
 
         # Both filters may pick up the result (it's both error and report candidate)
         # But deduplication ensures it appears only once
@@ -299,7 +298,7 @@ class TestFilterExecutionResults(TestCase):
         )
 
         latest_runs = {"java_compilation": execution_run}
-        actual = _filter_execution_results(latest_runs)
+        actual = filter_execution_results(latest_runs)
 
         # The same result matches both filters but should appear only once
         self.assertEqual(len(actual), 1)
@@ -719,7 +718,7 @@ class TestPiecewiseGenerationPrompts(TestCase):
     """Tests for the helper functions that create prompts for piecewise generation."""
 
     def test_create_metadata_prompt__includes_all_required_sections(self):
-        from mdeagent.implementation.implement_transformation import (
+        from mdeagent.implementation.transformation.prompts import (
             create_metadata_prompt,
         )
 
@@ -739,7 +738,7 @@ class TestPiecewiseGenerationPrompts(TestCase):
 
     def test_create_fields_and_constructor_prompt__includes_metadata_context(self):
         from mdeagent.implementation.transformation.generator import TransformationClassMetadata
-        from mdeagent.implementation.implement_transformation import (
+        from mdeagent.implementation.transformation.prompts import (
             create_fields_and_constructor_prompt,
         )
 
@@ -766,9 +765,7 @@ class TestPiecewiseGenerationPrompts(TestCase):
 
     def test_create_method_body_prompts__include_fields_info(self):
         from mdeagent.implementation.transformation.generator import TransformationClassMetadata
-        from mdeagent.implementation.implement_transformation import (
-            create_backward_body_prompt,
-            create_forward_body_prompt,
+        from mdeagent.implementation.transformation.prompts import (
             create_synch_body_prompt,
         )
 

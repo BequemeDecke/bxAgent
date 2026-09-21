@@ -1,3 +1,5 @@
+from mdeagent.implementation.transformation.generator import TransformationClassMetadata
+
 PROMPT_TEMPLATE_WITH_PLAN = """
 You are a Java transformation code generator for EMF-based model transformations.
 Generate a concrete implementation of the AgentTransformationForEMF interface based on the task specification and the provided template.
@@ -178,3 +180,118 @@ Decision Type: {decision_type}
 Return only the Java code for the synch method body (no method signature, just the body content).
 The synch method handles incremental updates between {source_type} and {target_type}.
 """
+
+
+def create_input_prompt(
+    task_specification: str,
+    transformation_plan: str,
+    template: str,
+    evaluation_results_text: str = "No evaluation results available.",
+) -> str:
+    return PROMPT_TEMPLATE_WITH_PLAN.format(
+        task_specification=task_specification,
+        transformation_plan=transformation_plan,
+        template=template,
+        evaluation_results_text=evaluation_results_text,
+    )
+
+
+def create_metadata_prompt(
+    task_specification: str,
+    transformation_plan: str,
+    template: str,
+    evaluation_results_text: str = "No evaluation results available.",
+) -> str:
+    """Create prompt for generating transformation metadata (package and type names)."""
+    return METADATA_PROMPT_TEMPLATE.format(
+        task_specification=task_specification,
+        transformation_plan=transformation_plan,
+        template=template,
+        evaluation_results_text=evaluation_results_text,
+    )
+
+
+def create_fields_and_constructor_prompt(
+    task_specification: str,
+    transformation_plan: str,
+    template: str,
+    metadata: TransformationClassMetadata,
+    evaluation_results_text: str = "No evaluation results available.",
+) -> str:
+    """Create prompt for generating fields and constructor."""
+    return FIELDS_AND_CONSTRUCTOR_PROMPT_TEMPLATE.format(
+        task_specification=task_specification,
+        transformation_plan=transformation_plan,
+        package_name=metadata.package_name,
+        source_type=metadata.source_type,
+        target_type=metadata.target_type,
+        decision_type=metadata.decision_type,
+        template=template,
+        evaluation_results_text=evaluation_results_text,
+    )
+
+
+def create_forward_body_prompt(
+    task_specification: str,
+    transformation_plan: str,
+    template: str,
+    metadata: TransformationClassMetadata,
+    fields_info: str,
+    evaluation_results_text: str = "No evaluation results available.",
+) -> str:
+    """Create prompt for generating forward method body."""
+    return FORWARD_BODY_PROMPT_TEMPLATE.format(
+        task_specification=task_specification,
+        transformation_plan=transformation_plan,
+        package_name=metadata.package_name,
+        source_type=metadata.source_type,
+        target_type=metadata.target_type,
+        decision_type=metadata.decision_type,
+        fields_info=fields_info,
+        template=template,
+        evaluation_results_text=evaluation_results_text,
+    )
+
+
+def create_backward_body_prompt(
+    task_specification: str,
+    transformation_plan: str,
+    template: str,
+    metadata: TransformationClassMetadata,
+    fields_info: str,
+    evaluation_results_text: str = "No evaluation results available.",
+) -> str:
+    """Create prompt for generating backward method body."""
+    return BACKWARD_BODY_PROMPT_TEMPLATE.format(
+        task_specification=task_specification,
+        transformation_plan=transformation_plan,
+        package_name=metadata.package_name,
+        source_type=metadata.source_type,
+        target_type=metadata.target_type,
+        decision_type=metadata.decision_type,
+        fields_info=fields_info,
+        template=template,
+        evaluation_results_text=evaluation_results_text,
+    )
+
+
+def create_synch_body_prompt(
+    task_specification: str,
+    transformation_plan: str,
+    template: str,
+    metadata: TransformationClassMetadata,
+    fields_info: str,
+    evaluation_results_text: str = "No evaluation results available.",
+) -> str:
+    """Create prompt for generating synch method body."""
+    return SYNCH_BODY_PROMPT_TEMPLATE.format(
+        task_specification=task_specification,
+        transformation_plan=transformation_plan,
+        package_name=metadata.package_name,
+        source_type=metadata.source_type,
+        target_type=metadata.target_type,
+        decision_type=metadata.decision_type,
+        fields_info=fields_info,
+        template=template,
+        evaluation_results_text=evaluation_results_text,
+    )
