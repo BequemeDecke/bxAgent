@@ -1,9 +1,9 @@
+import logging
 from pathlib import Path
 from typing import Literal
 
 from deepagents import create_deep_agent
 from deepagents.backends import FilesystemBackend
-from langchain.agents import AgentState
 from langchain.chat_models import BaseChatModel
 from langchain.tools import ToolRuntime, tool
 
@@ -11,7 +11,12 @@ from mdeagent.comprehension.plan import SerializedTransformationPlan, Transforma
 from mdeagent.implementation.transformation.react.middleware import (
     TrackWrittenFilesMiddleware,
 )
+from mdeagent.implementation.transformation.react.wrapper import (
+    TransformationClassAgentState,
+)
 from mdeagent.models import build_coding_model
+
+logger = logging.getLogger(__name__)
 
 SYSTEM_PROMPT = """
 You are a coding agent in a model driven development environment that helps writing java code for model to model transformations.
@@ -19,15 +24,6 @@ You are given the interfaces of the source and target models, and the transforma
 
 A transformation plan is also provided, which describes the steps to be taken in order to perform the transformation. You should follow the plan and write the code accordingly.
 """
-
-
-class CodingAgentState(AgentState):
-    """
-    Expands the AgentState (messages) to include the transformation plan and the list of written files.
-    """
-
-    transformation_plan: SerializedTransformationPlan
-    written_files: list[Path]
 
 
 Section = Literal[
@@ -60,11 +56,12 @@ def read_transformation_plan(runtime: ToolRuntime, section: Section) -> str:
     serialized_tp: SerializedTransformationPlan = runtime.state.get(
         "transformation_plan"
     )
+    logger.info(type(serialized_tp))
     if serialized_tp is None:
         raise ValueError("Transformation plan not found in the runtime state.")
 
     tp: TransformationPlan = TransformationPlan.from_dict(serialized_tp)
-    return tp.data[section]
+    return tp.data.get(section, "Section not found in the transformation plan.")
 
 
 def build_deep_agent(workspace: Path, model: BaseChatModel | None = None):
@@ -85,7 +82,7 @@ def build_deep_agent(workspace: Path, model: BaseChatModel | None = None):
         model=model,
         system_prompt=SYSTEM_PROMPT,
         backend=FilesystemBackend(root_dir=workspace, virtual_mode=True),
-        state_schema=CodingAgentState,
+        state_schema=TransformationClassAgentState,
         middleware=[TrackWrittenFilesMiddleware(workspace_path=workspace, file_extension_filter=".java")],
-        tools=[],
+        tools=[read_transformation_plan],
     )

@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import TypedDict
 
-from mdeagent.comprehension.plan import TransformationPlan
+from mdeagent.comprehension.plan import SerializedTransformationPlan
 from mdeagent.evaluation.types import EvaluationRun
 from mdeagent.implementation.types import TransformationClass
 
@@ -10,7 +10,7 @@ class ImplementationState(TypedDict):
     """State for the implementation node"""
 
     # === Transformation ===
-    transformation_plan: TransformationPlan
+    transformation_plan: SerializedTransformationPlan
     transformation_class: TransformationClass
 
     # === Required ===
