@@ -25,7 +25,7 @@ class TestImplementationNode(TestCase):
                 transformation_md=None,
                 task_specification="",
                 bxtool_path=None,
-                written_java_files=[Path("file1.java"), Path("file2.java")],
+                written_files=[Path("file1.java"), Path("file2.java")],
             )
         )
 

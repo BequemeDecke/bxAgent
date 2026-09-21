@@ -76,7 +76,7 @@ class TestTransformationGeneration(TestCase):
         state = ImplementationState(
             transformation_md=None,
             task_specification="Implement the transformation class",
-            written_java_files=[],
+            written_files=[],
             bxtool_path=Path("/tmp/workspace"),
             transformation_implementation="public class MyTransformation { }",
             latest_evaluation_runs={},

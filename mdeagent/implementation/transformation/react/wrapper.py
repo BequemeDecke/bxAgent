@@ -1,5 +1,4 @@
-from typing import TypedDict
-
+from langchain.agents import AgentState
 from langgraph.graph.state import CompiledStateGraph, RunnableConfig
 
 from mdeagent.comprehension.plan import TransformationPlan
@@ -10,15 +9,15 @@ from mdeagent.implementation.types import (
 )
 
 
-class TransformationClassAgentState(TypedDict):
-    written_java_files: list[str]
+class TransformationClassAgentState(AgentState):
+    written_files: list[str]
     specific_task: str | None
     transformation_plan: str
     transformation_class: TransformationClass
     evaluation_results: dict[str, EvaluationRun]
 
 
-class TransformationClassAgent(TransformationClassGenerator):
+class TransformationClassAgentWrapper(TransformationClassGenerator):
     graph: CompiledStateGraph[TransformationClassAgentState]
     config: RunnableConfig
 
@@ -37,11 +36,11 @@ class TransformationClassAgent(TransformationClassGenerator):
         evaluation_results: dict[str, EvaluationRun] | None = None,
     ):
         input = TransformationClassAgentState(
-            written_java_files=[],
+            written_files=[],
             specific_task=specific_task,
             transformation_plan=transformation_plan,
             transformation_class=transformation_class,
             evaluation_results=evaluation_results or {},
         )
         output = await self.graph.ainvoke(input, config=self.config, version="v2")
-        return output.value["written_java_files"]
+        return output.value["written_files"]

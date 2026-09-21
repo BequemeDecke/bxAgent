@@ -114,7 +114,7 @@ class TestImplementBxTool(TestCase):
 
         state = ImplementationState(
             task_specification="Implement the bx tool",
-            written_java_files=[],
+            written_files=[],
             transformation_implementation="public class MyTransformation { ... }",
             bxtool_path=bxtool_path,
         )
@@ -122,7 +122,7 @@ class TestImplementBxTool(TestCase):
         new_state = asyncio.run(self.implement_bx_tool(state))
 
         # Check if the new state contains the path to the written Java file
-        actual_written_files = new_state["written_java_files"]
+        actual_written_files = new_state["written_files"]
         self.assertEqual(len(actual_written_files), 1)
         self.assertEqual(
             actual_written_files[0],

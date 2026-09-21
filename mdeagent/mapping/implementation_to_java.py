@@ -15,7 +15,7 @@ def implementation_to_java_files(state: ImplementationState) -> dict[str, Any]:
     Returns:
         A dictionary with 'files' and optionally 'project_path' keys.
     """
-    result = {"files": state.get("written_java_files", [])}
+    result = {"files": state.get("written_files", [])}
     
     # Add project_path for java_compilation evaluation if available
     maven_project_path = state.get("maven_project_path")

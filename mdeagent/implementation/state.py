@@ -19,7 +19,7 @@ class ImplementationState(TypedDict):
     bxtool_path: Path  # This field will be used by a higher component
 
     # === Implementation ===
-    written_java_files: list[Path]  # All of these files have to be compiled together
+    written_files: list[Path]  # All of these files have to be compiled together
 
     # === Evaluation ===
     latest_evaluation_runs: dict[

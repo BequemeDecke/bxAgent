@@ -20,8 +20,8 @@ def create_transformation_class_generator(
             "The 'template_based' strategy is not yet implemented. Please use 'deep_agent' or 'hybrid_agent'."
         )
 
-    from mdeagent.implementation.transformation.react.interface import (
-        TransformationClassAgent,
+    from mdeagent.implementation.transformation.react.wrapper import (
+        TransformationClassAgentWrapper,
     )
 
     if strategy == "hybrid_agent":
@@ -35,5 +35,5 @@ def create_transformation_class_generator(
 
         graph = build_deep_agent(workspace)
 
-    agent_wrapper = TransformationClassAgent(graph)
+    agent_wrapper = TransformationClassAgentWrapper(graph)
     return agent_wrapper

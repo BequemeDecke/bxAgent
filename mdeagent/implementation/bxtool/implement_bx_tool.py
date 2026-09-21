@@ -82,7 +82,7 @@ def create_implement_bx_tool_node(llm: BaseChatModel, workspace: Path, benchmarx
         # node (see ``agent.py``), not in the work nodes. See
         # ``implement_transformation`` for the rationale.
         return {
-            "written_java_files": state.get("written_java_files", []) + [bxtool_path],
+            "written_java_files": state.get("written_files", []) + [bxtool_path],
         }
 
     return implement_bx_tool

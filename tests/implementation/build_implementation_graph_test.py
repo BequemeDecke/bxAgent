@@ -372,7 +372,7 @@ class TestImplementationLoop(TestCase):
                     maven_project_path=Path(temp_dir),
                     transformation_class_path=Path(temp_dir) / "Trans.java",
                     bxtool_path=Path(temp_dir) / "BxTool.java",
-                    written_java_files=[],
+                    written_files=[],
                     iteration=0,
                 )
                 output: GraphOutput = asyncio.run(
@@ -422,7 +422,7 @@ class TestImplementationLoop(TestCase):
                     maven_project_path=Path(temp_dir),
                     transformation_class_path=Path(temp_dir) / "Trans.java",
                     bxtool_path=Path(temp_dir) / "BxTool.java",
-                    written_java_files=[],
+                    written_files=[],
                     iteration=0,
                 )
                 output: GraphOutput = asyncio.run(
@@ -463,7 +463,7 @@ class TestImplementationLoop(TestCase):
                     maven_project_path=Path(temp_dir),
                     transformation_class_path=Path(temp_dir) / "Trans.java",
                     bxtool_path=Path(temp_dir) / "BxTool.java",
-                    written_java_files=[],
+                    written_files=[],
                     iteration=0,
                 )
                 output: GraphOutput = asyncio.run(
@@ -525,7 +525,7 @@ class TestImplementationLoop(TestCase):
                     maven_project_path=Path(temp_dir),
                     transformation_class_path=Path(temp_dir) / "Trans.java",
                     bxtool_path=Path(temp_dir) / "BxTool.java",
-                    written_java_files=[],
+                    written_files=[],
                     iteration=0,
                 )
                 output: GraphOutput = asyncio.run(

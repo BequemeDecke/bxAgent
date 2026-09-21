@@ -32,7 +32,7 @@ def create_implement_transformation_node(
         filtered_results = filter_execution_results(latest_evaluation_runs)
 
         # Call the transformation class generator to synthesize the transformation class
-        written_java_files = await generator.synthesize_transformation_class(
+        written_files = await generator.synthesize_transformation_class(
             transformation_plan=transformation_plan,
             transformation_class=transformation_class,
             specific_task=task_specification,
@@ -49,7 +49,7 @@ def create_implement_transformation_node(
         # entirely. The counter is advanced once per cycle in the
         # ``evaluate_implementation`` node instead (see ``agent.py``).
         return {
-            "written_java_files": written_java_files,
+            "written_files": written_files,
         }
 
     return implement_transformation

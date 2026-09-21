@@ -8,6 +8,9 @@ from langchain.chat_models import BaseChatModel
 from langchain.tools import ToolRuntime, tool
 
 from mdeagent.comprehension.plan import SerializedTransformationPlan, TransformationPlan
+from mdeagent.implementation.transformation.react.middleware import (
+    TrackWrittenFilesMiddleware,
+)
 from mdeagent.models import build_coding_model
 
 SYSTEM_PROMPT = """
@@ -20,11 +23,11 @@ A transformation plan is also provided, which describes the steps to be taken in
 
 class CodingAgentState(AgentState):
     """
-    Expands the AgentState (messages) to include the transformation plan and the list of written java files.
+    Expands the AgentState (messages) to include the transformation plan and the list of written files.
     """
 
     transformation_plan: SerializedTransformationPlan
-    written_java_files: list[Path]
+    written_files: list[Path]
 
 
 Section = Literal[
@@ -83,5 +86,6 @@ def build_deep_agent(workspace: Path, model: BaseChatModel | None = None):
         system_prompt=SYSTEM_PROMPT,
         backend=FilesystemBackend(root_dir=workspace, virtual_mode=True),
         state_schema=CodingAgentState,
+        middleware=[TrackWrittenFilesMiddleware(workspace_path=workspace, file_extension_filter=".java")],
         tools=[],
     )

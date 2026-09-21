@@ -72,7 +72,7 @@ def create_implementation_node(agent: CompiledStateGraph, benchmarx_path: str | 
             state.get("written_files", [])
         )  # Get existing written files from state
         new_written_files.update(
-            prep_output_state.get("written_java_files", [])
+            prep_output_state.get("written_files", [])
         )  # Add new written
 
         return {"written_files": list(new_written_files)}
