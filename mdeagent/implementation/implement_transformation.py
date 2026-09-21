@@ -14,7 +14,7 @@ from mdeagent.evaluation.filter import (
     IsExecutionRunFilter,
     IsReportCandidateFilter,
 )
-from mdeagent.implementation.generator import (
+from mdeagent.implementation.transformation.generator import (
     BackwardMethodBody,
     FallbackParser,
     ForwardMethodBody,
@@ -26,7 +26,7 @@ from mdeagent.implementation.generator import (
     ainvoke_and_parse,
 )
 from mdeagent.implementation.state import ImplementationState
-
+from mdeagent.implementation.types import TransformationClassGenerator
 
 PROMPT_TEMPLATE_WITH_PLAN = """
 You are a Java transformation code generator for EMF-based model transformations.

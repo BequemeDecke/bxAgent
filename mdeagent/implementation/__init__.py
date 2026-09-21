@@ -1,4 +1,4 @@
-from .bxtool import (
+from .bxtool.bxtool import (
     BxToolForEMF,
     BxToolTemplateResolver,
     Class,
@@ -7,7 +7,7 @@ from .bxtool import (
     TransformationImplementation,
     TransformationModel,
 )
-from .generator import (
+from .transformation.generator import (
     BackwardMethodBody,
     CodeGenerator,
     FallbackParser,

@@ -2,8 +2,8 @@ from pathlib import Path
 
 from langchain.chat_models import BaseChatModel
 
-from mdeagent.implementation.bxtool import BxToolForEMF, BxToolTemplateResolver
-from mdeagent.implementation.generator import FallbackParser, ainvoke_and_parse
+from mdeagent.implementation.bxtool.bxtool import BxToolForEMF, BxToolTemplateResolver
+from mdeagent.implementation.transformation.generator import FallbackParser, ainvoke_and_parse
 
 from .state import ImplementationState
 

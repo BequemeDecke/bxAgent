@@ -20,7 +20,7 @@ from langchain.chat_models import BaseChatModel
 
 from mdeagent.comprehension.plan import TransformationPlan, TransformationPlanParser
 from mdeagent.evaluation.types import EvaluationResult, EvaluationRun
-from mdeagent.implementation.generator import (
+from mdeagent.implementation.transformation.generator import (
     BackwardMethodBody,
     ForwardMethodBody,
     SynchMethodBody,
@@ -738,7 +738,7 @@ class TestPiecewiseGenerationPrompts(TestCase):
         self.assertIn("Return the package name, source type, target type", prompt)
 
     def test_create_fields_and_constructor_prompt__includes_metadata_context(self):
-        from mdeagent.implementation.generator import TransformationClassMetadata
+        from mdeagent.implementation.transformation.generator import TransformationClassMetadata
         from mdeagent.implementation.implement_transformation import (
             create_fields_and_constructor_prompt,
         )
@@ -765,7 +765,7 @@ class TestPiecewiseGenerationPrompts(TestCase):
         self.assertIn("Return the field declarations and constructor", prompt)
 
     def test_create_method_body_prompts__include_fields_info(self):
-        from mdeagent.implementation.generator import TransformationClassMetadata
+        from mdeagent.implementation.transformation.generator import TransformationClassMetadata
         from mdeagent.implementation.implement_transformation import (
             create_backward_body_prompt,
             create_forward_body_prompt,
