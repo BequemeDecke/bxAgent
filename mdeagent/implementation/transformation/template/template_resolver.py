@@ -2,7 +2,7 @@ from pathlib import Path
 
 from mdeagent.comprehension.plan import TransformationPlan
 from mdeagent.evaluation.types import EvaluationRun
-from mdeagent.implementation.transformation.generator import (
+from mdeagent.implementation.transformation.template.generator import (
     BackwardMethodBody,
     FallbackParser,
     ForwardMethodBody,
@@ -13,7 +13,7 @@ from mdeagent.implementation.transformation.generator import (
     TransformationFieldsAndConstructor,
     ainvoke_and_parse,
 )
-from mdeagent.implementation.transformation.prompts import (
+from mdeagent.implementation.transformation.template.prompts import (
     create_backward_body_prompt,
     create_fields_and_constructor_prompt,
     create_forward_body_prompt,

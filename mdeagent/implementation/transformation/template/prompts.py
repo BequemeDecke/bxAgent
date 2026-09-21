@@ -1,4 +1,4 @@
-from mdeagent.implementation.transformation.generator import TransformationClassMetadata
+from mdeagent.implementation.transformation.template.generator import TransformationClassMetadata
 
 PROMPT_TEMPLATE_WITH_PLAN = """
 You are a Java transformation code generator for EMF-based model transformations.
