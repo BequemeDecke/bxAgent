@@ -50,3 +50,36 @@ def filter_execution_results(
     )
 
     return combined_results
+
+
+def format_evaluation_results(results: list[EvaluationResult]) -> str:
+    """
+    Format a list of EvaluationResult objects into a human-readable text.
+
+    Args:
+        results: List of evaluation results to format.
+
+    Returns:
+        A formatted string representation of the evaluation results.
+    """
+    if not results:
+        return "No evaluation results available."
+
+    formatted_lines = []
+    for i, result in enumerate(results, start=1):
+        success_status = (
+            "SUCCESS" if result.metadata.get("success", True) else "FAILURE"
+        )
+        formatted_lines.append(f"{i}. [{success_status}] {result.content}")
+
+        # Add metadata details if present
+        metadata = result.metadata
+        if "file" in metadata:
+            formatted_lines.append(f"   File: {metadata['file']}")
+        if "line" in metadata:
+            line_info = f"Line: {metadata['line']}"
+            if "column" in metadata:
+                line_info += f", Column: {metadata['column']}"
+            formatted_lines.append(f"   {line_info}")
+
+    return "\n".join(formatted_lines)
