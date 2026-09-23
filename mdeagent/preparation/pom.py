@@ -266,9 +266,12 @@ class Pom:
         pom.save()
         ```
     """
+    pom_path: Path
 
     # Internal state
-    pom_path: Path
+    artifact_id: str
+    group_id: str
+    version: str
     modules: list[Module]
     dependencies: list[Dependency]
     plugins: list[Plugin]
@@ -378,6 +381,16 @@ class Pom:
         self._parent_element = parent_element
         if parent_element is not None:
             self.parent = Parent.from_etree(parent_element, self.registered_namespaces)
+
+        # Parse information
+        group_id_element = root.find("groupId", self.registered_namespaces)
+        artifact_id_element = root.find("artifactId", self.registered_namespaces)
+        version_element = root.find("version", self.registered_namespaces)
+        if group_id_element is None or artifact_id_element is None:
+            raise ValueError("pom.xml must have both groupId and artifactId.")
+        self.group_id = group_id_element.text or ""
+        self.artifact_id = artifact_id_element.text or ""
+        self.version = version_element.text if version_element is not None else "1.0"
 
     def add_module(self, module: Module) -> "Pom":
         """Add a new module reference to the pom.xml.

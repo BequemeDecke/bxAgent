@@ -2,7 +2,7 @@ import logging
 import subprocess
 from pathlib import Path
 
-from mdeagent.preparation.pom import Module, Pom
+from mdeagent.preparation.pom import Module, Parent, Pom
 
 logger = logging.getLogger(__name__)
 
@@ -179,3 +179,27 @@ class MavenProject:
         pom_path = workspace / artifact_id / "pom.xml"
         pom = Pom(pom_path)
         return cls(pom, workspace / artifact_id)
+
+    @classmethod
+    def register_submodule(
+        cls, parent: "MavenProject", submodule: "MavenProject"
+    ) -> None:
+        """
+        Register a submodule in the parent Maven project.
+
+        :param parent: The parent Maven project.
+        :param submodule: The submodule Maven project to be registered.
+        """
+        parent_pom = parent.pom
+        submodule_pom = submodule.pom
+
+        parent_pom.add_module(Module(submodule_pom.artifact_id))
+        parent_pom.save()
+        submodule_pom.set_parent(
+            Parent(
+                group_id=parent_pom.group_id,
+                artifact_id=parent_pom.artifact_id,
+                version=parent_pom.version,
+            )
+        )
+        submodule_pom.save()

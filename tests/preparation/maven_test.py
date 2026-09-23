@@ -31,6 +31,52 @@ class TestMavenProjectInitialization(TestCase):
             self.assertEqual(project.workspace, workspace)
 
 
+class TestMavenProjectRegisterSubmodule(TestCase):
+    """Test cases for MavenProject.register_submodule() method."""
+    
+    def test_register_submodule_adds_module_to_pom(self):
+        """Test that register_submodule adds a module to the parent POM."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            workspace = Path(temp_dir)
+            parent_pom_path = workspace / "pom.xml"
+            parent_pom_path.write_text("""<?xml version='1.0' encoding='utf-8'?>
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.example</groupId>
+  <artifactId>parent-app</artifactId>
+  <version>1.0-SNAPSHOT</version>
+</project>""")
+            
+            parent_pom = Pom(parent_pom_path)
+            parent_project = MavenProject(parent_pom, workspace)
+
+            submodule_pom_path = workspace / "submodule" / "pom.xml"
+            submodule_pom_path.parent.mkdir(parents=True, exist_ok=True)
+            submodule_pom_path.write_text("""<?xml version='1.0' encoding='utf-8'?>
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.example</groupId>
+  <artifactId>submodule</artifactId>
+  <version>1.0-SNAPSHOT</version>
+</project>""")
+            
+            submodule_pom = Pom(submodule_pom_path)
+            submodule_project = MavenProject(submodule_pom, workspace / "submodule")
+
+            MavenProject.register_submodule(parent_project, submodule_project)
+
+            self.assertIn(
+                "submodule",
+                [module.artifact_id for module in parent_project.pom.modules],
+                "Submodule should be registered in the parent POM.",
+            )
+            self.assertIn(
+                parent_project.pom.group_id,
+                [submodule_project.pom.parent.group_id],
+                "Submodule's parent groupId should match the parent's groupId.",
+            )
+
+
 class TestMavenProjectLoad(TestCase):
     """Test cases for MavenProject.load() method."""
     
