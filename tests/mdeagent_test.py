@@ -21,7 +21,7 @@ from mdeagent.state import MDEAgentState
 logger = logging.getLogger(__name__)
 
 TEST_ENVIRONMENT = Path(".mdeagent-tests")
-TEST_SETUP_FILES = TEST_ENVIRONMENT / "setup-files"
+TEST_SETUP_FILES = TEST_ENVIRONMENT / "setup"
 TEST_EXECUTION_RUNS = TEST_ENVIRONMENT / "test-executions"
 
 
@@ -42,20 +42,30 @@ class TestMDEAgent(TestCase):
         logger.info(f"Created test workspace at {self.workspace_path}")
 
         # Check if the setup files exist
-        self.source_model_path = TEST_SETUP_FILES / "Families"
-        self.target_model_path = TEST_SETUP_FILES / "Persons"
+        self.source_model_path = TEST_SETUP_FILES / "metamodels" / "Families"
+        self.target_model_path = TEST_SETUP_FILES / "metamodels" / "Persons"
         if not self.source_model_path.exists() or not self.target_model_path.exists():
             self.fail(
                 f"Setup files not found. Please ensure that {self.source_model_path} and {self.target_model_path} exist."
             )
-        if len(list(self.source_model_path.glob("*.java"))) != 4:
-            self.fail(
-                f"Expected 4 source model files in {self.source_model_path}, but found {len(list(self.source_model_path.glob('*.java')))}."
-            )
-        if len(list(self.target_model_path.glob("*.java"))) != 3:
-            self.fail(
-                f"Expected 3 target model files in {self.target_model_path}, but found {len(list(self.target_model_path.glob('*.java')))}."
-            )
+
+        # Check if the Git-Submodule metamodels have been downloaded.
+        # When the submodule is not initialized (e.g. after a fresh clone), the
+        # directory exists but is empty and the tests would fail with cryptic
+        # errors. Detect this up front and give the user an actionable hint.
+        for metamodel_name in ("Families", "Persons"):
+            metamodel_dir = TEST_SETUP_FILES / "metamodels" / metamodel_name
+            try:
+                ecore_files = list((metamodel_dir / "model").glob("*.ecore"))
+            except OSError:
+                ecore_files = []
+            if not ecore_files:
+                self.fail(
+                    f"Git-Submodule metamodel '{metamodel_name}' was not downloaded "
+                    f"(no *.ecore files found in {metamodel_dir / 'model'}).\n"
+                    "Please initialize the submodule:"
+                    "\n    git submodule update --init --recursive"
+                )
 
         # Build the workflow agent without BenchmarX support
         self.agent = build_mdeagent(self.workspace_path, benchmarx_path=None).compile()
