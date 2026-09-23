@@ -191,10 +191,12 @@ def create_prepare_workspace_node(
             target_model_path=target_model.get("path") if target_model else None,
         )
         transformation_class_name = naming.transformation_class_name
-        # Calculate transformation class path but don't create the file (user will implement it)
+        # Calculate transformation class path
         transformation_class_path = (
             project.get_package_path(full_package) / f"{transformation_class_name}.java"
         )
+        transformation_class_path.parent.mkdir(parents=True, exist_ok=True)
+        transformation_class_path.touch(exist_ok=True)  # Create empty file if not existing
 
         # Create the BxTool adapter Java file ONLY if BenchmarX is NOT being used
         # BenchmarX is not used when: benchmarx_path is None AND download_benchmarx is False
