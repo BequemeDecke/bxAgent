@@ -1,7 +1,10 @@
+import logging
 import subprocess
 from pathlib import Path
 
 from mdeagent.preparation.pom import Module, Pom
+
+logger = logging.getLogger(__name__)
 
 
 class MavenProject:
@@ -19,8 +22,16 @@ class MavenProject:
         :return: True if the project is valid, False otherwise.
         """
         validate_process = subprocess.run(
-            ["mvn", "validate"], cwd=self.workspace, capture_output=True, text=True
+            ["mvn", "validate"],
+            check=False,
+            cwd=self.workspace,
+            capture_output=True,
+            text=True,
         )
+        if validate_process.returncode != 0:
+            logger.error(
+                f"Maven validation failed for project at {self.workspace}:\n{validate_process.stdout}\n{validate_process.stderr}"
+            )
         return validate_process.returncode == 0
 
     def format(self) -> bool:
@@ -48,7 +59,9 @@ class MavenProject:
         )
         return (
             compile_process.returncode == 0,
-            compile_process.stderr if compile_process.returncode != 0 else compile_process.stdout,
+            compile_process.stderr
+            if compile_process.returncode != 0
+            else compile_process.stdout,
         )
 
     def build(self) -> bool:
