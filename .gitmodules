@@ -1,0 +1,3 @@
+[submodule ".mdeagent-tests/setup/metamodels"]
+	path = .mdeagent-tests/setup/metamodels
+	url = https://github.com/BequemeDecke/mdeagent-metamodels.git
