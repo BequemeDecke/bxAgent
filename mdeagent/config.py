@@ -44,9 +44,11 @@ class AgentControlConfig(BaseModel):
         default=5,
         description="Maximum number of iterations for the workflow transformation process.",
     )
-    TRANSFORMATION_IMPLEMENTATION_STRATEGY: Literal["deep_agent", "hybrid_agent", "template_based"] = Field(
+    TRANSFORMATION_IMPLEMENTATION_STRATEGY: Literal[
+        "deep_agent", "hybrid_agent", "template_based", "pi"
+    ] = Field(
         default="deep_agent",
-        description="The strategy to be used for the transformation implementation. Options are 'deep_agent', 'hybrid_agent', or 'template_based'.",
+        description="The strategy to be used for the transformation implementation. Options are 'deep_agent', 'hybrid_agent', 'template_based' or 'pi'.",
     )
 
 
@@ -96,7 +98,9 @@ def load_config(env_path: Path) -> BaseModel:
 
     workflow_approach_config = AgentControlConfig(
         WORKFLOW_MAX_ITERATIONS=int(os.getenv("WORKFLOW_MAX_ITERATIONS", "5")),
-        TRANSFORMATION_IMPLEMENTATION_STRATEGY=os.getenv("TRANSFORMATION_IMPLEMENTATION_STRATEGY", "deep_agent"),
+        TRANSFORMATION_IMPLEMENTATION_STRATEGY=os.getenv(
+            "TRANSFORMATION_IMPLEMENTATION_STRATEGY", "deep_agent"
+        ),
     )
 
     # Log the loaded configurations

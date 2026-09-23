@@ -5,12 +5,12 @@ from mdeagent.implementation.types import TransformationClassGenerator
 
 
 def create_transformation_class_generator(
-    strategy: Literal["deep_agent", "hybrid_agent", "template_based"], workspace: Path
+    strategy: Literal["deep_agent", "hybrid_agent", "template_based", "pi"], workspace: Path
 ) -> TransformationClassGenerator:
     """
     Factory function to create a TransformationClassGenerator based on the configuration.
     """
-    if strategy not in ["deep_agent", "hybrid_agent", "template_based"]:
+    if strategy not in ["deep_agent", "hybrid_agent", "template_based", "pi"]:
         raise NotImplementedError(
             f"Unknown transformation implementation strategy: {strategy}"
         )
@@ -19,6 +19,13 @@ def create_transformation_class_generator(
         raise NotImplementedError(
             "The 'template_based' strategy is not yet implemented. Please use 'deep_agent' or 'hybrid_agent'."
         )
+
+    if strategy == "pi":
+        from mdeagent.implementation.transformation.external.pi import (
+            PITransformationClassGenerator,
+        )
+
+        return PITransformationClassGenerator(workspace)
 
     from mdeagent.implementation.transformation.react.wrapper import (
         TransformationClassAgentWrapper,
