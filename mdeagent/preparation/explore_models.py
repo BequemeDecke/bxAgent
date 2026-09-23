@@ -3,8 +3,7 @@ from pathlib import Path
 
 from mdeagent.preparation.maven import MavenProject
 from mdeagent.preparation.pom import Dependency, Module, Pom
-
-from .state import ModelImplementation, PreparationState
+from mdeagent.preparation.state import ModelImplementation, PreparationState
 
 
 def read_generated_emf_implementations(
@@ -59,7 +58,6 @@ EMF_DEPENDENCIES: list[Dependency] = [
 def copy_model_to_workspace(
     workspace: Path,
     model_path: Path,
-    group_id: str,
 ) -> MavenProject:
     """
     Copies a model package to the workspace and uses its existing pom.xml.
@@ -71,7 +69,6 @@ def copy_model_to_workspace(
     Args:
         workspace: The workspace directory (parent pom.xml location).
         model_path: The path to the model package to copy (must contain pom.xml).
-        group_id: The Maven groupId for the module (used to ensure consistency).
 
     Returns:
         MavenProject: The loaded Maven project for the model module.
@@ -79,6 +76,8 @@ def copy_model_to_workspace(
     Raises:
         FileNotFoundError: If the model_path does not contain a pom.xml.
     """
+    parent = MavenProject.load(workspace)
+
     # Derive module name from model_path stem (last component of the path)
     module_name = model_path.stem
 
@@ -103,6 +102,9 @@ def copy_model_to_workspace(
     for dependency in EMF_DEPENDENCIES:
         project.pom.add_dependency(dependency)
     project.pom.save()
+
+    # Register the new module with the parent
+    MavenProject.register_submodule(parent, project)
 
     return project
 
@@ -169,14 +171,12 @@ def create_explore_models_node():
         source_model_project = copy_model_to_workspace(
             workspace=workspace,
             model_path=source_model_path,
-            group_id=group_id,
         )
 
         # Copy target model to workspace and load Maven module
         target_model_project = copy_model_to_workspace(
             workspace=workspace,
             model_path=target_model_path,
-            group_id=group_id,
         )
 
         # Register modules in parent pom.xml using derived names

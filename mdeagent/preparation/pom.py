@@ -594,12 +594,13 @@ class Pom:
                 )
             self._packaging_element.text = self.packaging_value
 
-        # Update parent if set
+        # Update parent only if set
         if self.parent is not None:
-            if self._parent_element is None:
-                self._parent_element = ET.SubElement(self._tree.getroot(), "parent")
-            self.parent.to_etree(self._tree.getroot())
-
+            if self._parent_element is not None:
+                # Remove existing parent element
+                self._tree.getroot().remove(self._parent_element)
+            # Add new parent element
+            self._parent_element = self.parent.to_etree(self._tree.getroot())
     def save(self) -> None:
         """Persist the current state of the PomProxy to the pom.xml file.
 
