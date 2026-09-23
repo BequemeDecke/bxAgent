@@ -7,6 +7,7 @@ from mdeagent.preparation.explore_models import (
     create_explore_models_node,
 )
 from mdeagent.preparation.pom import Pom
+from mdeagent.preparation.maven import MavenProject
 from mdeagent.preparation.state import ModelImplementation, PreparationState
 
 METAMODEL_PATH = Path.cwd() / ".mdeagent-tests" / "setup" / "metamodels"
@@ -49,24 +50,6 @@ def get_model_package_files(model_path: Path, artifact_id: str) -> list[Path]:
     return list(search_path.glob("*.java"))
 
 
-def create_maven_project(workspace: Path, group_id: str, artifact_id: str):
-    """
-    Creates a Maven project in the specified workspace with the given groupId and artifactId.
-    """
-    project_path = workspace / artifact_id
-    project_path.mkdir(parents=True, exist_ok=True)
-    pom_content = f"""<?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0">
-  <modelVersion>4.0.0</modelVersion>
-  <groupId>{group_id}</groupId>
-  <artifactId>{artifact_id}</artifactId>
-  <version>1.0</version>
-    <packaging>jar</packaging>
-</project>"""
-    (project_path / "pom.xml").write_text(pom_content)
-    return project_path
-
-
 class TestExploreModels(TestCase):
     def setUp(self):
         if (
@@ -91,32 +74,16 @@ class TestExploreModels(TestCase):
             workspace = temp_path / "workspace"
             workspace.mkdir()
 
-            # Create parent pom.xml
-            parent_pom_content = """<?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
-  <groupId>com.example</groupId>
-  <artifactId>parent</artifactId>
-  <version>1.0</version>
-  <packaging>pom</packaging>
-  <modules>
-  </modules>
-  <properties>
-    <maven.compiler.source>11</maven.compiler.source>
-    <maven.compiler.target>11</maven.compiler.target>
-  </properties>
-</project>"""
-            (workspace / "pom.xml").write_text(parent_pom_content)
             artifact_id = "Transformation"
             group_id = "com.example"
-            maven_project_path = create_maven_project(workspace, group_id, artifact_id)
+            parent_project = MavenProject.create(workspace, group_id, workspace.stem)
+            transformation_project = MavenProject.create(workspace, group_id, artifact_id, parent_project)
 
             result = self.explore_models(
                 PreparationState(
                     workspace_path=workspace,
                     artifact_id=artifact_id,
-                    maven_project_path=maven_project_path,
+                    maven_project_path=transformation_project.workspace,
                     group_id=group_id,
                     source_model=ModelImplementation(
                         name="Families",

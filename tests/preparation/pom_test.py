@@ -151,8 +151,13 @@ class TestPomInitialization(TestCase):
                     ),
                 ],
             )
-            self.assertIsNotNone(
-                pom._parent_element,
+            self.assertEqual(
+                pom.parent,
+                Parent(
+                    group_id="de.example",
+                    artifact_id="workspace",
+                    version="1.0",
+                ),
             )
 
     def test_new_pom(self):
@@ -659,6 +664,10 @@ class TestSetParent(TestCase):
             self.assertIn("<groupId>com.example</groupId>", modified_pom)
             self.assertIn("<artifactId>new-parent</artifactId>", modified_pom)
             self.assertIn("<version>2.0.0</version>", modified_pom)
+
+            self.assertEqual(
+                1, modified_pom.count("<parent>"), "There should be only one <parent> element."
+            )
 
 
 class TestPomSave(TestCase):
