@@ -3,7 +3,6 @@ import logging
 from langgraph.graph.state import CompiledStateGraph
 from langgraph.types import GraphOutput
 
-from mdeagent.comprehension.plan import TransformationPlan
 from mdeagent.implementation.state import ImplementationState
 from mdeagent.implementation.types import TransformationClass
 from mdeagent.state import MDEAgentState
@@ -55,8 +54,6 @@ def create_implementation_node(
                 "Maven project path is required for the implementation agent."
             )
 
-        tp = TransformationPlan.from_dict(serialized_tp)
-
         # Create a TransformationClass object from the preparation phase data
         # The path and package information is stored in the TransformationClass
 
@@ -67,8 +64,8 @@ def create_implementation_node(
             "code": None,  # Will be populated by implement_transformation node
         }
 
-        prep_invoke_state = ImplementationState(
-            transformation_plan=tp,
+        input_state = ImplementationState(
+            transformation_plan=serialized_tp,
             transformation_class=transformation_class,
             task_specification="",  # TODO: This field will be used by a higher component to provide instructions for the implementation agent
             maven_project_path=maven_project_path,
@@ -77,14 +74,14 @@ def create_implementation_node(
             latest_evaluation_runs={},
             iteration=0,
         )
-        response: GraphOutput = await agent.ainvoke(prep_invoke_state, version="v2")
-        prep_output_state: ImplementationState = response.value
+        response: GraphOutput = await agent.ainvoke(input_state, version="v2")
+        output_state: ImplementationState = response.value
 
         new_written_files = set(
             state.get("written_files", [])
         )  # Get existing written files from state
         new_written_files.update(
-            prep_output_state.get("written_files", [])
+            output_state.get("written_files", [])
         )  # Add new written
 
         return {"written_files": list(new_written_files)}

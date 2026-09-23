@@ -67,7 +67,9 @@ def build_implementation_graph(
         strategy=implementation_strategy,
         workspace=workspace_path,
     )
-    implement_transformation = create_implement_transformation_node(generator=generator)
+    implement_transformation = create_implement_transformation_node(
+        workspace=workspace_path, generator=generator
+    )
     # Implement BxTool adapter only when BenchmarX is being used (benchmarx_path=None)
     if benchmarx_path:
         implement_bx_tool = create_implement_bx_tool_node(

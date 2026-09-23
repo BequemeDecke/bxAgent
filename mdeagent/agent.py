@@ -4,6 +4,7 @@ from langgraph.graph import END, START, StateGraph
 
 from mdeagent.comprehension.agent import build_comprehension_agent
 from mdeagent.comprehension.node import create_comprehension_node
+from mdeagent.config import Config
 from mdeagent.evaluation import (
     EvaluationExecutor,
     FileExistenceEvaluation,
@@ -37,6 +38,8 @@ def build_mdeagent(
     benchmarx_path: Path | None = None,
     download_benchmarx: bool = False,
 ) -> StateGraph[MDEAgentState]:
+    config = Config.get_instance()
+    
     # 1. Initialize the core components of the MDEAgent
     check_transformation_iteration = create_check_transformation_iteration_function()
     agent_evaluator = EvaluationExecutor(
@@ -86,6 +89,7 @@ def build_mdeagent(
         agent=build_implementation_graph(
             evaluation_executor=agent_evaluator,
             workspace_path=workspace_path,
+            implementation_strategy=config.AGENT_CONTROL.TRANSFORMATION_IMPLEMENTATION_STRATEGY,
             benchmarx_path=benchmarx_path,
         ).compile()
     )

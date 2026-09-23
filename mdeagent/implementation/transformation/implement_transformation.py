@@ -1,15 +1,19 @@
+import logging
+from pathlib import Path
+
 from mdeagent.comprehension.plan import TransformationPlan
 from mdeagent.evaluation.utils import (
     filter_execution_results,
 )
 from mdeagent.implementation.state import ImplementationState
 from mdeagent.implementation.types import (
-    TransformationClass,
     TransformationClassGenerator,
 )
 
+logger = logging.getLogger(__name__)
 
 def create_implement_transformation_node(
+    workspace: Path,
     generator: TransformationClassGenerator,
 ):
     """
@@ -48,37 +52,20 @@ def create_implement_transformation_node(
         )
 
         # Update the transformation_class["code"] field with the generated code
-        # Read code from the first written .java file (the generated transformation class)
-        code = None
-        for written_file in written_files:
-            if written_file.suffix == ".java":
-                code = written_file.read_text(encoding="utf-8")
-                break
-        
-        # If no code was read from written files, try reading from transformation_class path
-        if code is None and transformation_class.get("path"):
-            code = transformation_class["path"].read_text(encoding="utf-8")
-        
-        # Create updated transformation_class with the code
-        updated_tc: TransformationClass = {
-            "name": transformation_class.get("name", ""),
-            "package": transformation_class.get("package", ""),
-            "path": transformation_class.get("path"),
-            "code": code,
-        }
-        
+        transformation_class_path = transformation_class.get("path")
+        if transformation_class_path is None or not Path(transformation_class_path).exists():
+            logger.error(f"Generated transformation class file does not exist: {transformation_class_path}")
+        else:
+            logger.info(f"Generated code for {transformation_class.get('name')}: {transformation_class.get('code', 'N/A')}")
+            transformation_class["code"] = transformation_class_path.read_text()
+
         # Merge old and new written files
+        written_files = [workspace / file for file in written_files]
         updated_written_files = list(set(state.get("written_files", [])) | set(written_files))
 
         return ImplementationState(
-            transformation_plan=state["transformation_plan"],
-            transformation_class=updated_tc,
-            task_specification=state["task_specification"],
-            maven_project_path=state["maven_project_path"],
-            bxtool_path=state["bxtool_path"],
+            transformation_class=transformation_class,
             written_files=updated_written_files,
-            latest_evaluation_runs=state.get("latest_evaluation_runs", {}),
-            iteration=state.get("iteration", 0),
         )
 
     return implement_transformation
