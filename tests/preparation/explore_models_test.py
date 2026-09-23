@@ -1,14 +1,10 @@
-import shutil
 import subprocess
 import tempfile
 from pathlib import Path
 from unittest import TestCase
-from unittest.mock import patch
 
 from mdeagent.preparation.explore_models import (
-    copy_model_to_workspace,
     create_explore_models_node,
-    read_generated_emf_implementations,
 )
 from mdeagent.preparation.pom import Pom
 from mdeagent.preparation.state import ModelImplementation, PreparationState
@@ -156,3 +152,9 @@ class TestExploreModels(TestCase):
             # Check if the result contains the implementation content for both models
             self.assertIn("implementation", result["source_model"])
             self.assertIn("implementation", result["target_model"])
+
+            # Check if copied metamodel packages have parent set in pom.xml
+            source_pom_content = (workspace / "Families" / "pom.xml").read_text()
+            target_pom_content = (workspace / "Persons" / "pom.xml").read_text()
+            self.assertIn("<parent>", source_pom_content)
+            self.assertIn("<parent>", target_pom_content)

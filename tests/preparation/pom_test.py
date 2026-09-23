@@ -6,6 +6,7 @@ from unittest import TestCase
 from mdeagent.preparation.pom import (
     Dependency,
     Module,
+    Parent,
     Plugin,
     Pom,
 )
@@ -149,6 +150,9 @@ class TestPomInitialization(TestCase):
                         configuration=None,
                     ),
                 ],
+            )
+            self.assertIsNotNone(
+                pom._parent_element,
             )
 
     def test_new_pom(self):
@@ -598,6 +602,63 @@ class TestPomSetPackaging(TestCase):
             result = pom.set_packaging("pom")
 
             self.assertIs(result, pom, "set_packaging should return self for chaining.")
+
+
+class TestSetParent(TestCase):
+    """Test cases for Pom.set_parent() method."""
+
+    def test_set_parent_creates_parent_element(self):
+        """Test that set_parent creates <parent> element if it doesn't exist."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            pom_path = Path(temp_dir, "pom.xml")
+            pom_path.write_text(BASE_POM_FOR_PROXY)
+
+            parent = Parent(
+                group_id="com.example",
+                artifact_id="parent-project",
+                version="1.0.0",
+            )
+
+            pom = Pom(pom_path)
+            pom.set_parent(parent)
+            pom.save()
+
+            modified_pom = pom_path.read_text()
+            logger.debug(f"Modified POM:\n{modified_pom}")
+
+            self.assertIn("<parent>", modified_pom)
+            self.assertIn("<groupId>com.example</groupId>", modified_pom)
+            self.assertIn("<artifactId>parent-project</artifactId>", modified_pom)
+            self.assertIn("<version>1.0.0</version>", modified_pom)
+
+    def test_set_parent_updates_existing_parent_element(self):
+        """Test that set_parent updates existing <parent> element."""
+        pom_with_parent = BASE_POM_FOR_PROXY.replace(
+            "</version>",
+            "</version>\n  <parent>\n    <groupId>old.group</groupId>\n    <artifactId>old-artifact</artifactId>\n    <version>0.1.0</version>\n  </parent>",
+        )
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            pom_path = Path(temp_dir, "pom.xml")
+            pom_path.write_text(pom_with_parent)
+
+            parent = Parent(
+                group_id="com.example",
+                artifact_id="new-parent",
+                version="2.0.0",
+            )
+
+            pom = Pom(pom_path)
+            pom.set_parent(parent)
+            pom.save()
+
+            modified_pom = pom_path.read_text()
+            logger.debug(f"Modified POM:\n{modified_pom}")
+
+            self.assertIn("<parent>", modified_pom)
+            self.assertIn("<groupId>com.example</groupId>", modified_pom)
+            self.assertIn("<artifactId>new-parent</artifactId>", modified_pom)
+            self.assertIn("<version>2.0.0</version>", modified_pom)
 
 
 class TestPomSave(TestCase):

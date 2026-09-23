@@ -184,6 +184,63 @@ class Plugin:
         return plugin_element
 
 
+class Parent:
+    """Represents a Maven parent POM reference."""
+
+    def __init__(self, group_id: str, artifact_id: str, version: str):
+        self.group_id = group_id
+        self.artifact_id = artifact_id
+        self.version = version
+
+    def __eq__(self, other):
+        if not isinstance(other, Parent):
+            return False
+        return (
+            self.group_id == other.group_id
+            and self.artifact_id == other.artifact_id
+            and self.version == other.version
+        )
+
+    def __repr__(self):
+        return f"Parent(group_id={self.group_id!r}, artifact_id={self.artifact_id!r}, version={self.version!r})"
+
+    @classmethod
+    def from_etree(cls, element: ET.Element, namespaces: dict[str, str]) -> "Parent":
+        group_id_element = element.find("groupId", namespaces)
+        artifact_id_element = element.find("artifactId", namespaces)
+        version_element = element.find("version", namespaces)
+
+        if (
+            group_id_element is None
+            or artifact_id_element is None
+            or version_element is None
+        ):
+            raise ValueError(
+                "Parent must have groupId, artifactId, and version elements."
+            )
+
+        group_id = group_id_element.text
+        artifact_id = artifact_id_element.text
+        version = version_element.text
+
+        if group_id is None or artifact_id is None or version is None:
+            raise ValueError(
+                "Parent must have non-empty groupId, artifactId, and version."
+            )
+
+        return cls(group_id=group_id, artifact_id=artifact_id, version=version)
+
+    def to_etree(self, parent: ET.Element) -> ET.Element:
+        parent_element = ET.SubElement(parent, "parent")
+        group_id_element = ET.SubElement(parent_element, "groupId")
+        group_id_element.text = self.group_id
+        artifact_id_element = ET.SubElement(parent_element, "artifactId")
+        artifact_id_element.text = self.artifact_id
+        version_element = ET.SubElement(parent_element, "version")
+        version_element.text = self.version
+        return parent_element
+
+
 class Pom:
     """Proxy class for managing Maven pom.xml files with optimized access patterns.
 
@@ -216,6 +273,7 @@ class Pom:
     dependencies: list[Dependency]
     plugins: list[Plugin]
     packaging_value: str | None = None
+    parent: Parent | None = None
 
     # Etree elements
     registered_namespaces: dict[str, str]
@@ -224,6 +282,7 @@ class Pom:
     _dependencies_element: ET.Element
     _plugins_element: ET.Element
     _packaging_element: ET.Element | None = None
+    _parent_element: ET.Element | None = None
 
     def __init__(self, pom_path: Path):
         """Initialize the PomProxy with an existing pom.xml file.
@@ -313,6 +372,12 @@ class Pom:
 
         if packaging_element is not None:
             self.packaging_value = packaging_element.text
+
+        # Parse parent element
+        parent_element = root.find("parent", self.registered_namespaces)
+        self._parent_element = parent_element
+        if parent_element is not None:
+            self.parent = Parent.from_etree(parent_element, self.registered_namespaces)
 
     def add_module(self, module: Module) -> "Pom":
         """Add a new module reference to the pom.xml.
@@ -459,6 +524,33 @@ class Pom:
         self.packaging_value = packaging
         return self
 
+    def set_parent(self, parent: Parent) -> "Pom":
+        """Set the parent POM reference in the pom.xml.
+
+        Updates or creates the <parent> element with the provided groupId, artifactId,
+        and version. This is typically used for multi-module Maven projects where
+        child modules inherit configuration from a parent POM.
+
+        Args:
+            parent (Parent): Parent object containing group_id, artifact_id, and version.
+
+        Returns:
+            PomProxy: Returns self to enable method chaining.
+
+        Note:
+            Changes are buffered in memory and only written to the XML file when
+            save() is called.
+
+        Example:
+            ```python
+            parent = Parent("com.example", "parent-pom", "1.0.0")
+            pom.set_parent(parent).save()
+            ```
+        """
+        # Store parent for save() to apply
+        self.parent = parent
+        return self
+
     def _apply_changes_to_xml(self) -> None:
         """Apply all cached changes to the XML tree. Called by save()."""
         # Clear existing modules, dependencies, and plugins in the XML tree
@@ -488,6 +580,12 @@ class Pom:
                     self._tree.getroot(), "packaging"
                 )
             self._packaging_element.text = self.packaging_value
+
+        # Update parent if set
+        if self.parent is not None:
+            if self._parent_element is None:
+                self._parent_element = ET.SubElement(self._tree.getroot(), "parent")
+            self.parent.to_etree(self._tree.getroot())
 
     def save(self) -> None:
         """Persist the current state of the PomProxy to the pom.xml file.
