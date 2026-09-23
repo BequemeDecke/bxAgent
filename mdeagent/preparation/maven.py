@@ -19,7 +19,7 @@ class MavenProject:
         :return: True if the project is valid, False otherwise.
         """
         validate_process = subprocess.run(
-            ["mvn", "validate"], check=True, cwd=self.workspace
+            ["mvn", "validate"], cwd=self.workspace, capture_output=True, text=True
         )
         return validate_process.returncode == 0
 
