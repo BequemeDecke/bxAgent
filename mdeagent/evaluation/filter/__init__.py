@@ -1,5 +1,14 @@
+from typing import Any, Union
+
 from mdeagent.evaluation.pipefilter import EvaluationFilter
 from mdeagent.evaluation.types import EvaluationResult, EvaluationRun
+
+
+def _extract_runs(runs: Union[dict[str, EvaluationRun], list[EvaluationRun]]) -> list[EvaluationRun]:
+    """Extract list of EvaluationRun from dict or list input."""
+    if isinstance(runs, dict):
+        return list(runs.values())
+    return runs
 
 
 def _is_report_candidate_filter(
@@ -31,26 +40,30 @@ IsErrorFilter: EvaluationFilter = _is_error_filter
 
 
 def _is_execution_run(
-    runs: list[EvaluationRun],
-) -> list[EvaluationResult]:
+    runs: Any,
+) -> list[EvaluationRun]:
     """
     Filter function to determine if evaluation runs contain execution errors.
-    Returns a list of results that are execution errors.
+    Accepts dict[str, EvaluationRun] or list[EvaluationRun].
+    Returns a list of runs that are execution runs.
     """
-    return [run for run in runs if run.category == "execution" and len(run.results) > 0]
+    runs_list = _extract_runs(runs)
+    return [run for run in runs_list if run.category == "execution" and len(run.results) > 0]
 
 
 IsExecutionRunFilter: EvaluationFilter = _is_execution_run
 
 
 def _is_design_run(
-    runs: list[EvaluationRun],
-) -> list[EvaluationResult]:
+    runs: Any,
+) -> list[EvaluationRun]:
     """
     Filter function to determine if evaluation runs contain design errors.
-    Returns a list of results that are design errors.
+    Accepts dict[str, EvaluationRun] or list[EvaluationRun].
+    Returns a list of runs that are design runs.
     """
-    return [run for run in runs if run.category == "design" and len(run.results) > 0]
+    runs_list = _extract_runs(runs)
+    return [run for run in runs_list if run.category == "design" and len(run.results) > 0]
 
 
 IsDesignRunFilter: EvaluationFilter = _is_design_run

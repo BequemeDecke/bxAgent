@@ -33,7 +33,7 @@ class PreparationState(TypedDict):
     transformation_package_path: str | None = None    # This will be set by the preparation_node and used for quick evaluation.
     
     # === Evaluation ===
-    latest_evaluation_runs: list[EvaluationRun]
+    latest_evaluation_runs: dict[str, EvaluationRun]
 
     # === Tracking ===
     iteration: int = 0  # Number of prepare_workspace iterations; used by the conditional edge to detect the very first run

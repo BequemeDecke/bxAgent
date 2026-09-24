@@ -53,12 +53,14 @@ def create_check_transformation_iteration_function():
             return "max_iteration_reached"
 
         runs = state["latest_evaluation_runs"]
+        # runs is now a dict[str, EvaluationRun] – iterate over values
+        runs_list = list(runs.values())
         all_results: list[EvaluationResult] = []
         logger.info(
             f"Checking transformation iteration for state: {iteration}"
         )
 
-        for run in runs:
+        for run in runs_list:
             if len(run.errors) > 0:
                 logger.error(f"Errors found in evaluation run: {run.errors}")
                 return "error"
@@ -70,7 +72,7 @@ def create_check_transformation_iteration_function():
 
         # Execution failed if there are error regarding java compilation or file existence
         execution_pipe = EvaluationPipe() | IsExecutionRunFilter
-        execution_runs = execution_pipe.filter_results(runs)
+        execution_runs = execution_pipe.filter_results(runs_list)
 
         execution_errors = error_pipe.filter_results(
             [result for run in execution_runs for result in run.results]
@@ -81,7 +83,7 @@ def create_check_transformation_iteration_function():
 
         # Design failed if there are errors regarding the workspace structure or tools installed
         design_pipe = EvaluationPipe() | IsDesignRunFilter
-        design_runs = design_pipe.filter_results(runs)
+        design_runs = design_pipe.filter_results(runs_list)
 
         design_errors = error_pipe.filter_results(
             [result for run in design_runs for result in run.results]

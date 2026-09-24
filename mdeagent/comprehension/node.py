@@ -41,7 +41,7 @@ def create_comprehension_node(comprehension_agent: CompiledStateGraph):
         input_prompt = PROMPT_TEMPLATE.format(
             transformation_plan=str(transformation),
             evaluation_results="\n".join(
-                [str(run) for run in state.get("latest_evaluation_runs", [])]
+                [str(run) for run in state.get("latest_evaluation_runs", {}).values()]
             ),
         )
 

@@ -58,7 +58,7 @@ class TestEvaluationNode__ExecutionModeAll(TestCase):
             "There should be results for one evaluation run.",
         )
 
-        run_result = result["latest_evaluation_runs"][0]
+        run_result = result["latest_evaluation_runs"][evaluation_id]
         self.assertEqual(
             len(run_result.results), 1, "There should be one evaluation result."
         )

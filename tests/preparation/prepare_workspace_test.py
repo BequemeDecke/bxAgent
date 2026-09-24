@@ -97,11 +97,10 @@ class TestWorkspaceStructureIsClean(TestCase):
         )
         self.assertFalse(workspace_structure_is_clean(state))
 
-    def test_clean__list_form_returns_false(self):
-        # execution_mode="all" returns a flat list; the workspace_structure run
-        # cannot be identified by id -> conservative default: not clean.
+    def test_clean__missing_workspace_structure_returns_false(self):
+        # If there is no workspace_structure run, the structure is not clean.
         state = PreparationState(
-            latest_evaluation_runs=[_clean_workspace_structure_run()]
+            latest_evaluation_runs={"other_run": _clean_workspace_structure_run()}
         )
         self.assertFalse(workspace_structure_is_clean(state))
 

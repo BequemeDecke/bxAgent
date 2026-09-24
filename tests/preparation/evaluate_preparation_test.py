@@ -157,17 +157,17 @@ class TestEvaluatePreparationDecision(TestCase):
         )
         self.assertEqual(self.decide(state), "structure_incomplete")
 
-    def test_decision__list_form_of_latest_results_is_supported(self):
-        """execution_mode='all' returns a list instead of a dict."""
+    def test_decision__latest_results_with_failing_results_routes_to_prepare_workspace(self):
+        """execution_mode='all' returns a dict; failing results route to prepare_workspace."""
         state = PreparationState(
             iteration=1,
-            latest_evaluation_runs=[_run(results=[_result(success=False)])],
+            latest_evaluation_runs={"test_run": _run(results=[_result(success=False)])},
         )
         self.assertEqual(self.decide(state), "structure_incomplete")
 
         state_clean = PreparationState(
             iteration=1,
-            latest_evaluation_runs=[_run()],
+            latest_evaluation_runs={"test_run": _run()},
         )
         self.assertEqual(self.decide(state_clean), "workspace_prepared")
 

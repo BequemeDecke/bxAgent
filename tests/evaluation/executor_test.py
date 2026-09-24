@@ -225,8 +225,8 @@ class TestEvaluationExecutor__execute_all(unittest.TestCase):
         )
 
     def test_execute_all__return_evaluation_runs(self):
-        expected_runs = [
-            EvaluationRun(
+        expected_runs: dict[str, EvaluationRun] = {
+            "evaluation1": EvaluationRun(
                 started_at=datetime.now(tz=UTC),
                 execution_time_ms=100,
                 iteration=1,
@@ -234,7 +234,7 @@ class TestEvaluationExecutor__execute_all(unittest.TestCase):
                 results=self.run_1.results,
                 errors=self.run_1.errors,
             ),
-            EvaluationRun(
+            "evaluation2": EvaluationRun(
                 started_at=datetime.now(tz=UTC),
                 execution_time_ms=100,
                 iteration=1,
@@ -242,7 +242,7 @@ class TestEvaluationExecutor__execute_all(unittest.TestCase):
                 results=self.run_2.results,
                 errors=self.run_2.errors,
             ),
-            EvaluationRun(
+            "evaluation3": EvaluationRun(
                 started_at=datetime.now(tz=UTC),
                 execution_time_ms=100,
                 iteration=1,
@@ -256,9 +256,9 @@ class TestEvaluationExecutor__execute_all(unittest.TestCase):
                     )
                 ],
             ),
-        ]
+        }
 
-        actual: list[EvaluationRun] = asyncio.run(
+        actual: dict[str, EvaluationRun] = asyncio.run(
             self.executor.execute_all(
                 input={
                     "evaluation1": {"param1": "value1"},
@@ -270,18 +270,26 @@ class TestEvaluationExecutor__execute_all(unittest.TestCase):
         self.assertEqual(
             len(actual), 3, "Should return runs for all three evaluation cases."
         )
+        self.assertIn("evaluation1", actual)
+        self.assertIn("evaluation2", actual)
+        self.assertIn("evaluation3", actual)
 
-        for actual_run, expected_run in zip(actual, expected_runs):
-            assert_evaluation_run_equal_except(
-                self.assertEqual, actual_run, expected_run
-            )
+        assert_evaluation_run_equal_except(
+            self.assertEqual, actual["evaluation1"], expected_runs["evaluation1"]
+        )
+        assert_evaluation_run_equal_except(
+            self.assertEqual, actual["evaluation2"], expected_runs["evaluation2"]
+        )
+        assert_evaluation_run_equal_except(
+            self.assertEqual, actual["evaluation3"], expected_runs["evaluation3"]
+        )
 
     def test_execute_all__ignores_linked_evaluations(self):
         # Register a linked evaluation
         self.executor.register_linked_evaluation("linked_eval", "evaluation1")
         
         # Execute all - should only execute non-linked evaluations (3 runs, not 4)
-        actual: list[EvaluationRun] = asyncio.run(
+        actual: dict[str, EvaluationRun] = asyncio.run(
             self.executor.execute_all(
                 input={
                     "evaluation1": {"param1": "value1"},
@@ -306,6 +314,8 @@ class TestEvaluationExecutor__execute_all(unittest.TestCase):
             len(self.executor.iterations["linked_eval"]), 0,
             "Linked evaluation should have no iterations after execute_all."
         )
+        # Verify linked_eval key is NOT in the result dict
+        self.assertNotIn("linked_eval", actual)
 
 
 class TestEvaluationExecutor__get_latest_results(unittest.TestCase):

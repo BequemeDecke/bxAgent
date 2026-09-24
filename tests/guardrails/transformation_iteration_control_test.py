@@ -37,7 +37,7 @@ class TestTransformationIterationControl(TestCase):
             # Create the agent state
             state: MDEAgentState = {
                 "transformation_plan": transformation_plan.to_dict(),
-                "latest_evaluation_runs": [],
+                "latest_evaluation_runs": {},
             }
             result = asyncio.run(
                 self.check_transformation_iteration(state, max_iterations)
@@ -58,8 +58,8 @@ class TestTransformationIterationControl(TestCase):
 
             state: MDEAgentState = {
                 "transformation_plan": transformation_plan.to_dict(),
-                "latest_evaluation_runs": [
-                    EvaluationRun(
+                "latest_evaluation_runs": {
+                    "test_run": EvaluationRun(
                         started_at=datetime.now(tz=UTC) - timedelta(minutes=5),
                         execution_time_ms=200,
                         iteration=1,
@@ -79,7 +79,7 @@ class TestTransformationIterationControl(TestCase):
                             )
                         ],
                     )
-                ],
+                },
             }
             result = asyncio.run(
                 self.check_transformation_iteration(state, max_iterations)
@@ -100,8 +100,8 @@ class TestTransformationIterationControl(TestCase):
 
             state: MDEAgentState = {
                 "transformation_plan": transformation_plan.to_dict(),
-                "latest_evaluation_runs": [
-                    EvaluationRun(
+                "latest_evaluation_runs": {
+                    "test_run": EvaluationRun(
                         started_at=datetime.now(tz=UTC) - timedelta(minutes=5),
                         execution_time_ms=200,
                         iteration=1,
@@ -114,7 +114,7 @@ class TestTransformationIterationControl(TestCase):
                         ],
                         errors=[],
                     )
-                ],
+                },
             }
             result = asyncio.run(
                 self.check_transformation_iteration(state, max_iterations)
@@ -134,8 +134,8 @@ class TestTransformationIterationControl(TestCase):
 
             state: MDEAgentState = {
                 "transformation_plan": transformation_plan.to_dict(),
-                "latest_evaluation_runs": [
-                    EvaluationRun(
+                "latest_evaluation_runs": {
+                    "design_run": EvaluationRun(
                         started_at=datetime.now(tz=UTC) - timedelta(minutes=5),
                         execution_time_ms=200,
                         iteration=1,
@@ -156,7 +156,7 @@ class TestTransformationIterationControl(TestCase):
                         ],
                         errors=[],
                     ),
-                    EvaluationRun(
+                    "execution_run": EvaluationRun(
                         started_at=datetime.now(tz=UTC) - timedelta(minutes=5),
                         execution_time_ms=200,
                         iteration=1,
@@ -173,7 +173,7 @@ class TestTransformationIterationControl(TestCase):
                         ],
                         errors=[],
                     ),
-                ],
+                },
             }
             result = asyncio.run(self.check_transformation_iteration(state, max_iterations))
             self.assertEqual(result, "design_passed")

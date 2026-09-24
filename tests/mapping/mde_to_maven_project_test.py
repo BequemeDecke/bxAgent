@@ -42,7 +42,7 @@ class TestMDEToMavenProject(TestCase):
             "bxtool_path": None,
             "required_tools": [],
             "written_files": [],
-            "latest_evaluation_runs": [],
+            "latest_evaluation_runs": {},
         }
         
         with self.assertRaises(KeyError) as context:
@@ -68,7 +68,7 @@ class TestMDEToMavenProject(TestCase):
             "bxtool_path": None,
             "required_tools": [],
             "written_files": [],
-            "latest_evaluation_runs": [],
+            "latest_evaluation_runs": {},
         }
         
         result = mde_to_maven_project(state)
@@ -93,7 +93,7 @@ class TestMDEToMavenProject(TestCase):
             "bxtool_path": None,
             "required_tools": [],
             "written_files": [],
-            "latest_evaluation_runs": [],
+            "latest_evaluation_runs": {},
         }
         
         result = mde_to_maven_project(state)

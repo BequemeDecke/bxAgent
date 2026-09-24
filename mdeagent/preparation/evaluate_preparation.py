@@ -37,14 +37,7 @@ def _evaluation_has_problems(state: PreparationState) -> bool:
     ``success=False`` instead of raising errors, so both have to be checked.
     """
     latest_results = state.get("latest_evaluation_runs", {})
-    # ``execution_mode="specific"`` (used by the preparation graph) returns a
-    # ``dict[str, EvaluationRun]`` while ``execution_mode="all"`` returns a
-    # ``list[EvaluationRun]``. Handle both to stay robust.
-    runs = (
-        latest_results.values()
-        if isinstance(latest_results, dict)
-        else latest_results
-    )
+    runs = latest_results.values()
 
     for run in runs:
         if len(run.errors) > 0:

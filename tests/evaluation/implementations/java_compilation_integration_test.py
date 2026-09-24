@@ -159,7 +159,7 @@ class TestJavaCompilationWithMapperAndNode(TestCase):
                 "bxtool_path": None,
                 "required_tools": [],
                 "written_files": [],
-                "latest_evaluation_runs": [],
+                "latest_evaluation_runs": {},
             }
             
             with patch.object(MavenProject, 'load', return_value=mock_project) as mock_load:
@@ -168,7 +168,7 @@ class TestJavaCompilationWithMapperAndNode(TestCase):
             
             # Verify state was updated with evaluation results
             self.assertEqual(len(result["latest_evaluation_runs"]), 1)
-            run = result["latest_evaluation_runs"][0]
+            run = list(result["latest_evaluation_runs"].values())[0]
             self.assertEqual(len(run.results), 1)
             self.assertTrue(run.results[0].metadata["success"])
 
@@ -220,7 +220,7 @@ class TestJavaCompilationWithMapperAndNode(TestCase):
                 "bxtool_path": None,
                 "required_tools": [],
                 "written_files": [],
-                "latest_evaluation_runs": [],
+                "latest_evaluation_runs": {},
             }
             
             with patch.object(MavenProject, 'load', return_value=mock_project) as mock_load:
@@ -259,7 +259,7 @@ class TestJavaCompilationWithMapperAndNode(TestCase):
             "bxtool_path": None,
             "required_tools": [],
             "written_files": [],
-            "latest_evaluation_runs": [],
+            "latest_evaluation_runs": {},
         }
         
         with self.assertRaises(KeyError):
@@ -323,13 +323,13 @@ class TestJavaCompilationWithRealMavenProject(TestCase):
                 "bxtool_path": None,
                 "required_tools": [],
                 "written_files": [],
-                "latest_evaluation_runs": [],
+                "latest_evaluation_runs": {},
             }
             
             result = asyncio.run(node(state))
             
             # Verify successful compilation
             self.assertEqual(len(result["latest_evaluation_runs"]), 1)
-            run = result["latest_evaluation_runs"][0]
+            run = list(result["latest_evaluation_runs"].values())[0]
             self.assertEqual(len(run.results), 1)
             self.assertTrue(run.results[0].metadata["success"])

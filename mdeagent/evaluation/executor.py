@@ -61,8 +61,10 @@ class EvaluationExecutor:
 
     async def execute_all(
         self, input: dict[str, dict[str, Any]]
-    ) -> list[EvaluationRun]:
-        results = []
+    ) -> dict[str, EvaluationRun]:
+        """Execute all evaluations and return a dict mapping evaluation id to EvaluationRun."""
+        async def _execution_wrapper(evaluation_id: str, input: dict[str, Any]) -> tuple[str, EvaluationRun]:
+            return evaluation_id, await self.execute_specific(evaluation_id, input)
         # Filter out LinkedEvaluations as they are managed by other nodes
         # and may not have corresponding input mappers in the calling node
         non_linked_evaluations = [
@@ -71,11 +73,11 @@ class EvaluationExecutor:
             if not isinstance(self.evaluations[evaluation_id]["evaluation"], LinkedEvaluation)
         ]
         tasks = [
-            self.execute_specific(evaluation_id, input=input[evaluation_id])
+            _execution_wrapper(evaluation_id, input=input[evaluation_id])
             for evaluation_id in non_linked_evaluations
         ]
-        results = await asyncio.gather(*tasks)
-        return results
+        runs = await asyncio.gather(*tasks)
+        return {evaluation_id: run for evaluation_id, run in runs}
 
     async def execute_specific(
         self, evaluation_id: str, input: dict[str, Any]

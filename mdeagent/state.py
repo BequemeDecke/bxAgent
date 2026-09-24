@@ -45,5 +45,5 @@ class MDEAgentState(TypedDict):
     # === Evaluation ===
     required_tools: list[str]                # This will be set by the agent at first.
     written_files: list[Path]                   # This will contain the paths of the files that were written by the implementation_node, and can be used by the evaluation_node to evaluate the generated artifacts.
-    latest_evaluation_runs: list[EvaluationRun] # This will contain the results of the latest evaluation runs, and can be used by the evaluation_node to evaluate the generated artifacts.
+    latest_evaluation_runs: dict[str, EvaluationRun] # This will contain the results of the latest evaluation runs, keyed by evaluation id.
 

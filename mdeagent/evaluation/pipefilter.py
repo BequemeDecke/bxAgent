@@ -1,6 +1,6 @@
-from typing import Callable
+from typing import Any, Callable
 
-EvaluationFilter = Callable[[list], list]
+EvaluationFilter = Callable[[Any], list]
 
 
 class EvaluationPipe:

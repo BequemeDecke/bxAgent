@@ -80,7 +80,7 @@ class TestComprehensionNode(TestCase):
             with self.assertRaises(ValueError) as context:
                 await call_sub(
                     {
-                        "latest_evaluation_runs": [],
+                        "latest_evaluation_runs": {},
                     }
                 )
 

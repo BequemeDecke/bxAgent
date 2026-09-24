@@ -11,11 +11,11 @@ def create_evaluation_tools(evaluations: dict[str, Evaluation]) -> list[BaseTool
     executor = EvaluationExecutor(evaluations)
 
     @tool("evaluation_tool", return_direct=True)
-    async def evaluation_tool() -> list[EvaluationRun]:
+    async def evaluation_tool() -> dict[str, EvaluationRun]:
         """Executes all evaluations and returns their latest results.
 
         Returns:
-            list[EvaluationRun]: A list of the latest EvaluationRun for each evaluation.
+            dict[str, EvaluationRun]: A dict mapping evaluation id to the latest EvaluationRun.
         """
         return await executor.execute_all()
 
