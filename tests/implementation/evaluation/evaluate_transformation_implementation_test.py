@@ -18,7 +18,7 @@ from unittest import TestCase
 
 from mdeagent.evaluation.types import EvaluationError, EvaluationResult, EvaluationRun
 from mdeagent.implementation.evaluation.evaluate_transformation_implementation import (
-    create_evaluate_transformation_implementation,
+    create_route_implementation,
 )
 from mdeagent.implementation.state import ImplementationState
 
@@ -105,14 +105,14 @@ def _state(iteration=1, latest_evaluation_runs=None, **kwargs) -> Implementation
 # --------------------------------------------------------------------------- #
 class TestEvaluateTransformationImplementation(TestCase):
     def test_decision__is_callable(self):
-        decide = create_evaluate_transformation_implementation()
+        decide = create_route_implementation()
         self.assertTrue(callable(decide))
 
     # --- max_iteration_reached -------------------------------------------- #
     def test_decision__max_iteration_reached(self):
         """The safety guard must terminate the loop even with failing results."""
         MAX_ITERATIONS = 5
-        decide = create_evaluate_transformation_implementation()
+        decide = create_route_implementation()
         state = _state(
             iteration=MAX_ITERATIONS,
             latest_evaluation_runs={
@@ -125,7 +125,7 @@ class TestEvaluateTransformationImplementation(TestCase):
         )
 
     def test_decision__custom_max_iterations(self):
-        decide = create_evaluate_transformation_implementation()
+        decide = create_route_implementation()
         state = _state(
             iteration=2,
             latest_evaluation_runs={
@@ -139,7 +139,7 @@ class TestEvaluateTransformationImplementation(TestCase):
 
     # --- implementation_error --------------------------------------------- #
     def test_decision__implementation_error_via_errors(self):
-        decide = create_evaluate_transformation_implementation()
+        decide = create_route_implementation()
         state = _state(
             iteration=1,
             latest_evaluation_runs={
@@ -151,7 +151,7 @@ class TestEvaluateTransformationImplementation(TestCase):
 
     def test_decision__implementation_error_via_failing_result(self):
         """Implementation evaluations signal problems via results with success=False."""
-        decide = create_evaluate_transformation_implementation()
+        decide = create_route_implementation()
         state = _state(
             iteration=1,
             latest_evaluation_runs={
@@ -164,7 +164,7 @@ class TestEvaluateTransformationImplementation(TestCase):
     # --- integration_error ------------------------------------------------ #
     def test_decision__integration_error_when_integration_enabled(self):
         """Requirement 3: integration_error routes to implement_bx_tool."""
-        decide = create_evaluate_transformation_implementation(integration_enabled=True)
+        decide = create_route_implementation(integration_enabled=True)
         state = _state(
             iteration=1,
             latest_evaluation_runs={
@@ -178,7 +178,7 @@ class TestEvaluateTransformationImplementation(TestCase):
         self.assertEqual(decide(state, max_iterations=5), "integration_error")
 
     def test_decision__integration_error_via_failing_result_when_enabled(self):
-        decide = create_evaluate_transformation_implementation(integration_enabled=True)
+        decide = create_route_implementation(integration_enabled=True)
         state = _state(
             iteration=1,
             latest_evaluation_runs={
@@ -196,7 +196,7 @@ class TestEvaluateTransformationImplementation(TestCase):
         failure must be reported as an ``implementation_error`` (routing back to
         ``implement_transformation``) instead.
         """
-        decide = create_evaluate_transformation_implementation(integration_enabled=False)
+        decide = create_route_implementation(integration_enabled=False)
         state = _state(
             iteration=1,
             latest_evaluation_runs={
@@ -211,7 +211,7 @@ class TestEvaluateTransformationImplementation(TestCase):
     def test_decision__missing_integration_run_is_not_an_integration_error(self):
         """When the integration run was not executed (None) it is not treated as
         an integration error on its own (robustness against a missing run)."""
-        decide = create_evaluate_transformation_implementation(integration_enabled=True)
+        decide = create_route_implementation(integration_enabled=True)
         state = _state(
             iteration=1,
             latest_evaluation_runs={
@@ -224,7 +224,7 @@ class TestEvaluateTransformationImplementation(TestCase):
 
     # --- implementation_success ------------------------------------------- #
     def test_decision__implementation_success(self):
-        decide = create_evaluate_transformation_implementation(integration_enabled=True)
+        decide = create_route_implementation(integration_enabled=True)
         state = _state(
             iteration=1,
             latest_evaluation_runs={
@@ -236,7 +236,7 @@ class TestEvaluateTransformationImplementation(TestCase):
         self.assertEqual(decide(state, max_iterations=5), "implementation_success")
 
     def test_decision__success_with_clean_results_metadata(self):
-        decide = create_evaluate_transformation_implementation()
+        decide = create_route_implementation()
         state = _state(
             iteration=1,
             latest_evaluation_runs={
@@ -249,7 +249,7 @@ class TestEvaluateTransformationImplementation(TestCase):
     def test_decision__integration_error_takes_precedence_when_enabled(self):
         """When integration is enabled an integration error is reported before
         an implementation error (so the bx tool is fixed first)."""
-        decide = create_evaluate_transformation_implementation(integration_enabled=True)
+        decide = create_route_implementation(integration_enabled=True)
         state = _state(
             iteration=1,
             latest_evaluation_runs={
