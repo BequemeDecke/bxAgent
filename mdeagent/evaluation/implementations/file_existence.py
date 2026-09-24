@@ -16,8 +16,7 @@ class FileExistenceEvaluation(Evaluation):
     async def run(
         self, **kwargs
     ) -> tuple[list[EvaluationResult], list[EvaluationError]]:
-        config = FileExistenceSchema(**kwargs)
-        files = config.files
+        files = kwargs.get("files", [])
 
         results = []
         errors = []

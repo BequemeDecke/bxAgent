@@ -54,6 +54,8 @@ def create_evaluation_node(
             # Execute only the evaluations related to transformation implementation with the mapped parameters
             latest_results = {}
             for evaluation_name in mapper:
+                _parameter_str = str(input_parameters[evaluation_name])
+                logger.info(f"Executing evaluation: {evaluation_name} with parameters: {_parameter_str if len(_parameter_str) < 100 else _parameter_str[:100] + '...'}")
                 evaluation_run = await evaluation_executor.execute_specific(
                     evaluation_id=evaluation_name,
                     input=input_parameters[evaluation_name],
