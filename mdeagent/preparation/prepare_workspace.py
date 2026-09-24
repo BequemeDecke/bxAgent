@@ -235,13 +235,6 @@ def create_prepare_workspace_node(
         project.pom.save()
         project.validate()
 
-        # Track how often the workspace has been (re-)prepared. This counter is
-        # used by the conditional edge after `evaluate_preparation` to detect the
-        # very first run (iteration == 0) and to break the loop once the workspace
-        # is correctly set up. Incrementing it here keeps prepare_workspace as the
-        # single driver of the preparation loop.
-        current_iteration = state.get("iteration", 0)
-
         # Update the state with the new paths and transformation plan
         new_state = PreparationState(
             transformation_plan=tp,
@@ -249,7 +242,6 @@ def create_prepare_workspace_node(
             transformation_class_path=transformation_class_path,
             maven_project_path=project.workspace,
             transformation_package_path=full_package,
-            iteration=current_iteration + 1,
         )
         new_state.update(fixed_state)
         return new_state
