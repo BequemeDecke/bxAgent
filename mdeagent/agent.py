@@ -35,6 +35,7 @@ from mdeagent.mapping import (
 from mdeagent.preparation.agent import build_preparation_graph
 from mdeagent.preparation.node import create_preparation_node
 from mdeagent.state import MDEAgentState
+from mdeagent.util import with_transformation
 
 
 def build_mdeagent(
@@ -76,28 +77,30 @@ def build_mdeagent(
         }
     )
 
-    # 2. Create the nodes of the MDEAgent workflow
-    call_comprehension_node = create_comprehension_node(
+    # 2. Create the base nodes of the MDEAgent workflow
+    preparation_node = (
+        create_preparation_node(
+            preparation_agent=build_preparation_graph(
+                evaluation_executor=agent_evaluator,
+                benchmarx_path=benchmarx_path,
+                download_benchmarx=download_benchmarx,
+            ).compile(),
+            workspace_path=workspace_path,
+            required_tools=[
+                "mvn",
+                "java",
+                "javac",
+                "jar",
+            ],
+        ),
+    )
+    comprehension_node = create_comprehension_node(
         comprehension_subgraph=build_comprehension_subgraph(
             evaluation_executor=agent_evaluator,
             comprehension_agent=build_comprehension_agent(),
         ).compile()
     )
-    call_preparation_node = create_preparation_node(
-        preparation_agent=build_preparation_graph(
-            evaluation_executor=agent_evaluator,
-            benchmarx_path=benchmarx_path,
-            download_benchmarx=download_benchmarx,
-        ).compile(),
-        workspace_path=workspace_path,
-        required_tools=[
-            "mvn",
-            "java",
-            "javac",
-            "jar",
-        ],
-    )
-    call_implementation_node = create_implementation_node(
+    implementation_node = create_implementation_node(
         agent=build_implementation_graph(
             evaluation_executor=agent_evaluator,
             workspace_path=workspace_path,
@@ -105,7 +108,7 @@ def build_mdeagent(
             benchmarx_path=benchmarx_path,
         ).compile()
     )
-    call_evaluation_node = create_evaluation_node(
+    evaluation_node = create_evaluation_node(
         evaluation_executor=agent_evaluator,
         mapper={
             "file_existence": mde_to_files,
@@ -116,12 +119,17 @@ def build_mdeagent(
         },
     )
 
-    # 3. Build the StateGraph for the MDEAgent workflow
+    # 3. Wrap nodes within transformation functions to control iteration and state updates
+    evaluation_incrementation_node = with_transformation(
+        evaluation_node, lambda state: {**state, "iteration": state.get("iteration", 0) + 1}
+    )
+
+    # 4. Build the StateGraph for the MDEAgent workflow
     builder = StateGraph(MDEAgentState)
-    builder.add_node("preparation", call_preparation_node)
-    builder.add_node("comprehension", call_comprehension_node)
-    builder.add_node("implementation", call_implementation_node)
-    builder.add_node("evaluation", call_evaluation_node)
+    builder.add_node("preparation", preparation_node)
+    builder.add_node("comprehension", comprehension_node)
+    builder.add_node("implementation", implementation_node)
+    builder.add_node("evaluation", evaluation_incrementation_node)
 
     builder.add_edge(START, "preparation")
     builder.add_edge("preparation", "comprehension")

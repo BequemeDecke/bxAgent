@@ -27,7 +27,6 @@ def create_comprehension_node(
                 "The comprehension node requires a transformation plan in the state."
             )
         transformation = TransformationPlan.from_dict(serialized_transformation)
-        transformation.update_iteration(state.get("iteration", 0))
 
         input_state = ComprehensionState(
             transformation_plan=transformation.to_dict(),
