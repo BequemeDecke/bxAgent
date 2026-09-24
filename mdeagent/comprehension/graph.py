@@ -9,6 +9,7 @@ from mdeagent.evaluation.executor import EvaluationExecutor
 from mdeagent.evaluation.filter import IsErrorFilter
 from mdeagent.evaluation.node import create_evaluation_node
 from mdeagent.evaluation.pipefilter import EvaluationPipe
+from mdeagent.util import with_transformation
 
 logger = logging.getLogger(__name__)
 
@@ -31,9 +32,6 @@ def create_reflect_comprehension_node(comprehension_agent: CompiledStateGraph):
         Reflects on the current transformation plan and updates the state with the current iteration.
         """
         logger.debug("Reflecting on the current transformation plan ...")
-        iteration = state.get("iteration", 0)
-        state["iteration"] = iteration + 1
-
         transformation = state.get("transformation_plan")
 
         input_prompt = PROMPT_TEMPLATE.format(
@@ -94,6 +92,7 @@ def build_comprehension_subgraph(
     - If the transformation plan is complete and consistent, the workflow proceeds to the next stage.
     - If the transformation plan is incomplete or inconsistent, the workflow loops back to the reflect_comprehension node for further refinement.
     """
+    # 1. Create the nodes
     reflect_comprehension = create_reflect_comprehension_node(comprehension_agent)
     evaluate_comprehension = create_evaluation_node(
         evaluation_executor,
@@ -105,8 +104,15 @@ def build_comprehension_subgraph(
         execution_mode="specific",
     )
 
+    # 2. Wrap reflect_comprehension node with iteration control
+    reflect_comprehension_iteration = with_transformation(
+        node=reflect_comprehension,
+        transform=lambda state: {**state, "iteration": state.get("iteration", 0) + 1},
+    )
+
+    # 3. Build the comprehension subgraph
     graph = StateGraph(state_schema=ComprehensionState)
-    graph.add_node("reflect_comprehension", reflect_comprehension)
+    graph.add_node("reflect_comprehension", reflect_comprehension_iteration)
     graph.add_node("evaluate_comprehension", evaluate_comprehension)
 
     graph.add_edge(START, "reflect_comprehension")
