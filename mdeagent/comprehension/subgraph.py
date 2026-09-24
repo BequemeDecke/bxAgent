@@ -73,7 +73,7 @@ def route_evaluation_decision(
     pipe = EvaluationPipe() | IsErrorFilter
     error_results = pipe.filter_results(transformation_plan_run.results)
 
-    return "plan_incomplete" if len(error_results) == 0 else "plan_complete"
+    return "plan_complete" if len(error_results) == 0 else "plan_incomplete"
 
 
 def build_comprehension_subgraph(

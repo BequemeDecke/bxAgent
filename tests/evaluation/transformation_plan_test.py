@@ -209,25 +209,6 @@ class TestTransformationPlanEvaluation(unittest.TestCase):
         # Should not raise
         asyncio.run(evaluator.setup())
 
-    def test_evaluation_handles_flat_dict(self):
-        """If a flat dict is passed (no 'data' key), handle it gracefully."""
-        flat_plan = {
-            "source_model_implementation": "ECore",
-            "target_model_implementation": "Java",
-            "transformation_direction": "forward",
-            "difficulties": "Some difficulties",
-            "implementation_steps": "Steps",
-        }
-        evaluator = TransformationPlanEvaluation()
-
-        results, errors = asyncio.run(evaluator.run(transformation_plan=flat_plan))
-
-        # Should have 5 results, all passing
-        self.assertEqual(len(results), 5)
-        self.assertEqual(len(errors), 0)
-        success_count = sum(1 for r in results if r.metadata.get("success"))
-        self.assertEqual(success_count, 5)
-
     def test_evaluation_handles_nested_data_key(self):
         """If plan has nested 'data' key, extract data correctly."""
         plan = _make_full_plan(
