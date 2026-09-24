@@ -35,6 +35,7 @@ from mdeagent.mapping import (
 from mdeagent.preparation.agent import build_preparation_graph
 from mdeagent.preparation.node import create_preparation_node
 from mdeagent.state import MDEAgentState
+from mdeagent.tracking import control_iteration
 from mdeagent.util import with_transformation
 
 
@@ -121,7 +122,7 @@ def build_mdeagent(
 
     # 3. Wrap nodes within transformation functions to control iteration and state updates
     evaluation_incrementation_node = with_transformation(
-        evaluation_node, lambda state: {**state, "iteration": state.get("iteration", 0) + 1}
+        node=evaluation_node, transform=control_iteration
     )
 
     # 4. Build the StateGraph for the MDEAgent workflow
