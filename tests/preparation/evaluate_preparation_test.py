@@ -27,7 +27,7 @@ from mdeagent.evaluation.types import (
     EvaluationResult,
     EvaluationRun,
 )
-from mdeagent.preparation.agent import build_preparation_graph
+from mdeagent.preparation.graph import build_preparation_graph
 from mdeagent.preparation.evaluate_preparation import create_evaluate_preparation
 from mdeagent.preparation.prepare_workspace import (
     StructureFixStrategy,

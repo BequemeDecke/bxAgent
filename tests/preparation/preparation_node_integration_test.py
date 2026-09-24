@@ -16,7 +16,7 @@ import pytest
 
 from mdeagent.comprehension.plan import TransformationPlan
 from mdeagent.evaluation import EvaluationExecutor, implementations
-from mdeagent.preparation.agent import build_preparation_graph
+from mdeagent.preparation.graph import build_preparation_graph
 from mdeagent.preparation.node import create_preparation_node
 from mdeagent.state import MDEAgentState
 

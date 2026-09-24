@@ -3,8 +3,8 @@ from pathlib import Path
 from langgraph.graph import END, START, StateGraph
 
 from mdeagent.comprehension.agent import build_comprehension_agent
+from mdeagent.comprehension.graph import build_comprehension_subgraph
 from mdeagent.comprehension.node import create_comprehension_node
-from mdeagent.comprehension.subgraph import build_comprehension_subgraph
 from mdeagent.config import Config
 from mdeagent.evaluation import (
     EvaluationExecutor,
@@ -23,7 +23,7 @@ from mdeagent.evaluation.node import create_evaluation_node
 from mdeagent.guardrails.transformation_iteration_control import (
     create_check_transformation_iteration_function,
 )
-from mdeagent.implementation.agent import build_implementation_graph
+from mdeagent.implementation.graph import build_implementation_graph
 from mdeagent.implementation.node import create_implementation_node
 from mdeagent.mapping import (
     mde_to_files,
@@ -32,7 +32,7 @@ from mdeagent.mapping import (
     mde_to_transformation_plan,
     mde_to_workspace,
 )
-from mdeagent.preparation.agent import build_preparation_graph
+from mdeagent.preparation.graph import build_preparation_graph
 from mdeagent.preparation.node import create_preparation_node
 from mdeagent.state import MDEAgentState
 from mdeagent.tracking import control_iteration

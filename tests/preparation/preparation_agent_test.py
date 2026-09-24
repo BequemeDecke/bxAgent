@@ -10,7 +10,7 @@ from langgraph.graph.state import CompiledStateGraph
 from langgraph.types import GraphOutput
 
 from mdeagent.evaluation import EvaluationExecutor, implementations
-from mdeagent.preparation.agent import build_preparation_graph
+from mdeagent.preparation.graph import build_preparation_graph
 from mdeagent.preparation.state import ModelImplementation, PreparationState
 
 

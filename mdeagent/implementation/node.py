@@ -84,6 +84,6 @@ def create_implementation_node(
             output_state.get("written_files", [])
         )  # Add new written
 
-        return {"written_files": list(new_written_files)}
+        return MDEAgentState(written_files=list(new_written_files))
 
     return implementation_node
