@@ -1,0 +1,118 @@
+from typing import Literal
+
+from langchain.messages import HumanMessage
+from langgraph.graph.state import END, START, CompiledStateGraph, StateGraph
+
+from mdeagent.comprehension.state import ComprehensionState
+from mdeagent.evaluation.executor import EvaluationExecutor
+from mdeagent.evaluation.filter import IsErrorFilter
+from mdeagent.evaluation.node import create_evaluation_node
+from mdeagent.evaluation.pipefilter import EvaluationPipe
+
+PROMPT_TEMPLATE = """
+--- BEGIN TRANSFORMATION PLAN ---
+{transformation_plan}
+--- END TRANSFORMATION PLAN ---
+
+Use the following results to check if the transformation plan is complete and consistent:
+
+--- BEGIN AUDIT RESULTS ---
+{evaluation_results}
+--- END AUDIT RESULTS ---
+"""
+
+
+def create_reflect_comprehension_node(comprehension_agent: CompiledStateGraph):
+    async def reflect_comprehension(state: ComprehensionState) -> ComprehensionState:
+        """
+        Reflects on the current transformation plan and updates the state with the current iteration.
+        """
+        iteration = state.get("iteration", 0)
+        state["iteration"] = iteration + 1
+
+        transformation = state.get("transformation_plan")
+
+        input_prompt = PROMPT_TEMPLATE.format(
+            transformation_plan=str(transformation),
+            evaluation_results="\n".join(
+                [str(run) for run in state.get("latest_evaluation_runs", {}).values()]
+            ),
+        )
+
+        await comprehension_agent.ainvoke(
+            input={
+                "messages": [HumanMessage(content=input_prompt)],
+                "transformation_plan": transformation,
+            },
+            version="v2",
+        )
+
+        return state
+
+    return reflect_comprehension
+
+
+ComprehensionEvaluationDecision = Literal["plan_complete", "plan_incomplete", "failure"]
+
+
+def route_evaluation_decision(
+    state: ComprehensionState,
+) -> ComprehensionEvaluationDecision:
+    """
+    Routes the flow based on the evaluation results of the transformation plan.
+
+    If the transformation plan is complete and consistent, the flow proceeds to the next stage.
+    If the transformation plan is incomplete or inconsistent, the flow loops back to the reflect_comprehension node for further refinement.
+    """
+    evaluation_runs = state.get("latest_evaluation_runs", {})
+    transformation_plan_run = evaluation_runs.get("transformation_plan")
+
+    if transformation_plan_run is None:
+        return "failure"
+
+    pipe = EvaluationPipe() | IsErrorFilter
+    error_results = pipe.filter_results(transformation_plan_run.results)
+
+    return "plan_incomplete" if len(error_results) == 0 else "plan_complete"
+
+
+def build_comprehension_subgraph(
+    evaluation_executor: EvaluationExecutor, comprehension_agent: CompiledStateGraph
+) -> StateGraph:
+    """
+    Builds the comprehension subgraph for the MDEAgent workflow.
+    Nodes:
+    - reflect_comprehension: This node is responsible for reflecting on the current transformation plan
+    - evaluate_comprehension: This node evaluates the current transformation plan and provides feedback for improvement.
+    Conditional Edges:
+    - If the transformation plan is complete and consistent, the workflow proceeds to the next stage.
+    - If the transformation plan is incomplete or inconsistent, the workflow loops back to the reflect_comprehension node for further refinement.
+    """
+    reflect_comprehension = create_reflect_comprehension_node(comprehension_agent)
+    evaluate_comprehension = create_evaluation_node(
+        evaluation_executor,
+        mapper={
+            "transformation_plan": lambda state: {
+                "transformation_plan": state.get("transformation_plan")
+            }
+        },
+        execution_mode="specific",
+    )
+
+    graph = StateGraph()
+    graph.add_node("reflect_comprehension", reflect_comprehension)
+    graph.add_node("evaluate_comprehension", evaluate_comprehension)
+
+    graph.add_edge(START, "reflect_comprehension")
+    graph.add_edge("reflect_comprehension", "evaluate_comprehension")
+
+    graph.add_conditional_edges(
+        "evaluate_comprehension",
+        route_evaluation_decision,
+        {
+            "plan_complete": END,
+            "plan_incomplete": "reflect_comprehension",
+            "failure": END,
+        },
+    )
+    return graph

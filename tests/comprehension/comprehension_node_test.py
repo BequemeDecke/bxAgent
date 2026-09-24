@@ -6,10 +6,9 @@ It has to write the plan into the `TRANSFORMATION.md` file.
 import asyncio
 import tempfile
 from pathlib import Path
-from typing import TypedDict
 from unittest import TestCase
 
-from langgraph.graph import START, StateGraph
+from langgraph.graph import END, START, StateGraph
 
 from mdeagent.comprehension.node import (
     create_comprehension_node,
@@ -19,19 +18,43 @@ from mdeagent.comprehension.plan import (
     TransformationPlan,
     TransformationPlanData,
 )
+from mdeagent.comprehension.state import ComprehensionState
 
 
 class TestComprehensionNode(TestCase):
     def setUp(self):
-        class DummyState(TypedDict):
-            pass
+        def generate_response(state: ComprehensionState) -> ComprehensionState:
+            # Simulate the comprehension agent: increment iteration and update disk
+            tp_obj = state["transformation_plan"]
 
-        def generate_response(state: DummyState) -> DummyState:
-            return {}
+            # Handle both TransformationPlan objects and raw dicts
+            if hasattr(tp_obj, "to_dict"):
+                tp_dict = tp_obj.to_dict()
+            else:
+                tp_dict = tp_obj
 
-        graph_builder = StateGraph(DummyState)
+            if tp_dict and isinstance(tp_dict, dict) and "parser" in tp_dict:
+                # Use from_dict to get the plan data without re-parsing from disk
+                # (the file was written as rendered template, not parseable format)
+                plan = TransformationPlan.from_dict(tp_dict)
+                # Increment from the current plan iteration
+                plan.data["iteration"] = plan.data.get("iteration", 0) + 1
+                parser = FileTransformationPlanParser.from_dict(tp_dict["parser"])
+                parser.save(str(plan))
+                return_dict = plan.to_dict()
+            else:
+                return_dict = tp_dict if isinstance(tp_dict, dict) else tp_obj
+
+            return {
+                "transformation_plan": return_dict,
+                "latest_evaluation_runs": {},
+                "iteration": state["iteration"] + 1,
+            }
+
+        graph_builder = StateGraph(ComprehensionState)
         graph_builder.add_node("comprehension", generate_response)
         graph_builder.add_edge(START, "comprehension")
+        graph_builder.add_edge("comprehension", END)
         self.graph = graph_builder.compile()
         self.transformation_plan_data = TransformationPlanData(
             source_model_package="com.example.source",
@@ -54,11 +77,14 @@ class TestComprehensionNode(TestCase):
             tp.data = self.transformation_plan_data
             parser.save(str(tp))
 
-            result = asyncio.run(call_sub(
-                {
-                    "transformation_plan": tp.to_dict(),
-                }
-            ))
+            result = asyncio.run(
+                call_sub(
+                    {
+                        "transformation_plan": tp.to_dict(),
+                        "iteration": 1,  # Pass the outer state's iteration so create_comprehension_node uses it
+                    }
+                )
+            )
 
             serialized_tp = result.get("transformation_plan")
             self.assertIsInstance(

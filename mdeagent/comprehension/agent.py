@@ -1,8 +1,8 @@
-from langchain.agents import create_agent
+from langchain.agents import AgentState, create_agent
 from langchain.chat_models import BaseChatModel
 from langchain.messages import SystemMessage
 
-from mdeagent.comprehension.state import ComprehensionAgent
+from mdeagent.comprehension import SerializedTransformationPlan
 from mdeagent.comprehension.tools import transformation_plan_tools
 from mdeagent.models import build_base_model
 
@@ -53,6 +53,10 @@ Return your plan using the predefined response_schema
 """
 
 
+class ComprehensionAgentState(AgentState):
+    transformation_plan: SerializedTransformationPlan
+
+
 def build_comprehension_agent(
     system_prompt: str = COMPREHENSION_SYSTEM_PROMPT,
     model: BaseChatModel | None = None,
@@ -63,7 +67,7 @@ def build_comprehension_agent(
 
     return create_agent(
         model=model,
-        state_schema=ComprehensionAgent,
+        state_schema=ComprehensionAgentState,
         system_prompt=SystemMessage(system_prompt),
         middleware=[],
         # checkpointer=InMemorySaver(

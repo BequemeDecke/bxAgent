@@ -1,27 +1,17 @@
 import logging
 
-from langchain.messages import HumanMessage
 from langgraph.graph.state import CompiledStateGraph
 
 from mdeagent.comprehension.plan import TransformationPlan
+from mdeagent.comprehension.state import ComprehensionState
 from mdeagent.state import MDEAgentState
 
-logger = logging.getLogger(__name__)    
-
-PROMPT_TEMPLATE = """
---- BEGIN TRANSFORMATION PLAN ---
-{transformation_plan}
---- END TRANSFORMATION PLAN ---
-
-Use the following results to check if the transformation plan is complete and consistent:
-
---- BEGIN AUDIT RESULTS ---
-{evaluation_results}
---- END AUDIT RESULTS ---
-"""
+logger = logging.getLogger(__name__)
 
 
-def create_comprehension_node(comprehension_agent: CompiledStateGraph):
+def create_comprehension_node(
+    comprehension_subgraph: CompiledStateGraph[ComprehensionState],
+):
     async def comprehension_node(state: MDEAgentState) -> MDEAgentState:
         """
         Calls the comprehension agent with the current workflow state.
@@ -37,25 +27,21 @@ def create_comprehension_node(comprehension_agent: CompiledStateGraph):
                 "The comprehension node requires a transformation plan in the state."
             )
         transformation = TransformationPlan.from_dict(serialized_transformation)
+        transformation.update_iteration(state.get("iteration", 0))
 
-        input_prompt = PROMPT_TEMPLATE.format(
-            transformation_plan=str(transformation),
-            evaluation_results="\n".join(
-                [str(run) for run in state.get("latest_evaluation_runs", {}).values()]
-            ),
+        input_state = ComprehensionState(
+            transformation_plan=transformation,
+            latest_evaluation_runs={},  # TODO: Pass the latest evaluation runs of category "design"
+            iteration=0,
         )
 
-        await comprehension_agent.ainvoke(
-            input={
-                "messages": [HumanMessage(content=input_prompt)],
-                "transformation_plan": serialized_transformation,
-            },
-            version="v2"
+        # Call the comprehension subgraph with the current state
+        output_state = await comprehension_subgraph.ainvoke(
+            input=input_state, version="v2"
         )
-
-        iteration = transformation.data.get("iteration", 0)
-        transformation.update_iteration(iteration + 1)
-
-        return {"transformation_plan": transformation.to_dict()}
+        # Return the new state delta
+        return MDEAgentState(
+            transformation_plan=output_state.value.get("transformation_plan")
+        )
 
     return comprehension_node

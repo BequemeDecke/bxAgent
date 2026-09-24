@@ -4,6 +4,7 @@ from langgraph.graph import END, START, StateGraph
 
 from mdeagent.comprehension.agent import build_comprehension_agent
 from mdeagent.comprehension.node import create_comprehension_node
+from mdeagent.comprehension.subgraph import build_comprehension_subgraph
 from mdeagent.config import Config
 from mdeagent.evaluation import (
     EvaluationExecutor,
@@ -13,6 +14,8 @@ from mdeagent.evaluation import (
     JavaCompilationSchema,
     ToolInstalledEvaluation,
     ToolInstalledSchema,
+    TransformationPlanEvaluation,
+    TransformationPlanSchema,
     WorkspaceStructureEvaluation,
     WorkspaceStructureSchema,
 )
@@ -26,6 +29,7 @@ from mdeagent.mapping import (
     mde_to_files,
     mde_to_maven_project,
     mde_to_tools,
+    mde_to_transformation_plan,
     mde_to_workspace,
 )
 from mdeagent.preparation.agent import build_preparation_graph
@@ -39,7 +43,7 @@ def build_mdeagent(
     download_benchmarx: bool = False,
 ) -> StateGraph[MDEAgentState]:
     config = Config.get_instance()
-    
+
     # 1. Initialize the core components of the MDEAgent
     check_transformation_iteration = create_check_transformation_iteration_function()
     agent_evaluator = EvaluationExecutor(
@@ -64,12 +68,20 @@ def build_mdeagent(
                 "evaluation_schema": JavaCompilationSchema,
                 "category": "execution",
             },
+            "transformation_plan": {
+                "evaluation": TransformationPlanEvaluation(),
+                "evaluation_schema": TransformationPlanSchema,
+                "category": "design",
+            },
         }
     )
 
     # 2. Create the nodes of the MDEAgent workflow
     call_comprehension_node = create_comprehension_node(
-        comprehension_agent=build_comprehension_agent()
+        comprehension_subgraph=build_comprehension_subgraph(
+            evaluation_executor=agent_evaluator,
+            comprehension_agent=build_comprehension_agent(),
+        )
     )
     call_preparation_node = create_preparation_node(
         preparation_agent=build_preparation_graph(
@@ -100,6 +112,7 @@ def build_mdeagent(
             "java_compilation": mde_to_maven_project,
             "tools_installed": mde_to_tools,
             "workspace_structure": mde_to_workspace,
+            "transformation_plan": mde_to_transformation_plan,
         },
     )
 
