@@ -17,7 +17,7 @@ from mdeagent.util import with_transformation
 
 class TestState(TypedDict):
     iteration: int
-    transformation_plan: SerializedTransformationPlan
+    transformation_plan: SerializedTransformationPlan | None
     codes: int
 
 
@@ -65,4 +65,8 @@ class TestIterationControl(TestCase):
             self.assertEqual(output.value.get("transformation_plan").get("data").get("iteration"), 4)
 
     def test_update_iteration_without_transformation_plan(self):
-        self.fail("Not implemented")
+        input_state = TestState(iteration=0, transformation_plan=None, codes=0)
+        output = asyncio.run(self.graph.ainvoke(input_state, version="v2"))
+
+        self.assertEqual(output.value.get("iteration"), 4)
+        self.assertIsNone(output.value.get("transformation_plan"))
