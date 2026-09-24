@@ -81,7 +81,7 @@ def build_mdeagent(
         comprehension_subgraph=build_comprehension_subgraph(
             evaluation_executor=agent_evaluator,
             comprehension_agent=build_comprehension_agent(),
-        )
+        ).compile()
     )
     call_preparation_node = create_preparation_node(
         preparation_agent=build_preparation_graph(

@@ -30,7 +30,7 @@ def create_comprehension_node(
         transformation.update_iteration(state.get("iteration", 0))
 
         input_state = ComprehensionState(
-            transformation_plan=transformation,
+            transformation_plan=transformation.to_dict(),
             latest_evaluation_runs={},  # TODO: Pass the latest evaluation runs of category "design"
             iteration=0,
         )

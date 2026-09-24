@@ -99,7 +99,7 @@ def build_comprehension_subgraph(
         execution_mode="specific",
     )
 
-    graph = StateGraph()
+    graph = StateGraph(state_schema=ComprehensionState)
     graph.add_node("reflect_comprehension", reflect_comprehension)
     graph.add_node("evaluate_comprehension", evaluate_comprehension)
 
