@@ -19,7 +19,10 @@ from mdeagent.implementation.transformation.factory import (
 from mdeagent.implementation.transformation.implement_transformation import (
     create_implement_transformation_node,
 )
-from mdeagent.mapping import implementation_to_java_files
+from mdeagent.mapping import (
+    implementation_to_java_files,
+    implementation_to_maven_project,
+)
 from mdeagent.models import build_base_model
 
 
@@ -84,8 +87,8 @@ def build_implementation_graph(
         evaluation_executor=evaluation_executor,
         mapper={
             "file_existence": implementation_to_java_files,
-            "java_compilation": implementation_to_java_files,
-            "integration_compilation": implementation_to_java_files,
+            "java_compilation": implementation_to_maven_project,
+            "integration_compilation": implementation_to_maven_project,
         },
         execution_mode="specific",
     )

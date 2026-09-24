@@ -1,7 +1,10 @@
+from pydantic import BaseModel
+
+from mdeagent.comprehension.plan import SerializedTransformationPlan
 from mdeagent.evaluation.types import Evaluation, EvaluationError, EvaluationResult
 
 
-class TransformationPlanSchema:
+class TransformationPlanSchema(BaseModel):
     """TypedDict schema describing the parameters expected by
     ``TransformationPlanEvaluation``.
 
@@ -11,16 +14,7 @@ class TransformationPlanSchema:
     treat this as a regular Pydantic model.
     """
 
-    @classmethod
-    def model_validate(cls, data: dict) -> "TransformationPlanSchema":
-        """Validate and return the input dict as-is (no transformation)."""
-        if "transformation_plan" not in data:
-            raise ValueError("Missing required field: transformation_plan")
-        return cls()
-
-    @classmethod
-    def model_dump(cls) -> dict:
-        return {}
+    transformation_plan: SerializedTransformationPlan | None
 
 
 class TransformationPlanEvaluation(Evaluation):
@@ -39,23 +33,14 @@ class TransformationPlanEvaluation(Evaluation):
     async def setup(self) -> None:
         pass
 
-    @staticmethod
-    def _get_plan_data(tp_dict: dict) -> dict:
-        """Extract the plan data dict from a SerializedTransformationPlan.
-
-        Handles both the full serialized form (with nested ``data`` key) and
-        a flat dict that was passed directly.
-        """
-        if "data" in tp_dict:
-            return tp_dict["data"]
-        return tp_dict
-
     async def run(
         self, **kwargs
     ) -> tuple[list[EvaluationResult], list[EvaluationError]]:
-        tp_dict = kwargs.get("transformation_plan")
+        serialized_plan: SerializedTransformationPlan = kwargs.get(
+            "transformation_plan"
+        )
 
-        if tp_dict is None or not tp_dict:
+        if serialized_plan is None or "data" not in serialized_plan:
             return (
                 [
                     EvaluationResult(
@@ -66,11 +51,10 @@ class TransformationPlanEvaluation(Evaluation):
                 [],
             )
 
-        plan_data = self._get_plan_data(tp_dict)
         results: list[EvaluationResult] = []
 
         for field_key, label in self.REQUIRED_FIELDS:
-            value = str(plan_data.get(field_key, "")).strip()
+            value = str(serialized_plan["data"].get(field_key, "")).strip()
             if value:
                 results.append(
                     EvaluationResult(

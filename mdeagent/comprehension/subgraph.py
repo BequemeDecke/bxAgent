@@ -1,3 +1,4 @@
+import logging
 from typing import Literal
 
 from langchain.messages import HumanMessage
@@ -8,6 +9,8 @@ from mdeagent.evaluation.executor import EvaluationExecutor
 from mdeagent.evaluation.filter import IsErrorFilter
 from mdeagent.evaluation.node import create_evaluation_node
 from mdeagent.evaluation.pipefilter import EvaluationPipe
+
+logger = logging.getLogger(__name__)
 
 PROMPT_TEMPLATE = """
 --- BEGIN TRANSFORMATION PLAN ---
@@ -27,6 +30,7 @@ def create_reflect_comprehension_node(comprehension_agent: CompiledStateGraph):
         """
         Reflects on the current transformation plan and updates the state with the current iteration.
         """
+        logger.debug("Reflecting on the current transformation plan ...")
         iteration = state.get("iteration", 0)
         state["iteration"] = iteration + 1
 
@@ -39,7 +43,7 @@ def create_reflect_comprehension_node(comprehension_agent: CompiledStateGraph):
             ),
         )
 
-        await comprehension_agent.ainvoke(
+        output = await comprehension_agent.ainvoke(
             input={
                 "messages": [HumanMessage(content=input_prompt)],
                 "transformation_plan": transformation,
@@ -47,7 +51,9 @@ def create_reflect_comprehension_node(comprehension_agent: CompiledStateGraph):
             version="v2",
         )
 
-        return state
+        return ComprehensionState(
+            transformation_plan=output.value.get("transformation_plan")
+        )
 
     return reflect_comprehension
 
@@ -73,7 +79,7 @@ def route_evaluation_decision(
     pipe = EvaluationPipe() | IsErrorFilter
     error_results = pipe.filter_results(transformation_plan_run.results)
 
-    return "plan_incomplete" if len(error_results) == 0 else "plan_complete"
+    return "plan_complete" if len(error_results) == 0 else "plan_incomplete"
 
 
 def build_comprehension_subgraph(
