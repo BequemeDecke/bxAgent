@@ -1,10 +1,65 @@
 import logging
 import xml.etree.ElementTree as ET
 from pathlib import Path
+from typing import Callable
 
-# Source - https://stackoverflow.com/a/54491129
-# Posted by rez, modified by community. See post 'Timeline' for change history
-# Retrieved 2026-07-13, License - CC BY-SA 4.0
+logger = logging.getLogger(__name__)
+
+
+def with_transformation[T](
+    node: Callable[[T], dict | T],
+    transform: Callable[[T], dict],
+) -> Callable[[T], dict]:
+    """Wraps a node with a state transformation function.
+
+    The transformation is applied **before** the node executes, allowing
+    decoupling of concerns that would otherwise be handled inside the node itself.
+
+    Common use cases:
+    - Path normalization between different components with different path conventions
+    - Iteration control (incrementing iteration counters before node execution)
+    - Injecting or stripping metadata before/after node processing
+
+    The returned function merges the transform result with the node result
+    (dict union, right-to-left: node values override transform values).
+
+    Parameters
+    ----------
+    node : callable
+        An async or sync node function: ``state -> dict | T``
+    transform : callable
+        A state transformation function: ``state -> dict``
+
+    Returns
+    -------
+    callable
+        An async function that applies ``transform`` to the incoming state,
+        passes the result to ``node``, and returns the merged state update.
+
+    Example
+    -------
+    >>> def increment_iteration(state):
+    ...     return {"iteration": state.get("iteration", 0) + 1}
+    >>>
+    >>> graph.add_node(
+    ...     "step",
+    ...     with_transformation(some_node, increment_iteration),
+    ... )
+    """
+
+    async def wrapped(state: T) -> dict:
+        # Step 1: Transform the incoming state
+        transformed_state = transform(state)
+
+        # Step 2: Execute the node with the transformed state
+        node_result = await node(transformed_state)
+
+        # Step 3: Merge results — node values override transform values
+        merged: dict = {**transformed_state, **node_result}
+
+        return merged
+
+    return wrapped
 
 
 def get_all_namespaces(filename: Path):
@@ -16,9 +71,9 @@ def log_workspace_structure(workspace: Path):
     """
     Log the structure of the workspace directory for debugging purposes.
     """
-    logging.debug(f"Workspace structure at {workspace}:")
+    logger.debug(f"Workspace structure at {workspace}:")
     for path in workspace.rglob("*"):
-        logging.debug(f" - {path.relative_to(workspace)}")
+        logger.debug(f" - {path.relative_to(workspace)}")
 
 
 def copy_workspace(workspace: Path, destination: Path):
@@ -28,10 +83,10 @@ def copy_workspace(workspace: Path, destination: Path):
     import shutil
 
     if destination.exists():
-        logging.warning(
+        logger.warning(
             f"Destination {destination} already exists. It will be overwritten."
         )
         shutil.rmtree(destination)
 
     shutil.copytree(workspace, destination)
-    logging.info(f"Workspace copied from {workspace} to {destination}.")
+    logger.info(f"Workspace copied from {workspace} to destination: {destination}.")
