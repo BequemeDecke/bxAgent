@@ -114,7 +114,7 @@ def create_prepare_workspace_node(
     benchmarx_path: Path | None = None,
     download_benchmarx: bool = False,
 ):
-    def prepare_workspace_node(state: PreparationState) -> PreparationState:
+    async def prepare_workspace_node(state: PreparationState) -> PreparationState:
         workspace = state.get("workspace_path")
         if workspace is None:
             raise ValueError("Workspace path is not set in the state.")

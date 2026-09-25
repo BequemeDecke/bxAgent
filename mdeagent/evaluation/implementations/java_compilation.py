@@ -64,7 +64,7 @@ class JavaCompilationEvaluation(Evaluation):
             raise ValueError("project_path is required (passed to constructor or run())")
 
         try:
-            self._maven_project = MavenProject.load(project_path)
+            maven_project = MavenProject.load(project_path)
         except Exception as e:
             logger.exception(f"Failed to load Maven project at {project_path}")
             return [], [
@@ -79,7 +79,7 @@ class JavaCompilationEvaluation(Evaluation):
         errors: list[EvaluationError] = []
 
         try:
-            success, output = self._maven_project.compile()
+            success, output = maven_project.compile()
 
             if success:
                 results.append(
@@ -93,14 +93,13 @@ class JavaCompilationEvaluation(Evaluation):
                 results.extend(parsed_results)
 
         except Exception as e:
-            logger.exception(
-                f"An error occurred while compiling the Maven project: {e}"
-            )
+            error_message = f"An error occurred while compiling the Maven project: {e!s}"
+            logger.exception(error_message)
             errors.append(
                 EvaluationError(
-                    message=f"An error occurred while compiling the Maven project: {str(e)}",
+                    message=error_message,
                     type=type(e).__name__,
-                    details={"project_path": str(self._maven_project.workspace)},
+                    details={"project_path": str(maven_project.workspace)},
                 )
             )
 

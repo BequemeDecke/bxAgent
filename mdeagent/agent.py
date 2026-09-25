@@ -93,7 +93,7 @@ def build_mdeagent(
                 "javac",
                 "jar",
             ],
-        ),
+        )
     )
     comprehension_node = create_comprehension_node(
         comprehension_subgraph=build_comprehension_subgraph(
