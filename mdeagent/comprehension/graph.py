@@ -80,7 +80,7 @@ def route_evaluation_decision(
     return "plan_complete" if len(error_results) == 0 else "plan_incomplete"
 
 
-def build_comprehension_subgraph(
+def build_comprehension_graph(
     evaluation_executor: EvaluationExecutor, comprehension_agent: CompiledStateGraph
 ) -> StateGraph:
     """
@@ -97,7 +97,7 @@ def build_comprehension_subgraph(
     evaluate_comprehension = create_evaluation_node(
         evaluation_executor,
         mapper={
-            "transformation_plan": lambda state: {
+            "plan_complete": lambda state: {
                 "transformation_plan": state.get("transformation_plan")
             }
         },
@@ -122,9 +122,8 @@ def build_comprehension_subgraph(
         "evaluate_comprehension",
         route_evaluation_decision,
         {
-            "plan_complete": END,
             "plan_incomplete": "reflect_comprehension",
-            "failure": END,
+            "plan_complete": END,
         },
     )
     return graph

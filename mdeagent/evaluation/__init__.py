@@ -4,8 +4,6 @@ from .pipefilter import EvaluationFilter, EvaluationPipe
 from .types import Evaluation, EvaluationError, EvaluationResult, EvaluationRun
 
 __all__ = [
-    "ToolInstalledEvaluation",
-    "ToolInstalledSchema",
     "Evaluation",
     "EvaluationError",
     "EvaluationExecutor",
@@ -18,6 +16,8 @@ __all__ = [
     "JavaCompilationEvaluation",
     "JavaCompilationSchema",
     "StateToEvaluationMapper",
+    "ToolInstalledEvaluation",
+    "ToolInstalledSchema",
     "WorkspaceStructureEvaluation",
     "WorkspaceStructureSchema",
 ]

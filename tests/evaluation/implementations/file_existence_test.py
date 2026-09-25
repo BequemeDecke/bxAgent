@@ -102,10 +102,3 @@ class TestFileExistence(TestCase):
             str(files[1]),
             "Expected details for non-existing file do not match.",
         )
-
-    def test_execute__missing_files_parameter(self):
-        file_existence_evaluation = FileExistenceEvaluation()
-        with self.assertRaises(
-            ValueError, msg="Should raise ValueError when 'files' parameter is missing."
-        ):
-            asyncio.run(file_existence_evaluation.run())

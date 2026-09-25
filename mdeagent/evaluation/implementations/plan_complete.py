@@ -4,7 +4,7 @@ from mdeagent.comprehension.plan import SerializedTransformationPlan
 from mdeagent.evaluation.types import Evaluation, EvaluationError, EvaluationResult
 
 
-class TransformationPlanSchema(BaseModel):
+class PlanCompleteSchema(BaseModel):
     """TypedDict schema describing the parameters expected by
     ``TransformationPlanEvaluation``.
 
@@ -17,7 +17,7 @@ class TransformationPlanSchema(BaseModel):
     transformation_plan: SerializedTransformationPlan | None
 
 
-class TransformationPlanEvaluation(Evaluation):
+class PlanCompleteEvaluation(Evaluation):
     """Evaluates whether the transformation plan has all required fields populated."""
 
     def __init__(self) -> None:

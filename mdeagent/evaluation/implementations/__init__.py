@@ -1,12 +1,12 @@
 from .file_existence import FileExistenceEvaluation, FileExistenceSchema
 from .java_compilation import JavaCompilationEvaluation, JavaCompilationSchema
+from .plan_complete import (
+    PlanCompleteEvaluation,
+    PlanCompleteSchema,
+)
 from .tool_installed import (
     ToolInstalledEvaluation,
     ToolInstalledSchema,
-)
-from .transformation_plan import (
-    TransformationPlanEvaluation,
-    TransformationPlanSchema,
 )
 from .workspace_structure import (
     WorkspaceStructureEvaluation,
@@ -18,10 +18,10 @@ __all__ = [
     "FileExistenceSchema",
     "JavaCompilationEvaluation",
     "JavaCompilationSchema",
+    "PlanCompleteEvaluation",
+    "PlanCompleteSchema",
     "ToolInstalledEvaluation",
     "ToolInstalledSchema",
-    "TransformationPlanEvaluation",
-    "TransformationPlanSchema",
     "WorkspaceStructureEvaluation",
     "WorkspaceStructureSchema",
 ]

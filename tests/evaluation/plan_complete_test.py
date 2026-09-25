@@ -4,9 +4,9 @@ import asyncio
 import unittest
 
 from mdeagent.comprehension.plan import SerializedTransformationPlan
-from mdeagent.evaluation.implementations.transformation_plan import (
-    TransformationPlanEvaluation,
-    TransformationPlanSchema,
+from mdeagent.evaluation.implementations.plan_complete import (
+    PlanCompleteEvaluation,
+    PlanCompleteSchema,
 )
 
 
@@ -37,7 +37,7 @@ def _make_full_plan(
     }
 
 
-class TestTransformationPlanSchema(unittest.TestCase):
+class TestPlanCompleteSchema(unittest.TestCase):
     """Test the schema validation for transformation plan parameters."""
 
     def test_schema_validates_complete_plan(self):
@@ -52,7 +52,7 @@ class TestTransformationPlanSchema(unittest.TestCase):
             )
         }
         # Should not raise
-        result = TransformationPlanSchema.model_validate(data)
+        result = PlanCompleteSchema.model_validate(data)
         self.assertIsNotNone(result)
 
     def test_schema_rejects_missing_plan(self):
@@ -61,7 +61,7 @@ class TestTransformationPlanSchema(unittest.TestCase):
         with self.assertRaises(
             ValueError, msg="Should raise ValueError for missing plan."
         ):
-            TransformationPlanSchema.model_validate(data)
+            PlanCompleteSchema.model_validate(data)
 
     def test_schema_allows_extra_keys(self):
         """Schema should allow extra keys beyond transformation_plan."""
@@ -69,16 +69,16 @@ class TestTransformationPlanSchema(unittest.TestCase):
             "transformation_plan": _make_full_plan(),
             "extra": "ignored",
         }
-        result = TransformationPlanSchema.model_validate(data)
+        result = PlanCompleteSchema.model_validate(data)
         self.assertIsNotNone(result)
 
 
-class TestTransformationPlanEvaluation(unittest.TestCase):
+class TestPlanCompleteEvaluation(unittest.TestCase):
     """Test the TransformationPlanEvaluation logic."""
 
     def test_evaluation_empty_plan_none(self):
         """When plan is None, should return a single failure result."""
-        evaluator = TransformationPlanEvaluation()
+        evaluator = PlanCompleteEvaluation()
 
         results, errors = asyncio.run(evaluator.run(transformation_plan=None))
 
@@ -90,7 +90,7 @@ class TestTransformationPlanEvaluation(unittest.TestCase):
 
     def test_evaluation_empty_plan_empty_dict(self):
         """When plan is empty dict, should return a single failure result."""
-        evaluator = TransformationPlanEvaluation()
+        evaluator = PlanCompleteEvaluation()
 
         results, errors = asyncio.run(evaluator.run(transformation_plan={}))
 
@@ -107,7 +107,7 @@ class TestTransformationPlanEvaluation(unittest.TestCase):
             difficulties="Complex type mappings",
             implementation_steps="Define mapping, generate code",
         )
-        evaluator = TransformationPlanEvaluation()
+        evaluator = PlanCompleteEvaluation()
 
         results, errors = asyncio.run(evaluator.run(transformation_plan=plan))
 
@@ -129,7 +129,7 @@ class TestTransformationPlanEvaluation(unittest.TestCase):
             difficulties="",
             implementation_steps="Steps",
         )
-        evaluator = TransformationPlanEvaluation()
+        evaluator = PlanCompleteEvaluation()
 
         results, errors = asyncio.run(evaluator.run(transformation_plan=plan))
 
@@ -160,7 +160,7 @@ class TestTransformationPlanEvaluation(unittest.TestCase):
             difficulties="  ",
             implementation_steps="  Steps  ",
         )
-        evaluator = TransformationPlanEvaluation()
+        evaluator = PlanCompleteEvaluation()
 
         results, errors = asyncio.run(evaluator.run(transformation_plan=plan))
 
@@ -180,7 +180,7 @@ class TestTransformationPlanEvaluation(unittest.TestCase):
             difficulties="diff",
             implementation_steps="steps",
         )
-        evaluator = TransformationPlanEvaluation()
+        evaluator = PlanCompleteEvaluation()
 
         results, errors = asyncio.run(evaluator.run(transformation_plan=plan))
 
@@ -196,7 +196,7 @@ class TestTransformationPlanEvaluation(unittest.TestCase):
     def test_evaluation_no_errors(self):
         """TransformationPlanEvaluation should never produce errors."""
         plan = _make_full_plan()
-        evaluator = TransformationPlanEvaluation()
+        evaluator = PlanCompleteEvaluation()
 
         results, errors = asyncio.run(evaluator.run(transformation_plan=plan))
 
@@ -204,7 +204,7 @@ class TestTransformationPlanEvaluation(unittest.TestCase):
 
     def test_setup_is_noop(self):
         """Setup should be async and do nothing."""
-        evaluator = TransformationPlanEvaluation()
+        evaluator = PlanCompleteEvaluation()
 
         # Should not raise
         asyncio.run(evaluator.setup())
@@ -224,7 +224,7 @@ class TestTransformationPlanEvaluation(unittest.TestCase):
             "parser": plan["parser"],
             "template": plan["template"],
         }
-        evaluator = TransformationPlanEvaluation()
+        evaluator = PlanCompleteEvaluation()
 
         results, errors = asyncio.run(evaluator.run(transformation_plan=nested_plan))
 

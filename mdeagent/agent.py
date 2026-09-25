@@ -3,7 +3,7 @@ from pathlib import Path
 from langgraph.graph import END, START, StateGraph
 
 from mdeagent.comprehension.agent import build_comprehension_agent
-from mdeagent.comprehension.graph import build_comprehension_subgraph
+from mdeagent.comprehension.graph import build_comprehension_graph
 from mdeagent.comprehension.node import create_comprehension_node
 from mdeagent.config import Config
 from mdeagent.evaluation import (
@@ -12,10 +12,10 @@ from mdeagent.evaluation import (
     FileExistenceSchema,
     JavaCompilationEvaluation,
     JavaCompilationSchema,
+    PlanCompleteEvaluation,
+    PlanCompleteSchema,
     ToolInstalledEvaluation,
     ToolInstalledSchema,
-    TransformationPlanEvaluation,
-    TransformationPlanSchema,
     WorkspaceStructureEvaluation,
     WorkspaceStructureSchema,
 )
@@ -70,9 +70,9 @@ def build_mdeagent(
                 "evaluation_schema": JavaCompilationSchema,
                 "category": "execution",
             },
-            "transformation_plan": {
-                "evaluation": TransformationPlanEvaluation(),
-                "evaluation_schema": TransformationPlanSchema,
+            "plan_complete": {
+                "evaluation": PlanCompleteEvaluation(),
+                "evaluation_schema": PlanCompleteSchema,
                 "category": "design",
             },
         }
@@ -96,7 +96,7 @@ def build_mdeagent(
         )
     )
     comprehension_node = create_comprehension_node(
-        comprehension_subgraph=build_comprehension_subgraph(
+        comprehension_subgraph=build_comprehension_graph(
             evaluation_executor=agent_evaluator,
             comprehension_agent=build_comprehension_agent(),
         ).compile()
@@ -116,7 +116,7 @@ def build_mdeagent(
             "java_compilation": mde_to_maven_project,
             "tools_installed": mde_to_tools,
             "workspace_structure": mde_to_workspace,
-            "transformation_plan": mde_to_transformation_plan,
+            "plan_complete": mde_to_transformation_plan,
         },
     )
 
